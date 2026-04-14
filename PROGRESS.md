@@ -1,8 +1,8 @@
 # Progression - Omni-Gerant
 
 **Derniere mise a jour** : 2026-04-14
-**Dernier prompt complete** : 9.2
-**Prochain prompt a executer** : 9.3
+**Dernier prompt complete** : 9.3
+**Prochain prompt a executer** : 10.1
 
 ## Checklist des Prompts
 
@@ -52,7 +52,7 @@
 ### Phase 9 : Integrations
 - [x] Prompt 9.1 — Export Comptable FEC — `COMPLETED`
 - [x] Prompt 9.2 — Integration Paiements — `COMPLETED`
-- [ ] Prompt 9.3 — Connecteur PPF/PDP — `NOT_STARTED`
+- [x] Prompt 9.3 — Connecteur PPF/PDP — `COMPLETED`
 
 ### Phase 10 : Polish et Deploiement
 - [ ] Prompt 10.1 — Optimisation Performance — `NOT_STARTED`
@@ -61,10 +61,10 @@
 
 ## Statistiques
 - **Total prompts** : 32
-- **Completes** : 29
+- **Completes** : 30
 - **En cours** : 0
-- **Restants** : 3
-- **Progression** : 91%
+- **Restants** : 2
+- **Progression** : 94%
 
 ## Journal d'execution
 
@@ -99,3 +99,4 @@
 | 2026-04-14 | 8.2 | SUCCESS | Onboarding magique (4 etapes SIRET auto-complete/personnalisation logo+couleurs/connexion bancaire optionnelle/premier devis, step-indicator, redirect dashboard), frontend uniquement |
 | 2026-04-14 | 9.1 | SUCCESS | Export FEC (generateur TSV 18 colonnes, mapper VE/AC/BQ, plan comptable TPE 411/401/512/706/606, validateur equilibre, filename SIRET, composants frontend), 19 nouveaux tests, 528 total API |
 | 2026-04-14 | 9.2 | SUCCESS | Integration Paiements (Stripe Connect+Checkout+webhooks HMAC-SHA256, GoCardless SEPA mandats+prelevements, routes integration, page settings paiements), 13 nouveaux tests, 541 total API |
+| 2026-04-14 | 9.3 | SUCCESS | Connecteur PPF/PDP (client API AIFE, sender avec annuaire+dedup, receiver avec auto-purchase, statut lifecycle deposee→encaissee, webhook HMAC, badge statut, page config), 33 nouveaux tests, 574 total API |
