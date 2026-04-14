@@ -1,8 +1,8 @@
 # Progression - Omni-Gerant
 
 **Derniere mise a jour** : 2026-04-14
-**Dernier prompt complete** : 4.1
-**Prochain prompt a executer** : 4.2
+**Dernier prompt complete** : 4.2
+**Prochain prompt a executer** : 4.3
 
 ## Checklist des Prompts
 
@@ -23,7 +23,7 @@
 
 ### Phase 4 : Module Ventes
 - [x] Prompt 4.1 — Editeur de Devis — `COMPLETED`
-- [ ] Prompt 4.2 — Workflow Devis — `NOT_STARTED`
+- [x] Prompt 4.2 — Workflow Devis — `COMPLETED`
 - [ ] Prompt 4.3 — Generation Factures — `NOT_STARTED`
 - [ ] Prompt 4.4 — Generation Factur-X — `NOT_STARTED`
 - [ ] Prompt 4.5 — Situations de Travaux — `NOT_STARTED`
@@ -61,10 +61,10 @@
 
 ## Statistiques
 - **Total prompts** : 32
-- **Completes** : 10
+- **Completes** : 11
 - **En cours** : 0
-- **Restants** : 22
-- **Progression** : 31%
+- **Restants** : 21
+- **Progression** : 34%
 
 ## Journal d'execution
 
@@ -80,3 +80,4 @@
 | 2026-04-14 | 3.1 | SUCCESS | Auth (JWT, scrypt hashing, TOTP 2FA, register/login/refresh/logout), 15 nouveaux tests, 61 total API |
 | 2026-04-14 | 3.2 | SUCCESS | RBAC (4 roles, matrice permissions, policies), auth plugin JWT, tenant plugin RLS, audit service+routes, auth routes, 38 nouveaux tests, 99 total API |
 | 2026-04-14 | 4.1 | SUCCESS | Devis (schema Quote/QuoteLine, calculateur TVA multi-taux, numerotation seq., CRUD service, routes, editeur frontend), 34 nouveaux tests, 133 total API |
+| 2026-04-14 | 4.2 | SUCCESS | Workflow devis (machine a etats, partage securise, tracking, email, signature eIDAS, routes publiques, composants frontend), 42 nouveaux tests, 175 total API |
