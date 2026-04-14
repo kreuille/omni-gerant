@@ -1,8 +1,8 @@
 # Progression - Omni-Gerant
 
 **Derniere mise a jour** : 2026-04-14
-**Dernier prompt complete** : 2.1
-**Prochain prompt a executer** : 2.2
+**Dernier prompt complete** : 2.2
+**Prochain prompt a executer** : 2.3
 
 ## Checklist des Prompts
 
@@ -14,7 +14,7 @@
 
 ### Phase 2 : Modeles de Donnees
 - [x] Prompt 2.1 — Modele Entreprise et Lookup SIRET — `COMPLETED`
-- [ ] Prompt 2.2 — Modele Client/Contact — `NOT_STARTED`
+- [x] Prompt 2.2 — Modele Client/Contact — `COMPLETED`
 - [ ] Prompt 2.3 — Catalogue Produits/Services — `NOT_STARTED`
 
 ### Phase 3 : Authentification et Securite
@@ -61,10 +61,10 @@
 
 ## Statistiques
 - **Total prompts** : 32
-- **Completes** : 5
+- **Completes** : 6
 - **En cours** : 0
-- **Restants** : 27
-- **Progression** : 16%
+- **Restants** : 26
+- **Progression** : 19%
 
 ## Journal d'execution
 
@@ -75,3 +75,4 @@
 | 2026-04-14 | 1.3 | SUCCESS | Fastify API (config Zod, error handler, rate limiter, health, graceful shutdown), 8 tests passent |
 | 2026-04-14 | 1.4 | SUCCESS | Next.js frontend (UI components, sidebar, header, auth pages, dashboard skeleton), 9 tests passent |
 | 2026-04-14 | 2.1 | SUCCESS | Tenant module (CRUD service, SIRET lookup avec cache 24h, routes, schemas Zod), 10 nouveaux tests |
+| 2026-04-14 | 2.2 | SUCCESS | Client module (CRUD service, cursor pagination, search, Zod schemas), 13 nouveaux tests, 31 total API |

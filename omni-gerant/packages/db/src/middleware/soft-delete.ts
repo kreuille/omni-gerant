@@ -9,6 +9,7 @@ import { Prisma } from '@prisma/client';
 const SOFT_DELETE_MODELS = new Set([
   'Tenant',
   'User',
+  'Client',
 ]);
 
 export const softDeleteMiddleware: Prisma.Middleware = async (params, next) => {

@@ -6,6 +6,7 @@ import { Prisma } from '@prisma/client';
 const TENANT_SCOPED_MODELS = new Set([
   'User',
   'AuditLog',
+  'Client',
 ]);
 
 // Models that are not tenant-scoped
