@@ -1,8 +1,8 @@
 # Progression - Omni-Gerant
 
 **Derniere mise a jour** : 2026-04-14
-**Dernier prompt complete** : 4.3
-**Prochain prompt a executer** : 4.4
+**Dernier prompt complete** : 4.4
+**Prochain prompt a executer** : 4.5
 
 ## Checklist des Prompts
 
@@ -25,7 +25,7 @@
 - [x] Prompt 4.1 — Editeur de Devis — `COMPLETED`
 - [x] Prompt 4.2 — Workflow Devis — `COMPLETED`
 - [x] Prompt 4.3 — Generation Factures — `COMPLETED`
-- [ ] Prompt 4.4 — Generation Factur-X — `NOT_STARTED`
+- [x] Prompt 4.4 — Generation Factur-X — `COMPLETED`
 - [ ] Prompt 4.5 — Situations de Travaux — `NOT_STARTED`
 - [ ] Prompt 4.6 — Suivi Paiements et Relances — `NOT_STARTED`
 
@@ -61,10 +61,10 @@
 
 ## Statistiques
 - **Total prompts** : 32
-- **Completes** : 12
+- **Completes** : 13
 - **En cours** : 0
-- **Restants** : 20
-- **Progression** : 37%
+- **Restants** : 19
+- **Progression** : 41%
 
 ## Journal d'execution
 
@@ -82,3 +82,4 @@
 | 2026-04-14 | 4.1 | SUCCESS | Devis (schema Quote/QuoteLine, calculateur TVA multi-taux, numerotation seq., CRUD service, routes, editeur frontend), 34 nouveaux tests, 133 total API |
 | 2026-04-14 | 4.2 | SUCCESS | Workflow devis (machine a etats, partage securise, tracking, email, signature eIDAS, routes publiques, composants frontend), 42 nouveaux tests, 175 total API |
 | 2026-04-14 | 4.3 | SUCCESS | Factures (schema Invoice/InvoiceLine/Payment, calculateur, PDF HTML, service CRUD, paiements partiel/total, routes, pages frontend), 32 nouveaux tests, 207 total API |
+| 2026-04-14 | 4.4 | SUCCESS | Factur-X (XML CII conforme, validation donnees+structure, PDF/A-3 embedding, orchestrateur complet, multi-taux), 32 nouveaux tests, 239 total API |
