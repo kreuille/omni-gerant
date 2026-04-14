@@ -1,8 +1,8 @@
 # Progression - Omni-Gerant
 
 **Derniere mise a jour** : 2026-04-14
-**Dernier prompt complete** : 7.1
-**Prochain prompt a executer** : 7.2
+**Dernier prompt complete** : 7.2
+**Prochain prompt a executer** : 7.3
 
 ## Checklist des Prompts
 
@@ -42,7 +42,7 @@
 
 ### Phase 7 : Module Legal
 - [x] Prompt 7.1 — Generateur DUERP — `COMPLETED`
-- [ ] Prompt 7.2 — Registre RGPD — `NOT_STARTED`
+- [x] Prompt 7.2 — Registre RGPD — `COMPLETED`
 - [ ] Prompt 7.3 — Coffre-Fort Assurances — `NOT_STARTED`
 
 ### Phase 8 : Dashboard et UX
@@ -61,10 +61,10 @@
 
 ## Statistiques
 - **Total prompts** : 32
-- **Completes** : 23
+- **Completes** : 24
 - **En cours** : 0
-- **Restants** : 9
-- **Progression** : 72%
+- **Restants** : 8
+- **Progression** : 75%
 
 ## Journal d'execution
 
@@ -93,3 +93,4 @@
 | 2026-04-14 | 6.2 | SUCCESS | Rapprochement bancaire (algorithme multi-criteres, rules/scorer/matcher, auto-match 100%, suggestions, prevention double matching, interface reconciliation), 19 nouveaux tests, 408 total API |
 | 2026-04-14 | 6.3 | SUCCESS | Previsionnel tresorerie (detection recurrence mensuelle/trimestrielle, projection 90j, alertes solde negatif J+7/J+30, graphique+tableau flux, charges recurrentes), 21 nouveaux tests, 429 total API |
 | 2026-04-14 | 7.1 | SUCCESS | Generateur DUERP (base risques NAF BTP/Restauration/Commerce, matrice G×P, detection produits chimiques/equipements, PDF HTML conforme, CRUD+versioning), 28 nouveaux tests, 457 total API |
+| 2026-04-14 | 7.2 | SUCCESS | Registre RGPD (5 traitements pre-remplis TPE, CRUD registre+traitements, export TSV format CNIL, bases legales contrat/obligation/interet/consentement, composants frontend), 18 nouveaux tests, 475 total API |

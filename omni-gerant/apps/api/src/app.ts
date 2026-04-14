@@ -18,6 +18,7 @@ import { purchaseRoutes } from './modules/purchase/purchase.routes.js';
 import { bankRoutes } from './modules/bank/bank.routes.js';
 import { forecastRoutes } from './modules/bank/forecast/forecast.routes.js';
 import { duerpRoutes } from './modules/legal/duerp/duerp.routes.js';
+import { rgpdRoutes } from './modules/legal/rgpd/rgpd.routes.js';
 import { createRequestContext, runWithContext } from './middleware/request-context.js';
 
 export async function buildApp() {
@@ -73,6 +74,7 @@ export async function buildApp() {
   await app.register(bankRoutes);
   await app.register(forecastRoutes);
   await app.register(duerpRoutes);
+  await app.register(rgpdRoutes);
 
   return app;
 }
