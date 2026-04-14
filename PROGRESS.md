@@ -1,8 +1,8 @@
 # Progression - Omni-Gerant
 
 **Derniere mise a jour** : 2026-04-14
-**Dernier prompt complete** : 4.5
-**Prochain prompt a executer** : 4.6
+**Dernier prompt complete** : 4.6
+**Prochain prompt a executer** : 5.1
 
 ## Checklist des Prompts
 
@@ -27,7 +27,7 @@
 - [x] Prompt 4.3 — Generation Factures — `COMPLETED`
 - [x] Prompt 4.4 — Generation Factur-X — `COMPLETED`
 - [x] Prompt 4.5 — Situations de Travaux — `COMPLETED`
-- [ ] Prompt 4.6 — Suivi Paiements et Relances — `NOT_STARTED`
+- [x] Prompt 4.6 — Suivi Paiements et Relances — `COMPLETED`
 
 ### Phase 5 : Module Achats
 - [ ] Prompt 5.1 — Module Achats : Factures Fournisseurs — `NOT_STARTED`
@@ -61,10 +61,10 @@
 
 ## Statistiques
 - **Total prompts** : 32
-- **Completes** : 14
+- **Completes** : 15
 - **En cours** : 0
-- **Restants** : 18
-- **Progression** : 44%
+- **Restants** : 17
+- **Progression** : 47%
 
 ## Journal d'execution
 
@@ -84,3 +84,4 @@
 | 2026-04-14 | 4.3 | SUCCESS | Factures (schema Invoice/InvoiceLine/Payment, calculateur, PDF HTML, service CRUD, paiements partiel/total, routes, pages frontend), 32 nouveaux tests, 207 total API |
 | 2026-04-14 | 4.4 | SUCCESS | Factur-X (XML CII conforme, validation donnees+structure, PDF/A-3 embedding, orchestrateur complet, multi-taux), 32 nouveaux tests, 239 total API |
 | 2026-04-14 | 4.5 | SUCCESS | Situations de travaux (avancement global 30/60/100%, calcul cumul et reste, TVA multi-taux, routes, composants frontend), 13 nouveaux tests, 252 total API |
+| 2026-04-14 | 4.6 | SUCCESS | Relances (5 niveaux J-3 a J+30, penalites retard, scheduler CRON, templates email, composants frontend), 16 nouveaux tests, 268 total API |
