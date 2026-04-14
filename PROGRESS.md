@@ -1,8 +1,8 @@
 # Progression - Omni-Gerant
 
 **Derniere mise a jour** : 2026-04-14
-**Dernier prompt complete** : 6.2
-**Prochain prompt a executer** : 6.3
+**Dernier prompt complete** : 6.3
+**Prochain prompt a executer** : 7.1
 
 ## Checklist des Prompts
 
@@ -38,7 +38,7 @@
 ### Phase 6 : Module Bancaire
 - [x] Prompt 6.1 — Connexion Bancaire Open Banking — `COMPLETED`
 - [x] Prompt 6.2 — Rapprochement Bancaire — `COMPLETED`
-- [ ] Prompt 6.3 — Previsionnel de Tresorerie — `NOT_STARTED`
+- [x] Prompt 6.3 — Previsionnel de Tresorerie — `COMPLETED`
 
 ### Phase 7 : Module Legal
 - [ ] Prompt 7.1 — Generateur DUERP — `NOT_STARTED`
@@ -61,10 +61,10 @@
 
 ## Statistiques
 - **Total prompts** : 32
-- **Completes** : 21
+- **Completes** : 22
 - **En cours** : 0
-- **Restants** : 11
-- **Progression** : 66%
+- **Restants** : 10
+- **Progression** : 69%
 
 ## Journal d'execution
 
@@ -91,3 +91,4 @@
 | 2026-04-14 | 5.4 | SUCCESS | Connecteurs fournisseurs (base+registry, Amazon/EDF/Orange/generique, retry+backoff, chiffrement AES-256, job sync, page settings), 13 nouveaux tests, 350 total API |
 | 2026-04-14 | 6.1 | SUCCESS | Connexion bancaire Open Banking (Bridge API client, bank service CRUD, sync transactions, webhook, auto-categorisation, job quotidien, pages frontend), 39 nouveaux tests, 389 total API |
 | 2026-04-14 | 6.2 | SUCCESS | Rapprochement bancaire (algorithme multi-criteres, rules/scorer/matcher, auto-match 100%, suggestions, prevention double matching, interface reconciliation), 19 nouveaux tests, 408 total API |
+| 2026-04-14 | 6.3 | SUCCESS | Previsionnel tresorerie (detection recurrence mensuelle/trimestrielle, projection 90j, alertes solde negatif J+7/J+30, graphique+tableau flux, charges recurrentes), 21 nouveaux tests, 429 total API |

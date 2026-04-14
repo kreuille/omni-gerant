@@ -16,6 +16,7 @@ import { paymentRoutes } from './modules/payment/payment.routes.js';
 import { supplierRoutes } from './modules/supplier/supplier.routes.js';
 import { purchaseRoutes } from './modules/purchase/purchase.routes.js';
 import { bankRoutes } from './modules/bank/bank.routes.js';
+import { forecastRoutes } from './modules/bank/forecast/forecast.routes.js';
 import { createRequestContext, runWithContext } from './middleware/request-context.js';
 
 export async function buildApp() {
@@ -69,6 +70,7 @@ export async function buildApp() {
   await app.register(supplierRoutes);
   await app.register(purchaseRoutes);
   await app.register(bankRoutes);
+  await app.register(forecastRoutes);
 
   return app;
 }
