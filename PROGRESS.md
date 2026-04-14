@@ -1,8 +1,8 @@
 # Progression - Omni-Gerant
 
 **Derniere mise a jour** : 2026-04-14
-**Dernier prompt complete** : 8.2
-**Prochain prompt a executer** : 9.1
+**Dernier prompt complete** : 9.1
+**Prochain prompt a executer** : 9.2
 
 ## Checklist des Prompts
 
@@ -50,7 +50,7 @@
 - [x] Prompt 8.2 — Onboarding Magique — `COMPLETED`
 
 ### Phase 9 : Integrations
-- [ ] Prompt 9.1 — Export Comptable FEC — `NOT_STARTED`
+- [x] Prompt 9.1 — Export Comptable FEC — `COMPLETED`
 - [ ] Prompt 9.2 — Integration Paiements — `NOT_STARTED`
 - [ ] Prompt 9.3 — Connecteur PPF/PDP — `NOT_STARTED`
 
@@ -61,10 +61,10 @@
 
 ## Statistiques
 - **Total prompts** : 32
-- **Completes** : 27
+- **Completes** : 28
 - **En cours** : 0
-- **Restants** : 5
-- **Progression** : 84%
+- **Restants** : 4
+- **Progression** : 88%
 
 ## Journal d'execution
 
@@ -97,3 +97,4 @@
 | 2026-04-14 | 7.3 | SUCCESS | Coffre-Fort Assurances (5 types RC Pro/Decennale/Multirisque/PJ/Prevoyance, CRUD+upload document, rappels M-2/M-1/J-7 avec scheduler, notifications mock, composants frontend), 19 nouveaux tests, 494 total API |
 | 2026-04-14 | 8.1 | SUCCESS | Dashboard principal (3 KPI Ce qu'on me doit/Ce que je dois/Reste a vivre reel, CA mensuel+trend, echeances semaine, activite recente, graphique barres 6 mois, Promise.all performance), 15 nouveaux tests, 509 total API |
 | 2026-04-14 | 8.2 | SUCCESS | Onboarding magique (4 etapes SIRET auto-complete/personnalisation logo+couleurs/connexion bancaire optionnelle/premier devis, step-indicator, redirect dashboard), frontend uniquement |
+| 2026-04-14 | 9.1 | SUCCESS | Export FEC (generateur TSV 18 colonnes, mapper VE/AC/BQ, plan comptable TPE 411/401/512/706/606, validateur equilibre, filename SIRET, composants frontend), 19 nouveaux tests, 528 total API |
