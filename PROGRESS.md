@@ -1,8 +1,8 @@
 # Progression - Omni-Gerant
 
 **Derniere mise a jour** : 2026-04-14
-**Dernier prompt complete** : 3.1
-**Prochain prompt a executer** : 3.2
+**Dernier prompt complete** : 3.2
+**Prochain prompt a executer** : 4.1
 
 ## Checklist des Prompts
 
@@ -19,7 +19,7 @@
 
 ### Phase 3 : Authentification et Securite
 - [x] Prompt 3.1 — Authentification JWT + 2FA — `COMPLETED`
-- [ ] Prompt 3.2 — Autorisation RBAC et RLS — `NOT_STARTED`
+- [x] Prompt 3.2 — Autorisation RBAC et RLS — `COMPLETED`
 
 ### Phase 4 : Module Ventes
 - [ ] Prompt 4.1 — Editeur de Devis — `NOT_STARTED`
@@ -61,10 +61,10 @@
 
 ## Statistiques
 - **Total prompts** : 32
-- **Completes** : 8
+- **Completes** : 9
 - **En cours** : 0
-- **Restants** : 24
-- **Progression** : 25%
+- **Restants** : 23
+- **Progression** : 28%
 
 ## Journal d'execution
 
@@ -78,3 +78,4 @@
 | 2026-04-14 | 2.2 | SUCCESS | Client module (CRUD service, cursor pagination, search, Zod schemas), 13 nouveaux tests, 31 total API |
 | 2026-04-14 | 2.3 | SUCCESS | Product module (CRUD, TVA multi-taux, CSV import, Zod schemas), 15 nouveaux tests, 46 total API |
 | 2026-04-14 | 3.1 | SUCCESS | Auth (JWT, scrypt hashing, TOTP 2FA, register/login/refresh/logout), 15 nouveaux tests, 61 total API |
+| 2026-04-14 | 3.2 | SUCCESS | RBAC (4 roles, matrice permissions, policies), auth plugin JWT, tenant plugin RLS, audit service+routes, auth routes, 38 nouveaux tests, 99 total API |

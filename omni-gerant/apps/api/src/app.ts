@@ -3,7 +3,12 @@ import cors from '@fastify/cors';
 import { loadConfig } from './config.js';
 import { registerErrorHandler } from './plugins/error-handler.js';
 import { registerRateLimiter } from './plugins/rate-limiter.js';
+import { registerAuthPlugin } from './plugins/auth.js';
+import { registerTenantPlugin } from './plugins/tenant.js';
 import { healthRoutes } from './routes/health.js';
+import { authRoutes } from './modules/auth/auth.routes.js';
+import { tenantRoutes } from './modules/tenant/tenant.routes.js';
+import { auditRoutes } from './modules/audit/audit.routes.js';
 import { createRequestContext, runWithContext } from './middleware/request-context.js';
 
 export async function buildApp() {
@@ -41,8 +46,15 @@ export async function buildApp() {
   // Rate limiter
   await registerRateLimiter(app);
 
+  // Plugins
+  await app.register(registerAuthPlugin);
+  await app.register(registerTenantPlugin);
+
   // Routes
   await app.register(healthRoutes);
+  await app.register(authRoutes);
+  await app.register(tenantRoutes);
+  await app.register(auditRoutes);
 
   return app;
 }
