@@ -386,6 +386,7 @@ model BankTransaction {
 
   @@index([tenant_id, bank_account_id])
   @@index([tenant_id, matched])
+  @@index([tenant_id, date])
   @@index([bank_account_id, date])
   @@map("bank_transactions")
 }
