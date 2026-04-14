@@ -1,8 +1,8 @@
 # Progression - Omni-Gerant
 
 **Derniere mise a jour** : 2026-04-14
-**Dernier prompt complete** : 1.4
-**Prochain prompt a executer** : 2.1
+**Dernier prompt complete** : 2.1
+**Prochain prompt a executer** : 2.2
 
 ## Checklist des Prompts
 
@@ -13,7 +13,7 @@
 - [x] Prompt 1.4 — Frontend Foundation — `COMPLETED`
 
 ### Phase 2 : Modeles de Donnees
-- [ ] Prompt 2.1 — Modele Entreprise et Lookup SIRET — `NOT_STARTED`
+- [x] Prompt 2.1 — Modele Entreprise et Lookup SIRET — `COMPLETED`
 - [ ] Prompt 2.2 — Modele Client/Contact — `NOT_STARTED`
 - [ ] Prompt 2.3 — Catalogue Produits/Services — `NOT_STARTED`
 
@@ -61,10 +61,10 @@
 
 ## Statistiques
 - **Total prompts** : 32
-- **Completes** : 4
+- **Completes** : 5
 - **En cours** : 0
-- **Restants** : 28
-- **Progression** : 13%
+- **Restants** : 27
+- **Progression** : 16%
 
 ## Journal d'execution
 
@@ -74,3 +74,4 @@
 | 2026-04-14 | 1.2 | SUCCESS | Prisma schema (Tenant, User, AuditLog, RefreshToken), soft-delete + tenant middleware, 19 tests passent |
 | 2026-04-14 | 1.3 | SUCCESS | Fastify API (config Zod, error handler, rate limiter, health, graceful shutdown), 8 tests passent |
 | 2026-04-14 | 1.4 | SUCCESS | Next.js frontend (UI components, sidebar, header, auth pages, dashboard skeleton), 9 tests passent |
+| 2026-04-14 | 2.1 | SUCCESS | Tenant module (CRUD service, SIRET lookup avec cache 24h, routes, schemas Zod), 10 nouveaux tests |
