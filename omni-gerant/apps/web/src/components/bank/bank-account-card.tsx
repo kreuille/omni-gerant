@@ -31,9 +31,9 @@ function maskIban(iban: string): string {
   return `${iban.slice(0, 4)} **** **** ${iban.slice(-4)}`;
 }
 
-const STATUS_MAP: Record<string, { label: string; variant: 'success' | 'destructive' | 'default' }> = {
+const STATUS_MAP: Record<string, { label: string; variant: 'success' | 'error' | 'default' }> = {
   active: { label: 'Connecte', variant: 'success' },
-  error: { label: 'Erreur', variant: 'destructive' },
+  error: { label: 'Erreur', variant: 'error' },
   disconnected: { label: 'Deconnecte', variant: 'default' },
 };
 

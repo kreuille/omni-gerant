@@ -15,7 +15,7 @@ interface QuoteClientSelectProps {
   onChange: (clientId: string) => void;
 }
 
-export function QuoteClientSelect({ value, onChange }: QuoteClientSelectProps) {
+export function QuoteClientSelect({ value: _value, onChange: _onChange }: QuoteClientSelectProps) {
   const [search, setSearch] = useState('');
 
   // Placeholder - will fetch from API

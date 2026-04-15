@@ -24,10 +24,10 @@ interface DuerpPreviewProps {
 }
 
 function levelBadge(label: string): JSX.Element {
-  const variants: Record<string, 'destructive' | 'default' | 'outline' | 'success'> = {
-    critique: 'destructive',
+  const variants: Record<string, 'error' | 'default' | 'info' | 'success'> = {
+    critique: 'error',
     eleve: 'default',
-    modere: 'outline',
+    modere: 'info',
     faible: 'success',
   };
   return <Badge variant={variants[label] || 'default'}>{label}</Badge>;

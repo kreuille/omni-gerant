@@ -64,7 +64,7 @@ export default function DuerpPage() {
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <Badge variant="outline">Version 1</Badge>
+            <Badge variant="info">Version 1</Badge>
             <p className="text-xs text-gray-500 mt-1">14/04/2026</p>
           </CardContent>
         </Card>

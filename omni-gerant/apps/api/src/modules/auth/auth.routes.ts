@@ -9,12 +9,21 @@ import { authenticate } from '../../plugins/auth.js';
 // BUSINESS RULE [CDC-6]: Auth endpoints (public + authenticated)
 
 export async function authRoutes(app: FastifyInstance) {
-  // Placeholder repo - will use Prisma when DB connected
+  // In-memory repo — functional for dev/demo, use Prisma in production
+  const users = new Map<string, User>();
+  const usersByEmail = new Map<string, string>(); // email → id
+  const refreshTokens = new Map<string, { user_id: string; revoked_at: Date | null; expires_at: Date }>();
+
   const repo: AuthRepository = {
-    async findUserByEmail(_email: string) { return null; },
-    async findUserById(_id: string) { return null; },
+    async findUserByEmail(email: string) {
+      const id = usersByEmail.get(email.toLowerCase());
+      return id ? users.get(id) ?? null : null;
+    },
+    async findUserById(id: string) {
+      return users.get(id) ?? null;
+    },
     async createTenantAndUser(data) {
-      return {
+      const user: User = {
         id: crypto.randomUUID(),
         tenant_id: crypto.randomUUID(),
         email: data.email,
@@ -25,12 +34,29 @@ export async function authRoutes(app: FastifyInstance) {
         totp_secret: null,
         totp_enabled: false,
       };
+      users.set(user.id, user);
+      usersByEmail.set(data.email.toLowerCase(), user.id);
+      return user;
     },
-    async storeRefreshToken() {},
-    async findRefreshToken(_hash) { return null; },
-    async revokeRefreshToken() {},
-    async revokeAllRefreshTokens() {},
-    async updateTotpSecret() {},
+    async storeRefreshToken(userId, tokenHash, expiresAt) {
+      refreshTokens.set(tokenHash, { user_id: userId, revoked_at: null, expires_at: expiresAt });
+    },
+    async findRefreshToken(tokenHash) {
+      return refreshTokens.get(tokenHash) ?? null;
+    },
+    async revokeRefreshToken(tokenHash) {
+      const token = refreshTokens.get(tokenHash);
+      if (token) refreshTokens.set(tokenHash, { ...token, revoked_at: new Date() });
+    },
+    async revokeAllRefreshTokens(userId) {
+      for (const [hash, token] of refreshTokens) {
+        if (token.user_id === userId) refreshTokens.set(hash, { ...token, revoked_at: new Date() });
+      }
+    },
+    async updateTotpSecret(userId, secret, enabled) {
+      const user = users.get(userId);
+      if (user) users.set(userId, { ...user, totp_secret: secret, totp_enabled: enabled });
+    },
     async updateLastLogin() {},
   };
 

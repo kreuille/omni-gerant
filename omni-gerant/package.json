@@ -26,5 +26,8 @@
       "prisma",
       "esbuild"
     ]
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
   }
 }

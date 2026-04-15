@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: omni-gerant-api
+    runtime: node
+    plan: free
+    buildCommand: pnpm install && pnpm --filter @omni-gerant/shared build
+    startCommand: cd apps/api && node --import tsx src/index.ts
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: "0.0.0.0"
+      - key: JWT_SECRET
+        value: omni-gerant-prod-secret-key-at-least-32-characters-long
+      - key: CORS_ORIGIN
+        value: https://omni-gerant.vercel.app

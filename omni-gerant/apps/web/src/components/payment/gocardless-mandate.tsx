@@ -15,7 +15,7 @@ export function GoCardlessMandate({
   clientId,
   mandateActive = false,
   mandateId,
-  onMandateCreated,
+  onMandateCreated: _onMandateCreated,
 }: GoCardlessMandateProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

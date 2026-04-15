@@ -73,7 +73,7 @@ export function TransactionList({ transactions }: TransactionListProps) {
               <div className="flex items-center gap-2 mt-0.5">
                 <span className="text-xs text-gray-400">{formatDate(tx.date)}</span>
                 {tx.category && (
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="info" className="text-xs">
                     {CATEGORY_LABELS[tx.category] || tx.category}
                   </Badge>
                 )}

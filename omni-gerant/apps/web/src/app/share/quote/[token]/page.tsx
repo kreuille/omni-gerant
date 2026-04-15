@@ -13,11 +13,11 @@ function formatCents(cents: number): string {
   return (cents / 100).toFixed(2).replace('.', ',');
 }
 
-export default function SharedQuotePage({ params }: { params: { token: string } }) {
+export default function SharedQuotePage({ params: _params }: { params: { token: string } }) {
   const [signerName, setSignerName] = useState('');
   const [signerFirstName, setSignerFirstName] = useState('');
   const [signing, setSigning] = useState(false);
-  const [signed, setSigned] = useState(false);
+  const [signed, _setSigned] = useState(false);
 
   // Placeholder - will fetch from API
   const loading = true;

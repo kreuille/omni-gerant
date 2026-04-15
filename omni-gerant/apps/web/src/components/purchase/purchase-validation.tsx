@@ -11,7 +11,7 @@ interface PurchaseValidationProps {
   currentStatus: string;
 }
 
-export function PurchaseValidation({ purchaseId, currentStatus }: PurchaseValidationProps) {
+export function PurchaseValidation({ purchaseId: _purchaseId, currentStatus }: PurchaseValidationProps) {
   const canValidate = currentStatus === 'pending';
   const canDispute = currentStatus === 'pending' || currentStatus === 'validated';
   const canPay = currentStatus === 'validated';

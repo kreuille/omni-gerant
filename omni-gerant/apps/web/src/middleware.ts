@@ -23,13 +23,14 @@ export function middleware(request: NextRequest) {
   );
 
   // Content Security Policy
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
   const csp = [
     "default-src 'self'",
     "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // Next.js requires these
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: https: blob:",
     "font-src 'self' data:",
-    "connect-src 'self' https://api-sandbox.ppf.gouv.fr https://api.gocardless.com https://api.stripe.com",
+    `connect-src 'self' ${apiUrl} https://api-sandbox.ppf.gouv.fr https://api.gocardless.com https://api.stripe.com`,
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -37,18 +38,21 @@ export function middleware(request: NextRequest) {
 
   response.headers.set('Content-Security-Policy', csp);
 
-  // Auth redirect — protect dashboard routes
-  const { pathname } = request.nextUrl;
-  const isAuthPage = pathname.startsWith('/auth/');
-  const isPublicPage = pathname === '/' || pathname.startsWith('/onboarding') || pathname.startsWith('/public');
-  const isApiRoute = pathname.startsWith('/api/');
+  // Auth redirect — protect dashboard routes (disabled in development)
+  const isDev = process.env.NODE_ENV === 'development';
+  if (!isDev) {
+    const { pathname } = request.nextUrl;
+    const isAuthPage = pathname === '/login' || pathname === '/register';
+    const isPublicPage = pathname === '/' || pathname.startsWith('/onboarding') || pathname.startsWith('/public') || pathname.startsWith('/share');
+    const isApiRoute = pathname.startsWith('/api/');
 
-  if (!isAuthPage && !isPublicPage && !isApiRoute) {
-    const token = request.cookies.get('auth_token')?.value;
-    if (!token) {
-      const loginUrl = new URL('/auth/login', request.url);
-      loginUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(loginUrl);
+    if (!isAuthPage && !isPublicPage && !isApiRoute) {
+      const token = request.cookies.get('auth_token')?.value;
+      if (!token) {
+        const loginUrl = new URL('/login', request.url);
+        loginUrl.searchParams.set('redirect', pathname);
+        return NextResponse.redirect(loginUrl);
+      }
     }
   }
 

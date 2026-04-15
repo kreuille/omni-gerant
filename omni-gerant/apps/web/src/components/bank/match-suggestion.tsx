@@ -71,7 +71,7 @@ export function MatchSuggestion({
             {/* Match candidate */}
             <div className="flex items-center gap-2 text-sm text-gray-600 ml-4">
               <span className="text-gray-400">&#8594;</span>
-              <Badge variant="outline">
+              <Badge variant="info">
                 {candidateType === 'invoice' ? 'Facture' : 'Achat'}
               </Badge>
               {candidateNumber && <span className="font-mono">{candidateNumber}</span>}
@@ -82,7 +82,7 @@ export function MatchSuggestion({
             {/* Matched rules */}
             <div className="flex items-center gap-1 mt-2 ml-4">
               {matchedRules.map((rule) => (
-                <Badge key={rule} variant="outline" className="text-xs">
+                <Badge key={rule} variant="info" className="text-xs">
                   {RULE_LABELS[rule] || rule}
                 </Badge>
               ))}

@@ -9,6 +9,38 @@ import { Card, CardContent } from '@/components/ui/card';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+      const res = await fetch(`${apiUrl}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error?.message ?? 'Erreur de connexion');
+        return;
+      }
+      // Store tokens
+      document.cookie = `auth_token=${data.tokens.access_token}; path=/; max-age=900`;
+      localStorage.setItem('access_token', data.tokens.access_token);
+      localStorage.setItem('refresh_token', data.tokens.refresh_token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      // Redirect to dashboard
+      window.location.href = '/quotes';
+    } catch {
+      setError('Impossible de contacter le serveur');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
@@ -19,7 +51,7 @@ export default function LoginPage() {
         </div>
         <Card>
           <CardContent className="pt-6">
-            <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+            <form className="space-y-4" onSubmit={handleSubmit}>
               <Input
                 id="email"
                 label="Email"
@@ -36,8 +68,9 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
-              <Button type="submit" className="w-full">
-                Se connecter
+              {error && <p className="text-sm text-red-600">{error}</p>}
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Connexion...' : 'Se connecter'}
               </Button>
             </form>
             <p className="mt-4 text-center text-sm text-gray-600">

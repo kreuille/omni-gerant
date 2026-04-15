@@ -1,13 +1,10 @@
 'use client';
 
-import { useParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
 export default function SupplierDetailPage() {
-  const params = useParams();
-  const id = params.id as string;
 
   // Placeholder - sera connecte a l'API
   return (

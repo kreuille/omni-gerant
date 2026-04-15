@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RiskForm } from '@/components/legal/risk-form';
 import { DuerpPreview } from '@/components/legal/duerp-preview';
+import { api } from '@/lib/api-client';
 
 // BUSINESS RULE [CDC-2.4]: Edition DUERP
 
@@ -67,9 +68,51 @@ export default function EditDuerpPage() {
     setRisks((prev) => prev.filter((r) => r.id !== riskId));
   };
 
-  const handleLoadDefaults = () => {
-    // TODO: Call API GET /api/legal/duerp/risks/:nafCode
-    alert(`Charger les risques par defaut pour le code NAF ${nafCode}`);
+  const [loading, setLoading] = useState(false);
+
+  const handleLoadDefaults = async () => {
+    if (!nafCode.trim()) return;
+    setLoading(true);
+    try {
+      const result = await api.get<{
+        naf_prefix: string;
+        sector_name: string;
+        risks: Array<{
+          id: string;
+          category: string;
+          name: string;
+          description: string;
+          default_gravity: number;
+          default_probability: number;
+          preventive_actions: string[];
+        }>;
+      }>(`/api/legal/duerp/risks/${encodeURIComponent(nafCode.trim())}`);
+
+      if (result.ok) {
+        const loadedRisks: Risk[] = result.value.risks.map((r) => {
+          const { level, label } = calculateLevel(r.default_gravity, r.default_probability);
+          return {
+            id: r.id,
+            category: r.category,
+            name: r.name,
+            description: r.description || null,
+            gravity: r.default_gravity,
+            probability: r.default_probability,
+            risk_level: level,
+            risk_label: label,
+            preventive_actions: r.preventive_actions,
+            responsible: null,
+          };
+        });
+        setRisks(loadedRisks);
+      } else {
+        alert(`Erreur: ${result.error.message || 'Impossible de charger les risques'}`);
+      }
+    } catch {
+      alert('Erreur réseau lors du chargement des risques');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -102,8 +145,8 @@ export default function EditDuerpPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Code NAF</label>
               <div className="flex gap-2">
                 <Input value={nafCode} onChange={(e) => setNafCode(e.target.value)} />
-                <Button variant="outline" onClick={handleLoadDefaults}>
-                  Charger risques
+                <Button variant="outline" onClick={handleLoadDefaults} disabled={loading}>
+                  {loading ? 'Chargement...' : 'Charger risques'}
                 </Button>
               </div>
             </div>

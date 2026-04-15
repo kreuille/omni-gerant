@@ -4,26 +4,136 @@
 Plateforme SaaS "tout-en-un" pour TPE, artisans et auto-entrepreneurs.
 Objectif Zero Saisie, Conformite Native (Factur-X 2026), Pilotage Proactif.
 
+## Deploiement Production
+- **Frontend** : https://omni-gerant.vercel.app (Vercel)
+- **API** : https://omni-gerant-api.onrender.com (Render, plan free)
+- **GitHub** : https://github.com/kreuille/omni-gerant (public)
+- **Vercel project ID** : prj_rrWWOdvv2q3x6TpkOZLvDTNrPFvF
+- **Vercel scope** : arnaudguedou-1634s-projects
+- **Render service** : srv-d7fkjk471suc73bccdg0
+
+> **Note** : L'API utilise un stockage **in-memory** (Map). A chaque redeploy Render, les donnees sont effacees (comptes, factures, devis...). Il faudra migrer vers PostgreSQL pour la persistence.
+
 ## Stack Technique
-- **Frontend** : Next.js 14+ (App Router), TypeScript strict, Tailwind CSS
-- **Backend** : Node.js + Fastify + TypeScript strict
-- **Database** : PostgreSQL 16 + Prisma ORM
-- **AI/OCR** : Python FastAPI + LayoutLM/Donut
+- **Frontend** : Next.js 14.2 (App Router), TypeScript strict, Tailwind CSS
+- **Backend** : Node.js + Fastify + TypeScript strict (tsx runtime)
+- **Database** : In-memory Maps (PostgreSQL 16 + Prisma ORM prevu)
+- **AI/OCR** : Python FastAPI + LayoutLM/Donut (prevu)
 - **Monorepo** : pnpm workspaces + Turborepo
-- **Tests** : Vitest (backend/frontend), Pytest (Python)
+- **Tests** : Vitest (694 tests, 61 fichiers) + Playwright E2E (51 tests)
 
 ## Structure Monorepo
 ```
 omni-gerant/
   apps/
-    web/          # Next.js frontend
-    api/          # Fastify backend
-    ocr/          # Python FastAPI OCR service
+    web/          # Next.js frontend (port 3000)
+    api/          # Fastify backend (port 3001)
+    ocr/          # Python FastAPI OCR service (prevu)
   packages/
     shared/       # Types partages, utils, Result pattern
-    db/           # Prisma schema, migrations, seeds
+    db/           # Prisma schema, migrations, seeds (prevu)
     config/       # ESLint, TSConfig partages
+  e2e/            # Tests Playwright E2E
+  render.yaml     # Blueprint Render pour l'API
+  .claude/
+    launch.json   # Config serveurs dev (web + api)
 ```
+
+## Modules Implementes
+
+### 1. Authentification & Securite
+- JWT (access + refresh tokens), 2FA TOTP
+- RBAC (owner, admin, member, accountant)
+- Ressources : tenant, user, client, product, quote, invoice, purchase, bank, audit, settings, billing, export, **legal**
+- Middleware CSP, rate limiting, audit trail
+
+### 2. Ventes (Devis & Factures)
+- CRUD devis avec workflow (draft -> sent -> accepted -> invoiced -> cancelled)
+- CRUD factures avec numerotation sequentielle (FAC-YYYY-NNN)
+- Calcul TVA multi-taux France (20%, 10%, 5.5%, 2.1%)
+- Generation PDF, Factur-X XML
+- Partage de devis par lien public (/share/quote/[token])
+- Relances automatiques pour factures impayees
+
+### 3. Achats & Fournisseurs
+- CRUD fournisseurs avec lookup SIRET
+- CRUD achats avec validation workflow
+- OCR upload pour extraction automatique
+- Detection automatique de risques chimiques/equipements dans les achats
+
+### 4. Banque
+- Connexion bancaire (Open Banking / GoCardless)
+- Rapprochement bancaire automatique
+- Previsions de tresorerie
+- Graphique CA mensuel sur le dashboard
+
+### 5. Legal & Conformite
+- **DUERP** : Document Unique d'Evaluation des Risques Professionnels
+  - Base complete de risques pour **73 codes NAF** (tous les secteurs francais 01-99)
+  - Chargement automatique des risques par code NAF
+  - Matrice des risques (gravite x probabilite)
+  - Generation PDF
+  - Detection de risques depuis les achats
+- **RGPD** : Registre des traitements
+- **Assurances** : Coffre-fort numerique
+
+### 6. Parametres
+- Paiements (Stripe Connect, GoCardless)
+- PPF (Portail Public de Facturation)
+- Comptabilite (plan comptable, export FEC)
+- Connecteurs (API tierces)
+
+### 7. Onboarding
+- Wizard 4 etapes (entreprise, activite, coordonnees, validation)
+- Lookup SIRET automatique
+
+### 8. Dashboard
+- KPIs : CA, creances, dettes, reste a vivre
+- Graphique CA mensuel
+- Echeances de la semaine
+- Activite recente
+
+## API Endpoints Principaux
+
+### Auth
+- `POST /api/auth/register` - Inscription
+- `POST /api/auth/login` - Connexion
+- `POST /api/auth/refresh` - Rafraichir le token
+- `POST /api/auth/2fa/setup` - Configurer 2FA
+- `POST /api/auth/2fa/verify` - Verifier 2FA
+
+### Ventes
+- `GET/POST /api/quotes` - Devis (CRUD)
+- `POST /api/quotes/:id/send` - Envoyer un devis
+- `POST /api/quotes/:id/accept` - Accepter un devis
+- `POST /api/quotes/:id/convert` - Convertir en facture
+- `GET/POST /api/invoices` - Factures (CRUD)
+- `GET /api/invoices/:id/pdf` - PDF facture
+- `GET /api/invoices/:id/facturx` - XML Factur-X
+
+### Achats
+- `GET/POST /api/purchases` - Achats (CRUD)
+- `GET/POST /api/suppliers` - Fournisseurs (CRUD)
+
+### Banque
+- `GET/POST /api/bank/accounts` - Comptes bancaires
+- `GET /api/bank/transactions` - Transactions
+- `POST /api/bank/reconciliation` - Rapprochement
+- `GET /api/bank/forecast` - Previsions
+
+### Legal
+- `GET/POST /api/legal/duerp` - DUERP (CRUD)
+- `GET /api/legal/duerp/risks/:nafCode` - Risques par code NAF
+- `POST /api/legal/duerp/detect-risks` - Detection risques achats
+- `GET /api/legal/duerp/:id/pdf` - PDF DUERP
+- `GET/POST /api/legal/rgpd/treatments` - Traitements RGPD
+- `GET/POST /api/legal/insurance` - Assurances
+
+### Parametres
+- `GET/PUT /api/settings/accounting` - Comptabilite
+- `GET /api/settings/accounting/fec` - Export FEC
+- `GET/PUT /api/settings/payments` - Paiements
+- `GET/PUT /api/settings/ppf` - PPF
 
 ---
 
@@ -57,6 +167,7 @@ Les queries par defaut filtrent `WHERE deleted_at IS NULL`.
 - Couverture globale : >= 80%
 - Code financier (calculs, montants) : >= 95%
 - Chaque prompt doit inclure ses tests
+- **Tests actuels** : 694 tests unitaires (Vitest), 51 tests E2E (Playwright)
 
 ### R07 - Commentaires Business Rule
 Chaque regle metier est annotee :
@@ -90,6 +201,52 @@ Toujours reversibles. Jamais de perte de donnees dans les migrations.
 
 ### R15 - Git Conventions
 Commits conventionnels : `feat(module): description`, `fix(module): description`, `test(module): description`
+
+---
+
+## Variables d'Environnement
+
+### Frontend (apps/web)
+- `NEXT_PUBLIC_API_URL` : URL de l'API (defaut: http://localhost:3001)
+
+### Backend (apps/api)
+- `NODE_ENV` : production | development
+- `HOST` : 0.0.0.0 (pour Render)
+- `PORT` : 3001
+- `JWT_SECRET` : Cle secrete JWT (min 32 caracteres)
+- `CORS_ORIGIN` : URL du frontend autorise
+
+---
+
+## Base de Risques DUERP - Codes NAF
+
+73 profils couvrant tous les secteurs d'activite :
+
+| Section | Codes | Secteurs |
+|---------|-------|----------|
+| A | 01-03 | Agriculture, sylviculture, peche |
+| B | 05-09 | Industries extractives (mines, carrieres) |
+| C | 10-33 | Industrie manufacturiere (alimentaire, chimique, metallurgie, bois, textile, electronique, automobile...) |
+| D | 35 | Production et distribution d'electricite, gaz |
+| E | 36-39 | Eau, assainissement, gestion des dechets |
+| F | 41-43 | Construction / BTP |
+| G | 45-47 | Commerce (auto, gros, detail) |
+| H | 49-53 | Transports et entreposage |
+| I | 55-56 | Hebergement et restauration |
+| J | 58-63 | Information et communication (IT, telecom, edition) |
+| K | 64-66 | Activites financieres et assurance |
+| L | 68 | Activites immobilieres |
+| M | 69-75 | Activites specialisees (juridique, comptable, conseil, labo, veterinaire) |
+| N | 77-82 | Services administratifs (interim, nettoyage, securite, espaces verts) |
+| O | 84 | Administration publique |
+| P | 85 | Enseignement |
+| Q | 86-88 | Sante humaine et action sociale |
+| R | 90-93 | Arts, spectacles, activites recreatives et sportives |
+| S | 94-96 | Autres services (associations, reparation, coiffure/beaute) |
+| T | 97 | Activites des menages (emploi a domicile) |
+| U | 99 | Organisations extraterritoriales |
+
+Chaque profil contient des risques specifiques au secteur + 6 risques communs (routier, psychosocial, biologique, incendie, chute de plain-pied, electrique).
 
 ---
 
@@ -179,3 +336,15 @@ Commits conventionnels : `feat(module): description`, `fix(module): description`
 - CDC-5 : Roadmap
 - CDC-6 : Securite
 - CDC-7 : Business Model
+
+---
+
+## Prochaines Etapes
+- [ ] Migrer le stockage in-memory vers PostgreSQL + Prisma
+- [ ] Ajouter une vraie base de donnees sur Render (PostgreSQL gratuit)
+- [ ] Implementer le service OCR (Python FastAPI)
+- [ ] Connecter les vrais providers bancaires (GoCardless sandbox)
+- [ ] Connecter Stripe en mode test
+- [ ] Implementer les notifications email (Resend/SendGrid)
+- [ ] Ajouter le mode sombre (theme system)
+- [ ] Tests de performance / charge

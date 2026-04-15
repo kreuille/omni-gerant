@@ -1,6 +1,5 @@
 'use client';
 
-import { Card, CardContent } from '@/components/ui/card';
 import { ConnectorCard } from '@/components/settings/connector-card';
 
 // BUSINESS RULE [CDC-2.2]: Configuration connecteurs fournisseurs

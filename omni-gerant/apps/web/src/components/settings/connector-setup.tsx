@@ -10,7 +10,7 @@ interface ConnectorSetupProps {
   onClose: () => void;
 }
 
-export function ConnectorSetup({ type, displayName, onClose }: ConnectorSetupProps) {
+export function ConnectorSetup({ type: _type, displayName, onClose }: ConnectorSetupProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [syncInterval, setSyncInterval] = useState('24');

@@ -21,7 +21,7 @@ type Step = 'select' | 'connecting' | 'success' | 'error';
 
 export default function ConnectBankPage() {
   const [step, setStep] = useState<Step>('select');
-  const [selectedBank, setSelectedBank] = useState<string | null>(null);
+  const [_selectedBank, setSelectedBank] = useState<string | null>(null);
 
   const handleConnect = async (bankId: string) => {
     setSelectedBank(bankId);

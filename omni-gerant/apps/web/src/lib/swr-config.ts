@@ -1,5 +1,6 @@
 // BUSINESS RULE [CDC-3.1]: Configuration SWR pour cache frontend
 
+// @ts-ignore - swr may not be installed yet
 import type { SWRConfiguration } from 'swr';
 
 /**

@@ -73,10 +73,10 @@ const DEMO_UNMATCHED = [
 
 export default function ReconciliationPage() {
   const [suggestions, setSuggestions] = useState(DEMO_SUGGESTIONS);
-  const [unmatched, setUnmatched] = useState(DEMO_UNMATCHED);
+  const [unmatched, _setUnmatched] = useState(DEMO_UNMATCHED);
   const [matchedCount, setMatchedCount] = useState(0);
 
-  const handleAccept = (transactionId: string, candidateId: string, candidateType: string) => {
+  const handleAccept = (transactionId: string, _candidateId: string, _candidateType: string) => {
     // TODO: Call API POST /api/bank/transactions/:id/match
     setSuggestions((prev) => prev.filter((s) => s.transactionId !== transactionId));
     setMatchedCount((c) => c + 1);
@@ -130,7 +130,7 @@ export default function ReconciliationPage() {
         <div className="mb-8">
           <h2 className="text-lg font-semibold text-gray-900 mb-3">
             Suggestions de rapprochement
-            <Badge variant="outline" className="ml-2">{suggestions.length}</Badge>
+            <Badge variant="info" className="ml-2">{suggestions.length}</Badge>
           </h2>
           <div className="space-y-3">
             {suggestions.map((s) => (
@@ -149,7 +149,7 @@ export default function ReconciliationPage() {
       <div>
         <h2 className="text-lg font-semibold text-gray-900 mb-3">
           Transactions non rapprochees
-          <Badge variant="outline" className="ml-2">{unmatched.length}</Badge>
+          <Badge variant="info" className="ml-2">{unmatched.length}</Badge>
         </h2>
         <Card>
           <CardContent className="p-0">

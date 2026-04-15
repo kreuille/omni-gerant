@@ -21,7 +21,8 @@ export type Resource =
   | 'audit'
   | 'settings'
   | 'billing'
-  | 'export';
+  | 'export'
+  | 'legal';
 
 export type Action = 'create' | 'read' | 'update' | 'delete' | 'export';
 
@@ -46,6 +47,7 @@ const PERMISSION_MATRIX: Record<UserRole, Set<string>> = {
     'settings:read', 'settings:update',
     'billing:read', 'billing:update',
     'export:read', 'export:export',
+    'legal:create', 'legal:read', 'legal:update', 'legal:delete',
   ]),
   admin: new Set([
     // Admin can do everything except billing and tenant delete
@@ -60,6 +62,7 @@ const PERMISSION_MATRIX: Record<UserRole, Set<string>> = {
     'audit:read',
     'settings:read', 'settings:update',
     'export:read', 'export:export',
+    'legal:create', 'legal:read', 'legal:update', 'legal:delete',
   ]),
   member: new Set([
     // Member: CRUD on business entities, no users/settings/billing
@@ -70,6 +73,7 @@ const PERMISSION_MATRIX: Record<UserRole, Set<string>> = {
     'invoice:create', 'invoice:read', 'invoice:update', 'invoice:delete',
     'purchase:create', 'purchase:read', 'purchase:update', 'purchase:delete',
     'bank:read',
+    'legal:read',
   ]),
   accountant: new Set([
     // Accountant: read-only + export FEC
@@ -82,6 +86,7 @@ const PERMISSION_MATRIX: Record<UserRole, Set<string>> = {
     'bank:read',
     'audit:read',
     'export:read', 'export:export',
+    'legal:read',
   ]),
 };
 

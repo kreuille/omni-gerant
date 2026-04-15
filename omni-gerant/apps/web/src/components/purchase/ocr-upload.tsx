@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useCallback, useRef } from 'react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
 // BUSINESS RULE [CDC-2.2]: OCR Mobile (V-IA) - scanner tickets de caisse
