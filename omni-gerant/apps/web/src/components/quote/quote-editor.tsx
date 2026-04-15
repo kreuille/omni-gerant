@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { QuoteLineRow, type QuoteLineData } from './quote-line-row';
 import { QuoteTotals, type TvaGroupDisplay } from './quote-totals';
@@ -73,88 +73,99 @@ function calculateTotals(lines: QuoteLineData[]) {
   };
 }
 
+export interface QuoteEditorHandle {
+  getLines: () => QuoteLineData[];
+}
+
 interface QuoteEditorProps {
   depositRate?: number | null;
+  initialLines?: QuoteLineData[];
 }
 
-export function QuoteEditor({ depositRate }: QuoteEditorProps) {
-  const [lines, setLines] = useState<QuoteLineData[]>([createEmptyLine(1)]);
+export const QuoteEditor = forwardRef<QuoteEditorHandle, QuoteEditorProps>(
+  function QuoteEditor({ depositRate, initialLines }, ref) {
+    const [lines, setLines] = useState<QuoteLineData[]>(initialLines ?? [createEmptyLine(1)]);
 
-  const updateLine = useCallback((id: string, field: keyof QuoteLineData, value: string | number) => {
-    setLines((prev) => {
-      const updated = prev.map((line) => {
-        if (line.id !== id) return line;
-        const newLine = { ...line, [field]: value };
-        newLine.total_ht_cents = calculateLineTotal(newLine);
-        return newLine;
+    useImperativeHandle(ref, () => ({
+      getLines: () => lines,
+    }));
+
+    const updateLine = useCallback((id: string, field: keyof QuoteLineData, value: string | number) => {
+      setLines((prev) => {
+        const updated = prev.map((line) => {
+          if (line.id !== id) return line;
+          const newLine = { ...line, [field]: value };
+          newLine.total_ht_cents = calculateLineTotal(newLine);
+          return newLine;
+        });
+        return updated;
       });
-      return updated;
-    });
-  }, []);
+    }, []);
 
-  const removeLine = useCallback((id: string) => {
-    setLines((prev) => {
-      const filtered = prev.filter((l) => l.id !== id);
-      return filtered.map((l, i) => ({ ...l, position: i + 1 }));
-    });
-  }, []);
+    const removeLine = useCallback((id: string) => {
+      setLines((prev) => {
+        const filtered = prev.filter((l) => l.id !== id);
+        return filtered.map((l, i) => ({ ...l, position: i + 1 }));
+      });
+    }, []);
 
-  const addLine = useCallback((type: QuoteLineData['type'] = 'line') => {
-    setLines((prev) => [...prev, createEmptyLine(prev.length + 1, type)]);
-  }, []);
+    const addLine = useCallback((type: QuoteLineData['type'] = 'line') => {
+      setLines((prev) => [...prev, createEmptyLine(prev.length + 1, type)]);
+    }, []);
 
-  const totals = calculateTotals(lines);
+    const totals = calculateTotals(lines);
 
-  return (
-    <div className="space-y-4">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-200">
-              <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 w-10">#</th>
-              <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Designation</th>
-              <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 w-20">Qte</th>
-              <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 w-16">Unite</th>
-              <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 w-28">P.U. HT</th>
-              <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 w-20">TVA</th>
-              <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 w-28">Total HT</th>
-              <th className="px-2 py-2 w-16"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {lines.map((line) => (
-              <QuoteLineRow
-                key={line.id}
-                line={line}
-                onChange={updateLine}
-                onRemove={removeLine}
-              />
-            ))}
-          </tbody>
-        </table>
+    return (
+      <div className="space-y-4">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 w-10">#</th>
+                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Designation</th>
+                <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 w-20">Qte</th>
+                <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 w-16">Unite</th>
+                <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 w-28">P.U. HT</th>
+                <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 w-20">TVA</th>
+                <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 w-28">Total HT</th>
+                <th className="px-2 py-2 w-16"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {lines.map((line) => (
+                <QuoteLineRow
+                  key={line.id}
+                  line={line}
+                  onChange={updateLine}
+                  onRemove={removeLine}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => addLine('line')}>
+            + Ligne
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => addLine('section')}>
+            + Section
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => addLine('comment')}>
+            + Commentaire
+          </Button>
+        </div>
+
+        <div className="max-w-sm ml-auto">
+          <QuoteTotals
+            totalHtCents={totals.totalHtCents}
+            totalTvaCents={totals.totalTvaCents}
+            totalTtcCents={totals.totalTtcCents}
+            tvaBreakdown={totals.tvaBreakdown}
+            depositRate={depositRate}
+          />
+        </div>
       </div>
-
-      <div className="flex gap-2">
-        <Button variant="outline" size="sm" onClick={() => addLine('line')}>
-          + Ligne
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => addLine('section')}>
-          + Section
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => addLine('comment')}>
-          + Commentaire
-        </Button>
-      </div>
-
-      <div className="max-w-sm ml-auto">
-        <QuoteTotals
-          totalHtCents={totals.totalHtCents}
-          totalTvaCents={totals.totalTvaCents}
-          totalTtcCents={totals.totalTtcCents}
-          tvaBreakdown={totals.tvaBreakdown}
-          depositRate={depositRate}
-        />
-      </div>
-    </div>
-  );
-}
+    );
+  }
+);

@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { api } from '@/lib/api-client';
 
 const STATUS_LABELS: Record<string, { label: string; variant: 'default' | 'success' | 'warning' | 'error' }> = {
   draft: { label: 'Brouillon', variant: 'default' },
@@ -20,19 +21,34 @@ function formatCents(cents: number): string {
   return (cents / 100).toFixed(2).replace('.', ',') + ' EUR';
 }
 
+interface QuoteItem {
+  id: string;
+  number: string;
+  title: string | null;
+  client_id: string;
+  status: string;
+  total_ht_cents: number;
+  total_tva_cents: number;
+  total_ttc_cents: number;
+  issue_date: string;
+  validity_date: string;
+  created_at: string;
+}
+
 export default function QuotesPage() {
   const [search, setSearch] = useState('');
+  const [quotes, setQuotes] = useState<QuoteItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Placeholder data - will be fetched from API
-  const quotes: Array<{
-    id: string;
-    number: string;
-    client_name: string;
-    status: string;
-    total_ttc_cents: number;
-    issue_date: string;
-    validity_date: string;
-  }> = [];
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (search.trim()) params.set('search', search.trim());
+    api.get<{ items: QuoteItem[]; has_more: boolean }>(`/api/quotes?${params.toString()}`)
+      .then((result) => {
+        if (result.ok) setQuotes(result.value.items);
+      })
+      .finally(() => setLoading(false));
+  }, [search]);
 
   return (
     <div>
@@ -52,7 +68,13 @@ export default function QuotesPage() {
         />
       </div>
 
-      {quotes.length === 0 ? (
+      {loading ? (
+        <Card>
+          <CardContent className="py-12 text-center text-gray-500">
+            <p className="text-sm">Chargement...</p>
+          </CardContent>
+        </Card>
+      ) : quotes.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-gray-500">
             <p className="text-lg mb-2">Aucun devis pour le moment</p>
@@ -66,11 +88,10 @@ export default function QuotesPage() {
               <thead>
                 <tr className="border-b border-gray-200">
                   <th className="px-4 py-3 text-left font-medium text-gray-500">Numero</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Client</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">Titre</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-500">Statut</th>
                   <th className="px-4 py-3 text-right font-medium text-gray-500">Montant TTC</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-500">Date</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Validite</th>
                 </tr>
               </thead>
               <tbody>
@@ -83,13 +104,14 @@ export default function QuotesPage() {
                           {quote.number}
                         </Link>
                       </td>
-                      <td className="px-4 py-3 text-gray-900">{quote.client_name}</td>
+                      <td className="px-4 py-3 text-gray-900">{quote.title || '—'}</td>
                       <td className="px-4 py-3">
                         <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
                       </td>
                       <td className="px-4 py-3 text-right font-medium">{formatCents(quote.total_ttc_cents)}</td>
-                      <td className="px-4 py-3 text-gray-500">{quote.issue_date}</td>
-                      <td className="px-4 py-3 text-gray-500">{quote.validity_date}</td>
+                      <td className="px-4 py-3 text-gray-500">
+                        {new Date(quote.issue_date).toLocaleDateString('fr-FR')}
+                      </td>
                     </tr>
                   );
                 })}

@@ -15,11 +15,13 @@ import { z } from 'zod';
 // BUSINESS RULE [CDC-2.1]: Endpoints devis
 
 export async function quoteRoutes(app: FastifyInstance) {
-  // Placeholder repo - will use Prisma when DB connected
+  // In-memory repo — functional for dev/demo, use Prisma in production
+  const quotes = new Map<string, Quote>();
+
   const repo: QuoteRepository = {
     async create(data) {
       const id = crypto.randomUUID();
-      return {
+      const quote: Quote = {
         id,
         tenant_id: data.tenant_id,
         client_id: data.client_id,
@@ -40,7 +42,7 @@ export async function quoteRoutes(app: FastifyInstance) {
         created_at: new Date(),
         updated_at: new Date(),
         deleted_at: null,
-        lines: data.lines.map((l, i) => ({
+        lines: data.lines.map((l) => ({
           id: crypto.randomUUID(),
           quote_id: id,
           product_id: l.product_id ?? null,
@@ -57,11 +59,43 @@ export async function quoteRoutes(app: FastifyInstance) {
           total_ht_cents: l.total_ht_cents,
         })),
       };
+      quotes.set(id, quote);
+      return quote;
     },
-    async findById(_id, _tenantId) { return null; },
-    async findMany(_params) { return { items: [], next_cursor: null, has_more: false }; },
-    async update(_id, _tenantId, _data) { return null; },
-    async delete(_id, _tenantId) { return true; },
+    async findById(id, tenantId) {
+      const quote = quotes.get(id);
+      if (!quote || quote.tenant_id !== tenantId || quote.deleted_at) return null;
+      return quote;
+    },
+    async findMany(params) {
+      let items = Array.from(quotes.values())
+        .filter((q) => q.tenant_id === params.tenant_id && !q.deleted_at);
+      if (params.status) items = items.filter((q) => q.status === params.status);
+      if (params.client_id) items = items.filter((q) => q.client_id === params.client_id);
+      if (params.search) {
+        const s = params.search.toLowerCase();
+        items = items.filter((q) =>
+          (q.title?.toLowerCase().includes(s)) ||
+          q.number.toLowerCase().includes(s)
+        );
+      }
+      items.sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
+      const limit = params.limit ?? 20;
+      return { items: items.slice(0, limit), next_cursor: null, has_more: items.length > limit };
+    },
+    async update(id, tenantId, data) {
+      const quote = quotes.get(id);
+      if (!quote || quote.tenant_id !== tenantId || quote.deleted_at) return null;
+      const updated = { ...quote, ...data, updated_at: new Date() };
+      quotes.set(id, updated);
+      return updated;
+    },
+    async delete(id, tenantId) {
+      const quote = quotes.get(id);
+      if (!quote || quote.tenant_id !== tenantId) return false;
+      quotes.set(id, { ...quote, deleted_at: new Date() });
+      return true;
+    },
   };
 
   // Placeholder share token repo
