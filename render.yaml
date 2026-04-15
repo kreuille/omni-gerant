@@ -8,11 +8,9 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: "3001"
       - key: HOST
         value: "0.0.0.0"
       - key: JWT_SECRET
         value: omni-gerant-prod-secret-key-at-least-32-characters-long
       - key: CORS_ORIGIN
-        value: https://omni-gerant-94r9ahv0e-arnaudguedou-1634s-projects.vercel.app
+        value: https://omni-gerant.vercel.app
