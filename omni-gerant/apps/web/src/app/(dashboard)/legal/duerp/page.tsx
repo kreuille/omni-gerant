@@ -78,7 +78,7 @@ export default function DuerpPage() {
     setPdfLoading(true);
     try {
       const token = localStorage.getItem('access_token');
-      const apiBase = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001';
+      const apiBase = process.env['NEXT_PUBLIC_API_URL'] || 'https://omni-gerant-api.onrender.com';
       const response = await fetch(`${apiBase}/api/legal/duerp/${duerp.id}/pdf`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
