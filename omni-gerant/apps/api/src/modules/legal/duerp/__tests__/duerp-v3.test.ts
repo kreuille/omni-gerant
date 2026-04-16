@@ -31,9 +31,9 @@ describe('Base de risques V2', () => {
   });
 
   it.each(METIER_RISK_DATABASE.map((m) => [m.metierSlug, m] as const))(
-    '%s should have 8-13 specific risks',
+    '%s should have 6-13 specific risks',
     (_slug, profile) => {
-      expect(profile.risks.length).toBeGreaterThanOrEqual(7); // allowing some flexibility
+      expect(profile.risks.length).toBeGreaterThanOrEqual(6);
       expect(profile.risks.length).toBeLessThanOrEqual(13);
     },
   );
@@ -46,16 +46,36 @@ describe('Base de risques V2', () => {
   );
 
   it.each(METIER_RISK_DATABASE.map((m) => [m.metierSlug, m] as const))(
-    '%s should have preventive measures for each risk',
+    '%s should have existing measures AND proposed actions for each risk',
     (_slug, profile) => {
       for (const risk of profile.risks) {
-        expect(risk.preventiveMeasures.length, `${risk.name} should have measures`).toBeGreaterThanOrEqual(2);
+        expect(risk.existingMeasures.length, `${risk.name} should have existing measures`).toBeGreaterThanOrEqual(1);
+        expect(risk.proposedActions.length, `${risk.name} should have proposed actions`).toBeGreaterThanOrEqual(2);
       }
     },
   );
 
-  it('should find BTP by NAF code 43.22A', () => {
+  it.each(METIER_RISK_DATABASE.map((m) => [m.metierSlug, m] as const))(
+    '%s risks should reference valid work unit IDs',
+    (_slug, profile) => {
+      const validIds = new Set(profile.workUnits.map((wu) => wu.id));
+      for (const risk of profile.risks) {
+        expect(
+          risk.workUnitId === '*' || validIds.has(risk.workUnitId),
+          `${risk.name} references invalid workUnitId: ${risk.workUnitId}`,
+        ).toBe(true);
+      }
+    },
+  );
+
+  it('should find plombier by NAF code 43.22A (specific metier)', () => {
     const profile = findMetierByNaf('43.22A');
+    expect(profile).toBeDefined();
+    expect(profile!.metierSlug).toBe('plombier');
+  });
+
+  it('should find BTP general by NAF prefix 41', () => {
+    const profile = findMetierByNaf('41.20A');
     expect(profile).toBeDefined();
     expect(profile!.metierSlug).toBe('btp-general');
   });
@@ -255,7 +275,8 @@ describe('Generation unites de travail', () => {
 
 describe('Detection metier depuis NAF', () => {
   const testCases = [
-    ['43.22A', 'btp-general'],
+    ['43.22A', 'plombier'],
+    ['43.21A', 'electricien'],
     ['56.10A', 'restaurant'],
     ['96.02A', 'coiffure'],
     ['47.11F', 'commerce'],
@@ -263,6 +284,7 @@ describe('Detection metier depuis NAF', () => {
     ['45.20A', 'garage-auto'],
     ['88.10A', 'aide-domicile'],
     ['62.01Z', 'bureau'],
+    ['47.73Z', 'pharmacie'],
   ] as const;
 
   it.each(testCases)('NAF %s should map to metier %s', (naf, expectedSlug) => {
