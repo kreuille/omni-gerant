@@ -15,6 +15,16 @@ export default function LoginPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+
+    if (!email.trim()) {
+      setError('Veuillez saisir votre email');
+      return;
+    }
+    if (!password) {
+      setError('Veuillez saisir votre mot de passe');
+      return;
+    }
+
     setLoading(true);
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';

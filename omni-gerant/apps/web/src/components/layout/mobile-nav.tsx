@@ -12,9 +12,11 @@ interface MobileNavProps {
 
 const navItems = [
   { label: 'Dashboard', href: '/' },
-  { label: 'Ventes', href: '/quotes' },
+  { label: 'Devis', href: '/quotes' },
+  { label: 'Factures', href: '/invoices' },
   { label: 'Achats', href: '/purchases' },
   { label: 'Banque', href: '/bank' },
+  { label: 'Effectif', href: '/hr' },
   { label: 'Legal', href: '/legal' },
   { label: 'Parametres', href: '/settings' },
 ];
