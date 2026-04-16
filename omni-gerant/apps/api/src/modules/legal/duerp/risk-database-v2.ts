@@ -477,6 +477,7 @@ import { ALIMENTAIRE_TRADES } from './trades-alimentaire.js';
 import { COMMERCE_TRADES } from './trades-commerce.js';
 import { SANTE_TRADES } from './trades-sante.js';
 import { TERTIAIRE_TRADES } from './trades-tertiaire.js';
+import { INDUSTRIE_TRADES } from './trades-industrie.js';
 
 // ── Registre complet ────────────────────────────────────────────────
 
@@ -497,6 +498,7 @@ export const METIER_RISK_DATABASE: MetierRiskProfile[] = [
   ...COMMERCE_TRADES,
   ...SANTE_TRADES,
   ...TERTIAIRE_TRADES,
+  ...INDUSTRIE_TRADES,
 ];
 
 // ── Lookup functions ────────────────────────────────────────────────
