@@ -368,6 +368,68 @@ export const WORK_UNIT_TEMPLATES: Record<string, Omit<WorkUnitTemplate, 'id' | '
     { metierSlug: 'location-ski', name: 'Stockage materiel', description: 'Rangement skis', typicalHeadcount: '1-2', associatedRiskIds: ['ski-manutention'], typicalEquipment: ['Racks'], typicalPPE: [] },
     { metierSlug: 'location-ski', name: 'Espace exterieur', description: 'Remise materiel piste', typicalHeadcount: '0-1', associatedRiskIds: ['ski-froid'], typicalEquipment: [], typicalPPE: ['Vetements thermiques'] },
   ],
+  // ── E4: Sante & Social ─────────────────────────────────────────
+  'ambulancier': [
+    { metierSlug: 'ambulancier', name: 'Vehicule sanitaire', description: 'Conduite ambulance', typicalHeadcount: '2', associatedRiskIds: ['amb-routier', 'amb-vibrations'], typicalEquipment: ['Ambulance', 'VSL'], typicalPPE: ['Gilet EN 20471'] },
+    { metierSlug: 'ambulancier', name: 'Brancardage / transfert', description: 'Port et transfert patients', typicalHeadcount: '2', associatedRiskIds: ['amb-tms', 'amb-chute', 'amb-agression'], typicalEquipment: ['Brancard', 'Chaise portoir'], typicalPPE: ['Gants', 'Chaussures securite'] },
+    { metierSlug: 'ambulancier', name: 'Soins d\'urgence', description: 'Premiers secours', typicalHeadcount: '1-2', associatedRiskIds: ['amb-biologique', 'amb-rps'], typicalEquipment: ['Kit urgence', 'DSA'], typicalPPE: ['Gants usage unique', 'Masque'] },
+    { metierSlug: 'ambulancier', name: 'Administration', description: 'Planning, regulation', typicalHeadcount: '1', associatedRiskIds: [], typicalEquipment: ['Ordinateur', 'Radio'], typicalPPE: [] },
+  ],
+  'creche': [
+    { metierSlug: 'creche', name: 'Salle d\'accueil / jeux', description: 'Espace de jeu, activites', typicalHeadcount: '3-8', associatedRiskIds: ['cre-bruit', 'cre-rps', 'cre-chute', 'cre-morsure'], typicalEquipment: ['Jouets', 'Tapis'], typicalPPE: [] },
+    { metierSlug: 'creche', name: 'Change / toilette', description: 'Espace change', typicalHeadcount: '1-2', associatedRiskIds: ['cre-biologique', 'cre-tms', 'cre-chimique'], typicalEquipment: ['Table de change', 'Lavabo'], typicalPPE: ['Gants usage unique'] },
+    { metierSlug: 'creche', name: 'Repas / biberonnerie', description: 'Preparation repas', typicalHeadcount: '1-2', associatedRiskIds: ['cre-incendie'], typicalEquipment: ['Four', 'Micro-ondes'], typicalPPE: [] },
+    { metierSlug: 'creche', name: 'Dortoir / repos', description: 'Surveillance siestes', typicalHeadcount: '1-2', associatedRiskIds: [], typicalEquipment: ['Lits a barreaux'], typicalPPE: [] },
+  ],
+  'laboratoire': [
+    { metierSlug: 'laboratoire', name: 'Salle de prelevement', description: 'Prises de sang', typicalHeadcount: '1-4', associatedRiskIds: ['lab-biologique', 'lab-piqure'], typicalEquipment: ['Fauteuil prelevement', 'Conteneur OPCT'], typicalPPE: ['Gants usage unique'] },
+    { metierSlug: 'laboratoire', name: 'Plateau technique', description: 'Analyses sur automates', typicalHeadcount: '2-6', associatedRiskIds: ['lab-chimique', 'lab-rayonnement', 'lab-tms', 'lab-rps', 'lab-electrique'], typicalEquipment: ['Automates', 'Centrifugeuse', 'PSM'], typicalPPE: ['Gants nitrile', 'Blouse'] },
+    { metierSlug: 'laboratoire', name: 'Reception / secretariat', description: 'Accueil patients', typicalHeadcount: '1-3', associatedRiskIds: [], typicalEquipment: ['Ordinateur'], typicalPPE: [] },
+    { metierSlug: 'laboratoire', name: 'Stockage reactifs / DASRI', description: 'Stockage produits', typicalHeadcount: '1', associatedRiskIds: ['lab-incendie'], typicalEquipment: ['Armoire ventilee', 'Conteneur DASRI'], typicalPPE: ['Gants chimiques'] },
+  ],
+  'sante-generale': [
+    { metierSlug: 'sante-generale', name: 'Salle de consultation', description: 'Consultation, examen', typicalHeadcount: '1-2', associatedRiskIds: ['med-rps', 'med-agression', 'med-tms'], typicalEquipment: ['Bureau', 'Table examen'], typicalPPE: [] },
+    { metierSlug: 'sante-generale', name: 'Accueil / secretariat', description: 'Accueil patients', typicalHeadcount: '1-2', associatedRiskIds: ['med-chute', 'med-incendie'], typicalEquipment: ['Ordinateur'], typicalPPE: [] },
+    { metierSlug: 'sante-generale', name: 'Salle de soins', description: 'Injections, pansements', typicalHeadcount: '1', associatedRiskIds: ['med-biologique', 'med-chimique', 'med-dasri'], typicalEquipment: ['Chariot soins', 'Conteneur OPCT'], typicalPPE: ['Gants usage unique'] },
+    { metierSlug: 'sante-generale', name: 'Salle d\'attente', description: 'Espace patients', typicalHeadcount: '0', associatedRiskIds: [], typicalEquipment: ['Mobilier'], typicalPPE: [] },
+  ],
+  'veterinaire': [
+    { metierSlug: 'veterinaire', name: 'Salle de consultation', description: 'Examen clinique, soins', typicalHeadcount: '1-2', associatedRiskIds: ['vet-biologique', 'vet-morsure', 'vet-piqure', 'vet-rps'], typicalEquipment: ['Table consultation', 'Museliere'], typicalPPE: ['Gants', 'Blouse'] },
+    { metierSlug: 'veterinaire', name: 'Bloc operatoire', description: 'Chirurgie, anesthesie', typicalHeadcount: '1-3', associatedRiskIds: ['vet-chimique', 'vet-tms'], typicalEquipment: ['Table chirurgie', 'Anesthesie gazeuse'], typicalPPE: ['Gants steriles', 'Masque'] },
+    { metierSlug: 'veterinaire', name: 'Imagerie', description: 'Radiographies', typicalHeadcount: '1-2', associatedRiskIds: ['vet-rayonnement'], typicalEquipment: ['Radio numerique'], typicalPPE: ['Tablier plombe', 'Dosimetre'] },
+    { metierSlug: 'veterinaire', name: 'Hospitalisation', description: 'Soins post-op', typicalHeadcount: '1-2', associatedRiskIds: ['vet-morsure', 'vet-allergie'], typicalEquipment: ['Cages', 'Chenils'], typicalPPE: ['Gants contention'] },
+  ],
+  'cabinet-dentaire': [
+    { metierSlug: 'cabinet-dentaire', name: 'Fauteuil de soins', description: 'Soins dentaires', typicalHeadcount: '2-4', associatedRiskIds: ['dent-biologique', 'dent-chimique', 'dent-bruit', 'dent-tms', 'dent-projection', 'dent-rps'], typicalEquipment: ['Fauteuil', 'Turbine', 'Aspiration'], typicalPPE: ['Masque FFP2', 'Visiere', 'Gants nitrile'] },
+    { metierSlug: 'cabinet-dentaire', name: 'Zone sterilisation', description: 'Sterilisation instruments', typicalHeadcount: '1', associatedRiskIds: ['dent-incendie'], typicalEquipment: ['Autoclave', 'Bac ultrasons'], typicalPPE: ['Gants epais'] },
+    { metierSlug: 'cabinet-dentaire', name: 'Imagerie dentaire', description: 'Radiographies', typicalHeadcount: '1', associatedRiskIds: ['dent-rayonnement'], typicalEquipment: ['Capteur numerique', 'Panoramique'], typicalPPE: ['Tablier plombe'] },
+    { metierSlug: 'cabinet-dentaire', name: 'Accueil / secretariat', description: 'Accueil patients', typicalHeadcount: '1-2', associatedRiskIds: [], typicalEquipment: ['Ordinateur'], typicalPPE: [] },
+  ],
+  'centre-imagerie': [
+    { metierSlug: 'centre-imagerie', name: 'Scanner / IRM / radio', description: 'Salles d\'imagerie', typicalHeadcount: '2-4', associatedRiskIds: ['img-rayonnement', 'img-champ-magnetique', 'img-bruit', 'img-electrique'], typicalEquipment: ['Scanner', 'IRM', 'Radio'], typicalPPE: ['Dosimetre', 'Tablier plombe'] },
+    { metierSlug: 'centre-imagerie', name: 'Salle d\'injection', description: 'Injection produits contraste', typicalHeadcount: '1-2', associatedRiskIds: ['img-biologique', 'img-chimique'], typicalEquipment: ['Injecteur automatique'], typicalPPE: ['Gants usage unique'] },
+    { metierSlug: 'centre-imagerie', name: 'Poste d\'interpretation', description: 'Lecture images', typicalHeadcount: '1-3', associatedRiskIds: ['img-rps', 'img-tms'], typicalEquipment: ['Ecrans diagnostic', 'PACS'], typicalPPE: [] },
+    { metierSlug: 'centre-imagerie', name: 'Accueil', description: 'Accueil patients', typicalHeadcount: '1-3', associatedRiskIds: [], typicalEquipment: ['Ordinateur'], typicalPPE: [] },
+  ],
+  'ehpad': [
+    { metierSlug: 'ehpad', name: 'Chambres residents', description: 'Soins, nursing', typicalHeadcount: '5-20', associatedRiskIds: ['ehp-tms', 'ehp-rps', 'ehp-agression', 'ehp-biologique'], typicalEquipment: ['Leve-personne', 'Lit medicalise'], typicalPPE: ['Gants usage unique', 'Tablier'] },
+    { metierSlug: 'ehpad', name: 'Espaces communs', description: 'Salle a manger, salon', typicalHeadcount: '2-5', associatedRiskIds: ['ehp-chute', 'ehp-bruit', 'ehp-incendie'], typicalEquipment: ['Mobilier adapte'], typicalPPE: [] },
+    { metierSlug: 'ehpad', name: 'Salle de soins', description: 'Preparation medicaments', typicalHeadcount: '1-3', associatedRiskIds: ['ehp-biologique', 'ehp-chimique'], typicalEquipment: ['Chariot soins', 'Armoire pharmacie'], typicalPPE: ['Gants nitrile'] },
+    { metierSlug: 'ehpad', name: 'Cuisine / restauration', description: 'Preparation repas', typicalHeadcount: '2-5', associatedRiskIds: ['ehp-incendie'], typicalEquipment: ['Cuisine collective'], typicalPPE: ['Chaussures antiderapantes'] },
+    { metierSlug: 'ehpad', name: 'Lingerie / entretien', description: 'Lavage, entretien', typicalHeadcount: '1-3', associatedRiskIds: ['ehp-chimique', 'ehp-bruit'], typicalEquipment: ['Lave-linge', 'Seche-linge'], typicalPPE: ['Gants menage'] },
+  ],
+  'prothesiste-dentaire': [
+    { metierSlug: 'prothesiste-dentaire', name: 'Poste modelage', description: 'Sculpture, modelage', typicalHeadcount: '1-3', associatedRiskIds: ['pro-chimique', 'pro-tms'], typicalEquipment: ['Loupe binoculaire', 'Articulateur'], typicalPPE: ['Gants nitrile'] },
+    { metierSlug: 'prothesiste-dentaire', name: 'Coulage / four', description: 'Coulage metal, ceramique', typicalHeadcount: '1-2', associatedRiskIds: ['pro-brulure', 'pro-incendie'], typicalEquipment: ['Four ceramique', 'Centrifugeuse coulage'], typicalPPE: ['Gants EN 407'] },
+    { metierSlug: 'prothesiste-dentaire', name: 'Finition / polissage', description: 'Meulage, polissage', typicalHeadcount: '1-3', associatedRiskIds: ['pro-poussieres', 'pro-bruit', 'pro-projection'], typicalEquipment: ['Tour polissage', 'Sableuse'], typicalPPE: ['Masque FFP3', 'Lunettes EN 166', 'Casque antibruit'] },
+    { metierSlug: 'prothesiste-dentaire', name: 'CAO/FAO / usinage', description: 'Conception numerique', typicalHeadcount: '1-2', associatedRiskIds: ['pro-electrique'], typicalEquipment: ['Scanner 3D', 'Usineuse CNC'], typicalPPE: [] },
+  ],
+  'services-funeraires': [
+    { metierSlug: 'services-funeraires', name: 'Salle de preparation', description: 'Thanatopraxie, habillage', typicalHeadcount: '1-2', associatedRiskIds: ['fun-biologique', 'fun-chimique'], typicalEquipment: ['Table de preparation', 'Aspiration'], typicalPPE: ['Double gants', 'Masque A1B1', 'Tablier impermeable'] },
+    { metierSlug: 'services-funeraires', name: 'Lieu de ceremonie', description: 'Organisation ceremonie', typicalHeadcount: '1-3', associatedRiskIds: ['fun-tms', 'fun-chute', 'fun-agression', 'fun-rps'], typicalEquipment: ['Cercueil', 'Pupitre'], typicalPPE: ['Chaussures securite'] },
+    { metierSlug: 'services-funeraires', name: 'Vehicule funeraire', description: 'Transport du defunt', typicalHeadcount: '1-2', associatedRiskIds: ['fun-routier', 'fun-manutention'], typicalEquipment: ['Corbillard', 'Brancard'], typicalPPE: [] },
+    { metierSlug: 'services-funeraires', name: 'Accueil / bureau', description: 'Accueil familles', typicalHeadcount: '1-2', associatedRiskIds: ['fun-rps'], typicalEquipment: ['Bureau'], typicalPPE: [] },
+  ],
   'bureau': [
     { metierSlug: 'bureau', name: 'Bureau / poste de travail', description: 'Poste de travail informatique', typicalHeadcount: '2-20', associatedRiskIds: ['bur-ecran', 'bur-sedentarite', 'bur-tms-siege', 'bur-electrique-info'], typicalEquipment: ['Ordinateur', 'Ecran', 'Siege'], typicalPPE: [] },
     { metierSlug: 'bureau', name: 'Salle de reunion', description: 'Espaces de reunion et visioconference', typicalHeadcount: '2-15', associatedRiskIds: ['bur-qualite-air'], typicalEquipment: ['Table', 'Ecran', 'Visio'], typicalPPE: [] },
