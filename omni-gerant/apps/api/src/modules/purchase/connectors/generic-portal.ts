@@ -1,6 +1,6 @@
-import type { Result } from '@omni-gerant/shared';
-import { ok, err, appError } from '@omni-gerant/shared';
-import type { AppError } from '@omni-gerant/shared';
+import type { Result } from '@zenadmin/shared';
+import { ok, err, appError } from '@zenadmin/shared';
+import type { AppError } from '@zenadmin/shared';
 import type { ConnectorBase, ConnectorCredentials, ConnectorSession, RawInvoice } from './connector-base.js';
 import { withRetry } from './connector-base.js';
 

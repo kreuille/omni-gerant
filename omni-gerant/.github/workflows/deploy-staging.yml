@@ -32,7 +32,7 @@ jobs:
           context: .
           file: docker/Dockerfile.api
           push: true
-          tags: ${{ vars.REGISTRY_URL }}/omni-gerant-api:staging
+          tags: ${{ vars.REGISTRY_URL }}/zenadmin-api:staging
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -42,7 +42,7 @@ jobs:
           context: .
           file: docker/Dockerfile.web
           push: true
-          tags: ${{ vars.REGISTRY_URL }}/omni-gerant-web:staging
+          tags: ${{ vars.REGISTRY_URL }}/zenadmin-web:staging
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -52,7 +52,7 @@ jobs:
           context: .
           file: docker/Dockerfile.ocr
           push: true
-          tags: ${{ vars.REGISTRY_URL }}/omni-gerant-ocr:staging
+          tags: ${{ vars.REGISTRY_URL }}/zenadmin-ocr:staging
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

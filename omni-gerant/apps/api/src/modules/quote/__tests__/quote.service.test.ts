@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { createQuoteService, type QuoteRepository, type Quote, type QuoteLine } from '../quote.service.js';
-import { ok } from '@omni-gerant/shared';
+import { ok } from '@zenadmin/shared';
 
 const TENANT_ID = '550e8400-e29b-41d4-a716-446655440000';
 const CLIENT_ID = '660e8400-e29b-41d4-a716-446655440001';

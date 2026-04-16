@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
-import type { Result } from '@omni-gerant/shared';
-import { ok, err, appError, unauthorized, notFound } from '@omni-gerant/shared';
-import type { AppError } from '@omni-gerant/shared';
+import type { Result } from '@zenadmin/shared';
+import { ok, err, appError, unauthorized, notFound } from '@zenadmin/shared';
+import type { AppError } from '@zenadmin/shared';
 import { hashPassword, verifyPassword } from './password.js';
 import { generateTokenPair, generateAccessToken, type JwtPayload, type TokenPair } from './jwt.js';
 import { generateTotpSecret, verifyTotpCode, type TotpSetup } from './totp.js';

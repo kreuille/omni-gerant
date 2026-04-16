@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createSiretLookup } from '../siret-lookup.js';
 import type { PappersClient } from '../pappers-client.js';
 import type { SireneClient } from '../sirene-client.js';
-import { ok, err, appError } from '@omni-gerant/shared';
+import { ok, err, appError } from '@zenadmin/shared';
 
 // BUSINESS RULE [CDC-4]: Tests du lookup SIRET enrichi avec fallback 3 couches
 

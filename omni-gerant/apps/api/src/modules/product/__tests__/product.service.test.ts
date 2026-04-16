@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { createProductService, type Product, type ProductRepository } from '../product.service.js';
-import { tvaAmount, money } from '@omni-gerant/shared';
+import { tvaAmount, money } from '@zenadmin/shared';
 
 const TENANT_ID = '550e8400-e29b-41d4-a716-446655440000';
 

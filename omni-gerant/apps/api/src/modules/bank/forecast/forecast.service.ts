@@ -1,5 +1,5 @@
-import { ok } from '@omni-gerant/shared';
-import type { Result, AppError } from '@omni-gerant/shared';
+import { ok } from '@zenadmin/shared';
+import type { Result, AppError } from '@zenadmin/shared';
 import type { RecurringCharge, HistoricalTransaction } from './recurrence-detector.js';
 import { detectRecurringCharges } from './recurrence-detector.js';
 

@@ -1,7 +1,7 @@
 import { randomBytes, createHash } from 'node:crypto';
-import type { Result } from '@omni-gerant/shared';
-import { ok, err, notFound, unauthorized } from '@omni-gerant/shared';
-import type { AppError } from '@omni-gerant/shared';
+import type { Result } from '@zenadmin/shared';
+import { ok, err, notFound, unauthorized } from '@zenadmin/shared';
+import type { AppError } from '@zenadmin/shared';
 
 // BUSINESS RULE [CDC-2.1]: Generation lien securise pour partage devis
 

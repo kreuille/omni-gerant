@@ -25,7 +25,7 @@ async function registerUser(email: string, password: string, firstName: string, 
 test.describe('Auth', () => {
   test('login page loads with form', async ({ page }) => {
     await page.goto('/login');
-    await expect(page.locator('h1')).toContainText('Omni-Gerant');
+    await expect(page.locator('h1')).toContainText('zenAdmin');
     await expect(page.locator('input#email')).toBeVisible();
     await expect(page.locator('input#password')).toBeVisible();
     await expect(page.locator('button[type="submit"]')).toBeVisible();
@@ -33,7 +33,7 @@ test.describe('Auth', () => {
 
   test('register page loads', async ({ page }) => {
     await page.goto('/register');
-    await expect(page.locator('h1')).toContainText('Omni-Gerant');
+    await expect(page.locator('h1')).toContainText('zenAdmin');
     // Should have registration fields
     await expect(page.locator('input#email')).toBeVisible();
     await expect(page.locator('input#password')).toBeVisible();

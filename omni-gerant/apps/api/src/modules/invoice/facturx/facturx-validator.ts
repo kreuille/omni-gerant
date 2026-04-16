@@ -1,6 +1,6 @@
-import type { Result } from '@omni-gerant/shared';
-import { ok, err, validationError } from '@omni-gerant/shared';
-import type { AppError } from '@omni-gerant/shared';
+import type { Result } from '@zenadmin/shared';
+import { ok, err, validationError } from '@zenadmin/shared';
+import type { AppError } from '@zenadmin/shared';
 import type { FacturxInvoiceData } from './facturx-xml.js';
 
 // BUSINESS RULE [CDC-2.1]: Validation conformite Factur-X

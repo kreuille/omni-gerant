@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { createEmailScanner, type ImapClient, type ImapConfig } from '../email-scanner.js';
-import { ok, err, appError } from '@omni-gerant/shared';
+import { ok, err, appError } from '@zenadmin/shared';
 import type { EmailMessage } from '../attachment-detector.js';
 
 const TEST_CONFIG: ImapConfig = {
@@ -28,7 +28,7 @@ const mockMessages: EmailMessage[] = [
     subject: 'Newsletter',
     date: new Date('2026-04-14'),
     attachments: [],
-    flags: ['OmniGerant/Traite'],
+    flags: ['ZenAdmin/Traite'],
   },
 ];
 
@@ -110,7 +110,7 @@ describe('EmailScanner', () => {
       const result = await scanner.markProcessed(TEST_CONFIG, 'msg-001');
 
       expect(result.ok).toBe(true);
-      expect(client.markAsProcessed).toHaveBeenCalledWith('msg-001', 'OmniGerant/Traite');
+      expect(client.markAsProcessed).toHaveBeenCalledWith('msg-001', 'ZenAdmin/Traite');
     });
   });
 
@@ -118,7 +118,7 @@ describe('EmailScanner', () => {
     it('returns the label used for processed emails', () => {
       const client = createMockImapClient();
       const scanner = createEmailScanner(client);
-      expect(scanner.getProcessedLabel()).toBe('OmniGerant/Traite');
+      expect(scanner.getProcessedLabel()).toBe('ZenAdmin/Traite');
     });
   });
 });

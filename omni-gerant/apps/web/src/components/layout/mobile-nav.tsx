@@ -37,7 +37,7 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
       {/* Sheet */}
       <div className="fixed inset-y-0 left-0 w-64 bg-white shadow-xl">
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
-          <h1 className="text-xl font-bold text-primary-700">Omni-Gerant</h1>
+          <h1 className="text-xl font-bold text-primary-700">zenAdmin</h1>
           <button
             type="button"
             className="p-2 rounded-md text-gray-400 hover:text-gray-500"

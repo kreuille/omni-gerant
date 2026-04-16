@@ -1,6 +1,6 @@
-import type { Result } from '@omni-gerant/shared';
-import { ok, err, notFound, appError } from '@omni-gerant/shared';
-import type { AppError } from '@omni-gerant/shared';
+import type { Result } from '@zenadmin/shared';
+import { ok, err, notFound, appError } from '@zenadmin/shared';
+import type { AppError } from '@zenadmin/shared';
 import type { UpdateTenantProfileInput } from './tenant.schemas.js';
 import { detectLegalForm, detectLegalFormFromLabel, generateLegalMentions } from './legal-form.js';
 import type { LegalForm } from './legal-form.js';

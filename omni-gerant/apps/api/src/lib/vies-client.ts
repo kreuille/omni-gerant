@@ -1,6 +1,6 @@
-import type { Result } from '@omni-gerant/shared';
-import { ok, err, appError } from '@omni-gerant/shared';
-import type { AppError } from '@omni-gerant/shared';
+import type { Result } from '@zenadmin/shared';
+import { ok, err, appError } from '@zenadmin/shared';
+import type { AppError } from '@zenadmin/shared';
 
 // BUSINESS RULE [CDC-11.1]: Verification N° TVA intracommunautaire via API VIES UE
 // API REST: https://ec.europa.eu/taxation_customs/vies/rest-api/check-vat-number

@@ -38,7 +38,7 @@ services:
           memory: 256M
 
   api:
-    image: ${REGISTRY_URL}/omni-gerant-api:${VERSION:-latest}
+    image: ${REGISTRY_URL}/zenadmin-api:${VERSION:-latest}
     restart: always
     ports:
       - "3001:3001"
@@ -67,7 +67,7 @@ services:
           memory: 512M
 
   web:
-    image: ${REGISTRY_URL}/omni-gerant-web:${VERSION:-latest}
+    image: ${REGISTRY_URL}/zenadmin-web:${VERSION:-latest}
     restart: always
     ports:
       - "3000:3000"
@@ -82,7 +82,7 @@ services:
           memory: 256M
 
   ocr:
-    image: ${REGISTRY_URL}/omni-gerant-ocr:${VERSION:-latest}
+    image: ${REGISTRY_URL}/zenadmin-ocr:${VERSION:-latest}
     restart: always
     ports:
       - "8000:8000"

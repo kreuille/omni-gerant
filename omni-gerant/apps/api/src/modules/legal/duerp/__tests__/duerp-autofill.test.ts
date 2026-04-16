@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { createDuerpAutoFill, type AutoFillDeps, type TenantProfile } from '../duerp-autofill.js';
-import { ok, err, appError } from '@omni-gerant/shared';
+import { ok, err, appError } from '@zenadmin/shared';
 import type { EnrichedSiretInfo } from '../../../../lib/siret-lookup.js';
 
 // BUSINESS RULE [CDC-2.4]: Tests de l'orchestrateur auto-fill DUERP

@@ -1,5 +1,5 @@
-import { ok, err } from '@omni-gerant/shared';
-import type { Result, AppError } from '@omni-gerant/shared';
+import { ok, err } from '@zenadmin/shared';
+import type { Result, AppError } from '@zenadmin/shared';
 import type { createStripeClient } from './stripe-client.js';
 
 // BUSINESS RULE [CDC-3.2]: Service Stripe Checkout

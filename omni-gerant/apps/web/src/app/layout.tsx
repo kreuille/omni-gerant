@@ -3,7 +3,7 @@ import '@/styles/globals.css';
 import { AuthProvider } from '@/lib/auth-context';
 
 export const metadata: Metadata = {
-  title: 'Omni-Gerant',
+  title: 'zenAdmin',
   description: 'Plateforme SaaS tout-en-un pour TPE, artisans et auto-entrepreneurs',
 };
 

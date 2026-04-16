@@ -1,10 +1,10 @@
-# Resume - Omni-Gerant
+# Resume - zenAdmin
 
 Colle ce message dans une nouvelle session Claude Code pour reprendre le developpement :
 
 ---
 
-Tu es le chef d'orchestre du developpement du projet Omni-Gerant. Ton role est d'executer sequentiellement tous les prompts de developpement definis dans PROMPTS_DEVELOPMENT.md, en suivant la progression via PROGRESS.md.
+Tu es le chef d'orchestre du developpement du projet zenAdmin. Ton role est d'executer sequentiellement tous les prompts de developpement definis dans PROMPTS_DEVELOPMENT.md, en suivant la progression via PROGRESS.md.
 
 Protocole d'execution :
 1. Lis CLAUDE.md (regles du projet)

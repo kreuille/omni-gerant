@@ -1,7 +1,7 @@
 import * as OTPAuth from 'otpauth';
-import type { Result } from '@omni-gerant/shared';
-import { ok, err, appError } from '@omni-gerant/shared';
-import type { AppError } from '@omni-gerant/shared';
+import type { Result } from '@zenadmin/shared';
+import { ok, err, appError } from '@zenadmin/shared';
+import type { AppError } from '@zenadmin/shared';
 
 // BUSINESS RULE [CDC-6]: Double authentification (2FA) obligatoire
 
@@ -12,7 +12,7 @@ export interface TotpSetup {
 
 export function generateTotpSecret(email: string): TotpSetup {
   const totp = new OTPAuth.TOTP({
-    issuer: 'Omni-Gerant',
+    issuer: 'zenAdmin',
     label: email,
     algorithm: 'SHA1',
     digits: 6,
@@ -28,7 +28,7 @@ export function generateTotpSecret(email: string): TotpSetup {
 export function verifyTotpCode(secret: string, code: string): Result<boolean, AppError> {
   try {
     const totp = new OTPAuth.TOTP({
-      issuer: 'Omni-Gerant',
+      issuer: 'zenAdmin',
       algorithm: 'SHA1',
       digits: 6,
       period: 30,

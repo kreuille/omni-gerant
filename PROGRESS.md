@@ -1,4 +1,4 @@
-# Progression - Omni-Gerant
+# Progression - zenAdmin
 
 **Derniere mise a jour** : 2026-04-16
 **Dernier prompt complete** : 11.4 (Phase 11+ complete)

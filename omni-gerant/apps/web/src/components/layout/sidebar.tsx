@@ -28,7 +28,7 @@ export function Sidebar() {
     <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
       <div className="flex flex-col flex-grow bg-white border-r border-gray-200 pt-5 pb-4 overflow-y-auto">
         <div className="flex items-center flex-shrink-0 px-4">
-          <h1 className="text-xl font-bold text-primary-700">Omni-Gerant</h1>
+          <h1 className="text-xl font-bold text-primary-700">zenAdmin</h1>
         </div>
         <nav className="mt-8 flex-1 px-2 space-y-1">
           {navItems.map((item) => {

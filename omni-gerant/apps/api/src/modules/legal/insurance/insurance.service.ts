@@ -1,5 +1,5 @@
-import { ok, err } from '@omni-gerant/shared';
-import type { Result, AppError } from '@omni-gerant/shared';
+import { ok, err } from '@zenadmin/shared';
+import type { Result, AppError } from '@zenadmin/shared';
 import type { CreateInsuranceInput, UpdateInsuranceInput, InsuranceType } from './insurance.schemas.js';
 
 // BUSINESS RULE [CDC-2.4]: Service Coffre-Fort Assurances

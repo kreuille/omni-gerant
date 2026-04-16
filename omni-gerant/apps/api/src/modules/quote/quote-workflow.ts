@@ -1,6 +1,6 @@
-import type { Result } from '@omni-gerant/shared';
-import { ok, err, forbidden } from '@omni-gerant/shared';
-import type { AppError } from '@omni-gerant/shared';
+import type { Result } from '@zenadmin/shared';
+import { ok, err, forbidden } from '@zenadmin/shared';
+import type { AppError } from '@zenadmin/shared';
 
 // BUSINESS RULE [CDC-2.1]: Machine a etats du devis
 // draft → sent → viewed → signed → invoiced

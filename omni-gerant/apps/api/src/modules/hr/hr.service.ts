@@ -1,5 +1,5 @@
-import type { Result, AppError, PaginatedResult } from '@omni-gerant/shared';
-import { ok, err, notFound } from '@omni-gerant/shared';
+import type { Result, AppError, PaginatedResult } from '@zenadmin/shared';
+import { ok, err, notFound } from '@zenadmin/shared';
 import type { JobPosition } from './workforce.js';
 import type { Employee } from './employee.js';
 import { slugify, computeMedicalSurveillance } from './workforce.js';

@@ -37,8 +37,8 @@ jobs:
           file: docker/Dockerfile.api
           push: true
           tags: |
-            ${{ vars.REGISTRY_URL }}/omni-gerant-api:${{ steps.version.outputs.tag }}
-            ${{ vars.REGISTRY_URL }}/omni-gerant-api:latest
+            ${{ vars.REGISTRY_URL }}/zenadmin-api:${{ steps.version.outputs.tag }}
+            ${{ vars.REGISTRY_URL }}/zenadmin-api:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -49,8 +49,8 @@ jobs:
           file: docker/Dockerfile.web
           push: true
           tags: |
-            ${{ vars.REGISTRY_URL }}/omni-gerant-web:${{ steps.version.outputs.tag }}
-            ${{ vars.REGISTRY_URL }}/omni-gerant-web:latest
+            ${{ vars.REGISTRY_URL }}/zenadmin-web:${{ steps.version.outputs.tag }}
+            ${{ vars.REGISTRY_URL }}/zenadmin-web:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -61,8 +61,8 @@ jobs:
           file: docker/Dockerfile.ocr
           push: true
           tags: |
-            ${{ vars.REGISTRY_URL }}/omni-gerant-ocr:${{ steps.version.outputs.tag }}
-            ${{ vars.REGISTRY_URL }}/omni-gerant-ocr:latest
+            ${{ vars.REGISTRY_URL }}/zenadmin-ocr:${{ steps.version.outputs.tag }}
+            ${{ vars.REGISTRY_URL }}/zenadmin-ocr:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

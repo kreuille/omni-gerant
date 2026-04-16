@@ -1,6 +1,6 @@
-import type { Result, PaginatedResult } from '@omni-gerant/shared';
-import { ok, err, notFound, forbidden } from '@omni-gerant/shared';
-import type { AppError } from '@omni-gerant/shared';
+import type { Result, PaginatedResult } from '@zenadmin/shared';
+import { ok, err, notFound, forbidden } from '@zenadmin/shared';
+import type { AppError } from '@zenadmin/shared';
 import { calculateQuoteTotals, calculateLineTotal, type LineInput } from './quote-calculator.js';
 import type { CreateQuoteInput, UpdateQuoteInput, QuoteListInput } from './quote.schemas.js';
 

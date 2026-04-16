@@ -1,5 +1,5 @@
-import { ok, err } from '@omni-gerant/shared';
-import type { Result, AppError } from '@omni-gerant/shared';
+import { ok, err } from '@zenadmin/shared';
+import type { Result, AppError } from '@zenadmin/shared';
 import type { createPpfClient, PpfInvoiceSubmission, PpfStatus } from './ppf-client.js';
 
 // BUSINESS RULE [CDC-2.1]: Envoi factures au PPF avec suivi cycle de vie

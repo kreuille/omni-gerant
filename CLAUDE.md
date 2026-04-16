@@ -1,13 +1,13 @@
-# Omni-Gerant - Regles du Projet
+# zenAdmin - Regles du Projet
 
 ## Vision
 Plateforme SaaS "tout-en-un" pour TPE, artisans et auto-entrepreneurs.
 Objectif Zero Saisie, Conformite Native (Factur-X 2026), Pilotage Proactif.
 
 ## Deploiement Production
-- **Frontend** : https://omni-gerant.vercel.app (Vercel)
-- **API** : https://omni-gerant-api.onrender.com (Render, plan free)
-- **GitHub** : https://github.com/kreuille/omni-gerant (public)
+- **Frontend** : https://omni-gerant.vercel.app (Vercel) — a renommer
+- **API** : https://omni-gerant-api.onrender.com (Render, plan free) — a renommer
+- **GitHub** : https://github.com/kreuille/omni-gerant (public) — a renommer
 - **Vercel project ID** : prj_rrWWOdvv2q3x6TpkOZLvDTNrPFvF
 - **Vercel scope** : arnaudguedou-1634s-projects
 - **Render service** : srv-d7fkjk471suc73bccdg0
@@ -24,7 +24,7 @@ Objectif Zero Saisie, Conformite Native (Factur-X 2026), Pilotage Proactif.
 
 ## Structure Monorepo
 ```
-omni-gerant/
+zenadmin/
   apps/
     web/          # Next.js frontend (port 3000)
     api/          # Fastify backend (port 3001)

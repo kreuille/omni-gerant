@@ -14,7 +14,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@omni-gerant/shared': path.resolve(__dirname, '../../packages/shared/src/index.ts'),
+      '@zenadmin/shared': path.resolve(__dirname, '../../packages/shared/src/index.ts'),
     },
   },
 });

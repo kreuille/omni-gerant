@@ -1,6 +1,6 @@
-import type { Result } from '@omni-gerant/shared';
-import { ok, err, appError } from '@omni-gerant/shared';
-import type { AppError } from '@omni-gerant/shared';
+import type { Result } from '@zenadmin/shared';
+import { ok, err, appError } from '@zenadmin/shared';
+import type { AppError } from '@zenadmin/shared';
 import type { EmailMessage, EmailAttachment } from './attachment-detector.js';
 
 // BUSINESS RULE [CDC-2.2]: Connexion IMAP a la boite mail pro
@@ -22,7 +22,7 @@ export interface ImapClient {
 }
 
 // BUSINESS RULE [CDC-2.2]: Scan periodique des nouveaux emails
-const PROCESSED_LABEL = 'OmniGerant/Traite';
+const PROCESSED_LABEL = 'ZenAdmin/Traite';
 
 export function createEmailScanner(imapClient: ImapClient) {
   return {

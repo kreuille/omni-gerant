@@ -232,7 +232,7 @@ describe('TOTP', () => {
     const setup = generateTotpSecret('test@test.com');
     expect(setup.secret).toBeDefined();
     expect(setup.uri).toContain('otpauth://totp/');
-    expect(setup.uri).toContain('Omni-Gerant');
+    expect(setup.uri).toContain('zenAdmin');
   });
 
   it('verifies valid code', async () => {

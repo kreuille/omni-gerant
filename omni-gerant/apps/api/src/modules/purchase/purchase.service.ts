@@ -1,6 +1,6 @@
-import type { Result, PaginatedResult } from '@omni-gerant/shared';
-import { ok, err, notFound, validationError, appError } from '@omni-gerant/shared';
-import type { AppError } from '@omni-gerant/shared';
+import type { Result, PaginatedResult } from '@zenadmin/shared';
+import { ok, err, notFound, validationError, appError } from '@zenadmin/shared';
+import type { AppError } from '@zenadmin/shared';
 import type {
   CreatePurchaseInput,
   UpdatePurchaseInput,

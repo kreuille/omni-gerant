@@ -1,7 +1,7 @@
-import type { UserRole } from '@omni-gerant/shared';
-import { forbidden } from '@omni-gerant/shared';
-import type { Result, AppError } from '@omni-gerant/shared';
-import { ok, err } from '@omni-gerant/shared';
+import type { UserRole } from '@zenadmin/shared';
+import { forbidden } from '@zenadmin/shared';
+import type { Result, AppError } from '@zenadmin/shared';
+import { ok, err } from '@zenadmin/shared';
 
 // BUSINESS RULE [CDC-6]: Roles et permissions
 // owner    : tout (CRUD all, settings, billing, users)

@@ -9,7 +9,7 @@ import { createEmailService, createConsoleEmailProvider } from '../../lib/email.
 import { quoteSentHtml, quoteSentText } from '../../lib/email-templates/quote-sent.js';
 import { authenticate, requirePermission } from '../../plugins/auth.js';
 import { injectTenant } from '../../plugins/tenant.js';
-import { ok } from '@omni-gerant/shared';
+import { ok } from '@zenadmin/shared';
 import { z } from 'zod';
 
 // BUSINESS RULE [CDC-2.1]: Endpoints devis

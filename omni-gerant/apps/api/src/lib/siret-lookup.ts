@@ -1,6 +1,6 @@
-import type { Result } from '@omni-gerant/shared';
-import { ok, err, appError } from '@omni-gerant/shared';
-import type { AppError } from '@omni-gerant/shared';
+import type { Result } from '@zenadmin/shared';
+import { ok, err, appError } from '@zenadmin/shared';
+import type { AppError } from '@zenadmin/shared';
 import { createPappersClient, type PappersClient } from './pappers-client.js';
 import { createSireneClient, estimateEffectifFromTranche, type SireneClient } from './sirene-client.js';
 import type { CacheStore } from './cache.js';

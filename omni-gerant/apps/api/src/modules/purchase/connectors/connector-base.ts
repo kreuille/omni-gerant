@@ -1,6 +1,6 @@
-import type { Result } from '@omni-gerant/shared';
-import type { AppError } from '@omni-gerant/shared';
-import { ok, err, appError } from '@omni-gerant/shared';
+import type { Result } from '@zenadmin/shared';
+import type { AppError } from '@zenadmin/shared';
+import { ok, err, appError } from '@zenadmin/shared';
 
 // BUSINESS RULE [CDC-2.2]: Interface de base pour connecteurs fournisseurs
 // BUSINESS RULE [CDC-2.2]: Stockage credentials chiffre AES-256

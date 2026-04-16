@@ -3,7 +3,7 @@ import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import { registerErrorHandler } from '../plugins/error-handler.js';
 import { loadConfig } from '../config.js';
-import type { AppError } from '@omni-gerant/shared';
+import type { AppError } from '@zenadmin/shared';
 
 describe('Error handler', () => {
   let app: FastifyInstance;

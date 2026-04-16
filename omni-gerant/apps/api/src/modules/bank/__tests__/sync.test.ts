@@ -8,7 +8,7 @@ import type {
   CreateBankAccountData,
   CreateTransactionData,
 } from '../bank.service.js';
-import { ok, err } from '@omni-gerant/shared';
+import { ok, err } from '@zenadmin/shared';
 
 const TENANT_ID = '00000000-0000-0000-0000-000000000001';
 

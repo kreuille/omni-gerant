@@ -1,5 +1,5 @@
-import { ok, err } from '@omni-gerant/shared';
-import type { Result, AppError } from '@omni-gerant/shared';
+import { ok, err } from '@zenadmin/shared';
+import type { Result, AppError } from '@zenadmin/shared';
 import type {
   CreateRegistryInput,
   UpdateRegistryInput,
