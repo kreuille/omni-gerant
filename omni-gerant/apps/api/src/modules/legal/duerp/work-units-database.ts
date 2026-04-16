@@ -368,6 +368,79 @@ export const WORK_UNIT_TEMPLATES: Record<string, Omit<WorkUnitTemplate, 'id' | '
     { metierSlug: 'location-ski', name: 'Stockage materiel', description: 'Rangement skis', typicalHeadcount: '1-2', associatedRiskIds: ['ski-manutention'], typicalEquipment: ['Racks'], typicalPPE: [] },
     { metierSlug: 'location-ski', name: 'Espace exterieur', description: 'Remise materiel piste', typicalHeadcount: '0-1', associatedRiskIds: ['ski-froid'], typicalEquipment: [], typicalPPE: ['Vetements thermiques'] },
   ],
+  // ── E5: Tertiaire & Bureau ─────────────────────────────────────
+  'auto-ecole': [
+    { metierSlug: 'auto-ecole', name: 'Vehicule double commande', description: 'Leçons de conduite', typicalHeadcount: '1-2', associatedRiskIds: ['ae-routier', 'ae-rps', 'ae-tms', 'ae-agression'], typicalEquipment: ['Vehicule double commande'], typicalPPE: [] },
+    { metierSlug: 'auto-ecole', name: 'Salle de cours', description: 'Cours theoriques', typicalHeadcount: '1-2', associatedRiskIds: ['ae-chute', 'ae-electrique', 'ae-incendie'], typicalEquipment: ['Simulateur', 'Ordinateurs'], typicalPPE: [] },
+    { metierSlug: 'auto-ecole', name: 'Bureau / accueil', description: 'Inscription, admin', typicalHeadcount: '1-2', associatedRiskIds: [], typicalEquipment: ['Ordinateur'], typicalPPE: [] },
+    { metierSlug: 'auto-ecole', name: 'Piste moto', description: 'Leçons moto plateau', typicalHeadcount: '1-2', associatedRiskIds: ['ae-moto'], typicalEquipment: ['Motos ecole', 'Cones'], typicalPPE: ['Casque', 'Gants', 'Bottes', 'Dorsale'] },
+  ],
+  'avocat': [
+    { metierSlug: 'avocat', name: 'Bureau / cabinet', description: 'Travail juridique', typicalHeadcount: '1-5', associatedRiskIds: ['av-rps', 'av-tms', 'av-sedentarite', 'av-eclairage', 'av-chute', 'av-incendie'], typicalEquipment: ['Ordinateur', 'Bibliotheque juridique'], typicalPPE: [] },
+    { metierSlug: 'avocat', name: 'Tribunal', description: 'Audiences, plaidoiries', typicalHeadcount: '1', associatedRiskIds: ['av-rps'], typicalEquipment: ['Robe'], typicalPPE: [] },
+    { metierSlug: 'avocat', name: 'Deplacements', description: 'RDV clients, prison', typicalHeadcount: '1', associatedRiskIds: ['av-routier', 'av-agression'], typicalEquipment: ['Vehicule'], typicalPPE: [] },
+    { metierSlug: 'avocat', name: 'Salle de reunion', description: 'Reunions, mediation', typicalHeadcount: '1-3', associatedRiskIds: ['av-agression'], typicalEquipment: ['Table reunion'], typicalPPE: [] },
+  ],
+  'banque': [
+    { metierSlug: 'banque', name: 'Agence / guichet', description: 'Accueil clients', typicalHeadcount: '3-8', associatedRiskIds: ['bq-agression', 'bq-chute'], typicalEquipment: ['Guichet', 'Caisse'], typicalPPE: [] },
+    { metierSlug: 'banque', name: 'Bureau conseiller', description: 'Rendez-vous, conseil', typicalHeadcount: '1-4', associatedRiskIds: ['bq-rps', 'bq-routier'], typicalEquipment: ['Ordinateur'], typicalPPE: [] },
+    { metierSlug: 'banque', name: 'Zone automates', description: 'DAB, coffres', typicalHeadcount: '0-1', associatedRiskIds: ['bq-electrique'], typicalEquipment: ['DAB', 'Coffre'], typicalPPE: [] },
+    { metierSlug: 'banque', name: 'Back-office', description: 'Traitement admin', typicalHeadcount: '1-3', associatedRiskIds: ['bq-tms', 'bq-sedentarite', 'bq-incendie'], typicalEquipment: ['Ordinateur'], typicalPPE: [] },
+  ],
+  'expert-comptable': [
+    { metierSlug: 'expert-comptable', name: 'Bureau', description: 'Travail comptable', typicalHeadcount: '2-10', associatedRiskIds: ['ec-rps', 'ec-tms', 'ec-sedentarite', 'ec-eclairage', 'ec-chute', 'ec-electrique'], typicalEquipment: ['Ordinateur', 'Double ecran'], typicalPPE: [] },
+    { metierSlug: 'expert-comptable', name: 'Deplacements clients', description: 'RDV, audit', typicalHeadcount: '1-3', associatedRiskIds: ['ec-routier'], typicalEquipment: ['Vehicule'], typicalPPE: [] },
+    { metierSlug: 'expert-comptable', name: 'Salle de reunion', description: 'Reunions equipe/clients', typicalHeadcount: '1-3', associatedRiskIds: [], typicalEquipment: ['Table reunion'], typicalPPE: [] },
+    { metierSlug: 'expert-comptable', name: 'Archives', description: 'Stockage dossiers', typicalHeadcount: '0-1', associatedRiskIds: ['ec-incendie'], typicalEquipment: ['Rayonnages', 'Serveurs'], typicalPPE: [] },
+  ],
+  'immobilier': [
+    { metierSlug: 'immobilier', name: 'Agence', description: 'Accueil clients', typicalHeadcount: '1-3', associatedRiskIds: ['imm-incendie'], typicalEquipment: ['Ordinateur', 'Vitrines annonces'], typicalPPE: [] },
+    { metierSlug: 'immobilier', name: 'Visites de biens', description: 'Visites appartements/maisons', typicalHeadcount: '1-3', associatedRiskIds: ['imm-agression', 'imm-chute', 'imm-amiante', 'imm-electrique'], typicalEquipment: ['Lampe', 'Telephone'], typicalPPE: ['Chaussures fermees'] },
+    { metierSlug: 'immobilier', name: 'Bureau negociateur', description: 'Negociation, compromis', typicalHeadcount: '1-3', associatedRiskIds: ['imm-rps', 'imm-tms'], typicalEquipment: ['Ordinateur'], typicalPPE: [] },
+    { metierSlug: 'immobilier', name: 'Vehicule', description: 'Deplacements', typicalHeadcount: '1-3', associatedRiskIds: ['imm-routier'], typicalEquipment: ['Vehicule'], typicalPPE: [] },
+  ],
+  'informatique': [
+    { metierSlug: 'informatique', name: 'Bureau / open space', description: 'Developpement, support', typicalHeadcount: '2-20', associatedRiskIds: ['info-tms', 'info-rps', 'info-sedentarite', 'info-eclairage', 'info-bruit'], typicalEquipment: ['Ordinateur', 'Double ecran'], typicalPPE: [] },
+    { metierSlug: 'informatique', name: 'Salle serveurs', description: 'Maintenance serveurs', typicalHeadcount: '1-2', associatedRiskIds: ['info-electrique', 'info-bruit', 'info-incendie'], typicalEquipment: ['Serveurs', 'Climatisation'], typicalPPE: ['Protection auditive'] },
+    { metierSlug: 'informatique', name: 'Site client', description: 'Installation, support', typicalHeadcount: '1-3', associatedRiskIds: ['info-electrique'], typicalEquipment: ['Outillage', 'Ordinateur portable'], typicalPPE: [] },
+    { metierSlug: 'informatique', name: 'Teletravail', description: 'Travail a distance', typicalHeadcount: '1-10', associatedRiskIds: ['info-isolement', 'info-tms', 'info-sedentarite'], typicalEquipment: ['Ordinateur portable', 'Ecran'], typicalPPE: [] },
+  ],
+  'assurance': [
+    { metierSlug: 'assurance', name: 'Agence / accueil', description: 'Accueil assures', typicalHeadcount: '1-4', associatedRiskIds: ['ass-agression', 'ass-chute'], typicalEquipment: ['Comptoir', 'Ordinateur'], typicalPPE: [] },
+    { metierSlug: 'assurance', name: 'Bureau conseiller', description: 'Conseil, vente', typicalHeadcount: '1-4', associatedRiskIds: ['ass-rps'], typicalEquipment: ['Ordinateur'], typicalPPE: [] },
+    { metierSlug: 'assurance', name: 'Deplacements', description: 'Expertise, clients', typicalHeadcount: '1-2', associatedRiskIds: ['ass-routier'], typicalEquipment: ['Vehicule'], typicalPPE: [] },
+    { metierSlug: 'assurance', name: 'Back-office', description: 'Traitement admin', typicalHeadcount: '1-3', associatedRiskIds: ['ass-tms', 'ass-sedentarite', 'ass-electrique', 'ass-incendie'], typicalEquipment: ['Ordinateur'], typicalPPE: [] },
+  ],
+  'bureau-etudes': [
+    { metierSlug: 'bureau-etudes', name: 'Bureau / CAO', description: 'Conception, calculs', typicalHeadcount: '2-15', associatedRiskIds: ['be-tms', 'be-rps', 'be-eclairage', 'be-bruit', 'be-sedentarite'], typicalEquipment: ['Ordinateur', 'Ecran CAO'], typicalPPE: [] },
+    { metierSlug: 'bureau-etudes', name: 'Site / chantier', description: 'Supervision travaux', typicalHeadcount: '1-3', associatedRiskIds: ['be-chantier', 'be-routier'], typicalEquipment: ['EPI chantier'], typicalPPE: ['Casque EN 397', 'Gilet EN 20471', 'Chaussures S3'] },
+    { metierSlug: 'bureau-etudes', name: 'Salle reunion', description: 'Coordination', typicalHeadcount: '1-4', associatedRiskIds: [], typicalEquipment: ['Table', 'Ecran'], typicalPPE: [] },
+    { metierSlug: 'bureau-etudes', name: 'Archives / maquettes', description: 'Stockage plans', typicalHeadcount: '0-1', associatedRiskIds: ['be-incendie'], typicalEquipment: ['Rayonnages', 'Traceur'], typicalPPE: [] },
+  ],
+  'syndic-copropriete': [
+    { metierSlug: 'syndic-copropriete', name: 'Bureau / gestion', description: 'Gestion coproprietes', typicalHeadcount: '1-5', associatedRiskIds: ['syn-rps', 'syn-tms', 'syn-incendie'], typicalEquipment: ['Ordinateur'], typicalPPE: [] },
+    { metierSlug: 'syndic-copropriete', name: 'Visites immeubles', description: 'Visites coproprietes', typicalHeadcount: '1-3', associatedRiskIds: ['syn-chute', 'syn-amiante', 'syn-electrique'], typicalEquipment: ['Lampe', 'Cles'], typicalPPE: ['Chaussures fermees'] },
+    { metierSlug: 'syndic-copropriete', name: 'Assemblees generales', description: 'Animation AG', typicalHeadcount: '1-2', associatedRiskIds: ['syn-agression'], typicalEquipment: ['Documents AG'], typicalPPE: [] },
+    { metierSlug: 'syndic-copropriete', name: 'Vehicule', description: 'Deplacements', typicalHeadcount: '1', associatedRiskIds: ['syn-routier'], typicalEquipment: ['Vehicule'], typicalPPE: [] },
+  ],
+  'courtier-immobilier': [
+    { metierSlug: 'courtier-immobilier', name: 'Bureau', description: 'Montage dossiers', typicalHeadcount: '1-5', associatedRiskIds: ['court-tms', 'court-sedentarite', 'court-chute', 'court-incendie'], typicalEquipment: ['Ordinateur'], typicalPPE: [] },
+    { metierSlug: 'courtier-immobilier', name: 'RDV clients', description: 'Rendez-vous', typicalHeadcount: '1-3', associatedRiskIds: ['court-agression', 'court-rps'], typicalEquipment: ['Documents'], typicalPPE: [] },
+    { metierSlug: 'courtier-immobilier', name: 'Deplacements', description: 'RDV banques', typicalHeadcount: '1-2', associatedRiskIds: ['court-routier'], typicalEquipment: ['Vehicule'], typicalPPE: [] },
+    { metierSlug: 'courtier-immobilier', name: 'Teletravail', description: 'Travail a distance', typicalHeadcount: '1-3', associatedRiskIds: ['court-isolement'], typicalEquipment: ['Ordinateur portable'], typicalPPE: [] },
+  ],
+  'finance-investissement': [
+    { metierSlug: 'finance-investissement', name: 'Salle de marche', description: 'Trading, execution', typicalHeadcount: '5-30', associatedRiskIds: ['fin-rps', 'fin-tms', 'fin-eclairage', 'fin-bruit', 'fin-incendie'], typicalEquipment: ['Multi-ecrans', 'Bloomberg'], typicalPPE: [] },
+    { metierSlug: 'finance-investissement', name: 'Bureau / analyse', description: 'Analyse, modelisation', typicalHeadcount: '2-10', associatedRiskIds: ['fin-sedentarite', 'fin-addictions'], typicalEquipment: ['Ordinateur', 'Double ecran'], typicalPPE: [] },
+    { metierSlug: 'finance-investissement', name: 'Salle reunion', description: 'Comites, presentations', typicalHeadcount: '1-5', associatedRiskIds: [], typicalEquipment: ['Ecran', 'Visio'], typicalPPE: [] },
+    { metierSlug: 'finance-investissement', name: 'Deplacements', description: 'Road shows', typicalHeadcount: '1-3', associatedRiskIds: ['fin-routier'], typicalEquipment: ['Vehicule', 'Transport'], typicalPPE: [] },
+  ],
+  'commissaire-justice': [
+    { metierSlug: 'commissaire-justice', name: 'Etude / bureau', description: 'Redaction d\'actes', typicalHeadcount: '1-5', associatedRiskIds: ['cj-tms', 'cj-incendie', 'cj-electrique'], typicalEquipment: ['Ordinateur'], typicalPPE: [] },
+    { metierSlug: 'commissaire-justice', name: 'Signification / execution', description: 'Actes, saisies, expulsions', typicalHeadcount: '1-2', associatedRiskIds: ['cj-agression', 'cj-rps', 'cj-chute', 'cj-morsure', 'cj-electrique'], typicalEquipment: ['Actes', 'Telephone'], typicalPPE: ['Chaussures fermees'] },
+    { metierSlug: 'commissaire-justice', name: 'Vehicule', description: 'Deplacements', typicalHeadcount: '1-2', associatedRiskIds: ['cj-routier'], typicalEquipment: ['Vehicule', 'GPS'], typicalPPE: [] },
+    { metierSlug: 'commissaire-justice', name: 'Tribunal', description: 'Audiences', typicalHeadcount: '1', associatedRiskIds: [], typicalEquipment: [], typicalPPE: [] },
+  ],
   // ── E4: Sante & Social ─────────────────────────────────────────
   'ambulancier': [
     { metierSlug: 'ambulancier', name: 'Vehicule sanitaire', description: 'Conduite ambulance', typicalHeadcount: '2', associatedRiskIds: ['amb-routier', 'amb-vibrations'], typicalEquipment: ['Ambulance', 'VSL'], typicalPPE: ['Gilet EN 20471'] },

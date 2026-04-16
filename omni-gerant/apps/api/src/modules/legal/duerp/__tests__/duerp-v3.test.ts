@@ -285,7 +285,7 @@ describe('Detection metier depuis NAF', () => {
     ['10.71C', 'boulangerie'],
     ['45.20A', 'garage-auto'],
     ['88.10A', 'aide-domicile'],
-    ['62.01Z', 'bureau'],
+    ['62.01Z', 'informatique'],
     ['47.73Z', 'pharmacie'],
   ] as const;
 
