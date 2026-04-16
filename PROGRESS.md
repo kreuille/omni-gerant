@@ -1,7 +1,7 @@
 # Progression - Omni-Gerant
 
-**Derniere mise a jour** : 2026-04-14
-**Dernier prompt complete** : 10.3
+**Derniere mise a jour** : 2026-04-16
+**Dernier prompt complete** : 11.4 (Phase 11+ complete)
 **Prochain prompt a executer** : TERMINE
 
 ## Checklist des Prompts
@@ -59,9 +59,15 @@
 - [x] Prompt 10.2 — Securite et Hardening — `COMPLETED`
 - [x] Prompt 10.3 — CI/CD et Configuration Deploiement — `COMPLETED`
 
+### Phase 11+ : Profil Entreprise, Effectif, DUERP V3, Devis Conforme
+- [x] Prompt 11.1 — Profil Entreprise (SIRET cascade Pappers/SIRENE, forme juridique, regime TVA, VIES) — `COMPLETED`
+- [x] Prompt 11.2 — Effectif & Postes (module HR, 8 templates metier, auto-fill NAF, liaison DUERP) — `COMPLETED`
+- [x] Prompt 11.3 — DUERP V3 enrichi (8 profils metier, matrice 4x4, PAPRIPACT, maladies pro, formations, EPI, update engine) — `COMPLETED`
+- [x] Prompt 11.4 — Devis Conforme (moteur TVA 7 regimes x 19 secteurs, mentions legales auto, CERFA BTP) — `COMPLETED`
+
 ## Statistiques
-- **Total prompts** : 32
-- **Completes** : 32
+- **Total prompts** : 36
+- **Completes** : 36
 - **En cours** : 0
 - **Restants** : 0
 - **Progression** : 100%
@@ -103,3 +109,7 @@
 | 2026-04-14 | 10.1 | SUCCESS | Optimisation Performance (cache Redis/memory avec TTL+invalidation tenant, query optimizer, index tenant_id+date bank_transactions, SWR presets frontend, Suspense wrapper skeletons), 15 nouveaux tests, 589 total API |
 | 2026-04-14 | 10.2 | SUCCESS | Securite et Hardening (headers HSTS/CSP/X-Frame-Options, sanitization XSS detect+escape, AES-256-GCM chiffrement IBAN/tokens, rate limiting auth 5/15min upload 10/min, CSRF tokens, Next.js middleware CSP+auth redirect), 24 nouveaux tests, 613 total API |
 | 2026-04-14 | 10.3 | SUCCESS | CI/CD et Deploiement (GitHub Actions CI lint+typecheck+test+build+python, deploy staging/production, Dockerfiles multi-stage API/Web/OCR, docker-compose dev hot-reload + prod avec limites memoire, .env.example complet) |
+| 2026-04-15 | 11.1 | SUCCESS | Profil Entreprise (cascade Pappers→SIRENE→data.gouv.fr, detection forme juridique 11 types, regime TVA 4 types, VIES, secteur activite NAF, qualifications par secteur, page Settings/Profile avec auto-fill) |
+| 2026-04-16 | 11.2 | SUCCESS | Effectif & Postes (module HR complet, 8 templates metier, auto-fill proportionnel NAF+effectif, WorkforceForDuerp, 9 declencheurs DUERP, wizard frontend 3 etapes), 55 nouveaux tests, 763 total API |
+| 2026-04-16 | 11.3 | SUCCESS | DUERP V3 (risk-database-v2 8 profils metier+6 universels, matrice 4x4, action-plan, PAPRIPACT, maladies pro 8 tableaux RG, formations 12 obligatoires, EPI 13 normes EN, update-engine, work-units-database 8 metiers, penalites, conservation 40 ans), 94 nouveaux tests, 857 total API |
+| 2026-04-16 | 11.4 | SUCCESS | Devis Conforme (moteur TVA intelligent 7 regimes x 19 secteurs x 5 types client, mentions legales auto par forme juridique x secteur x client, CERFA BTP 1301-SD, alertes franchise, detection NAF→secteur), 57 nouveaux tests, 914 total API |
