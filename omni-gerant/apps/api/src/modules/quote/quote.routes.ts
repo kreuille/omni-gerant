@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { createQuoteService, type QuoteRepository, type Quote, type QuoteLine } from './quote.service.js';
 import { createQuoteSchema, updateQuoteSchema, quoteListSchema } from './quote.schemas.js';
 import { createDocumentNumberGenerator, createInMemoryNumberRepo } from './document-number.js';
+import { createPrismaQuoteRepository } from './quote.repository.js';
 import { getNextStatus } from './quote-workflow.js';
 import { createShareService, type ShareTokenRepository, type ShareToken } from './quote-share.js';
 import { createTrackingService, type TrackingRepository, type TrackingEvent } from './quote-tracking.js';
@@ -15,90 +16,9 @@ import { z } from 'zod';
 // BUSINESS RULE [CDC-2.1]: Endpoints devis
 
 export async function quoteRoutes(app: FastifyInstance) {
-  // In-memory repo — functional for dev/demo, use Prisma in production
-  const quotes = new Map<string, Quote>();
+  const repo = createPrismaQuoteRepository();
 
-  const repo: QuoteRepository = {
-    async create(data) {
-      const id = crypto.randomUUID();
-      const quote: Quote = {
-        id,
-        tenant_id: data.tenant_id,
-        client_id: data.client_id,
-        number: data.number,
-        status: 'draft',
-        title: data.title ?? null,
-        description: data.description ?? null,
-        issue_date: new Date(),
-        validity_date: data.validity_date,
-        deposit_rate: data.deposit_rate ?? null,
-        discount_type: data.discount_type ?? null,
-        discount_value: data.discount_value ?? null,
-        notes: data.notes ?? null,
-        total_ht_cents: data.total_ht_cents,
-        total_tva_cents: data.total_tva_cents,
-        total_ttc_cents: data.total_ttc_cents,
-        signed_at: null,
-        created_at: new Date(),
-        updated_at: new Date(),
-        deleted_at: null,
-        lines: data.lines.map((l) => ({
-          id: crypto.randomUUID(),
-          quote_id: id,
-          product_id: l.product_id ?? null,
-          position: l.position,
-          type: l.type,
-          label: l.label,
-          description: l.description ?? null,
-          quantity: l.quantity,
-          unit: l.unit,
-          unit_price_cents: l.unit_price_cents,
-          tva_rate: l.tva_rate,
-          discount_type: l.discount_type ?? null,
-          discount_value: l.discount_value ?? null,
-          total_ht_cents: l.total_ht_cents,
-        })),
-      };
-      quotes.set(id, quote);
-      return quote;
-    },
-    async findById(id, tenantId) {
-      const quote = quotes.get(id);
-      if (!quote || quote.tenant_id !== tenantId || quote.deleted_at) return null;
-      return quote;
-    },
-    async findMany(params) {
-      let items = Array.from(quotes.values())
-        .filter((q) => q.tenant_id === params.tenant_id && !q.deleted_at);
-      if (params.status) items = items.filter((q) => q.status === params.status);
-      if (params.client_id) items = items.filter((q) => q.client_id === params.client_id);
-      if (params.search) {
-        const s = params.search.toLowerCase();
-        items = items.filter((q) =>
-          (q.title?.toLowerCase().includes(s)) ||
-          q.number.toLowerCase().includes(s)
-        );
-      }
-      items.sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
-      const limit = params.limit ?? 20;
-      return { items: items.slice(0, limit), next_cursor: null, has_more: items.length > limit };
-    },
-    async update(id, tenantId, data) {
-      const quote = quotes.get(id);
-      if (!quote || quote.tenant_id !== tenantId || quote.deleted_at) return null;
-      const updated = { ...quote, ...data, updated_at: new Date() };
-      quotes.set(id, updated);
-      return updated;
-    },
-    async delete(id, tenantId) {
-      const quote = quotes.get(id);
-      if (!quote || quote.tenant_id !== tenantId) return false;
-      quotes.set(id, { ...quote, deleted_at: new Date() });
-      return true;
-    },
-  };
-
-  // Placeholder share token repo
+  // Placeholder share token repo (will be migrated in a future prompt)
   const shareTokenRepo: ShareTokenRepository = {
     async create(data) {
       return {
@@ -111,7 +31,7 @@ export async function quoteRoutes(app: FastifyInstance) {
     async markSigned(_id, _sig) {},
   };
 
-  // Placeholder tracking repo
+  // Placeholder tracking repo (will be migrated in a future prompt)
   const trackingRepo: TrackingRepository = {
     async create(data) {
       return {
@@ -125,6 +45,7 @@ export async function quoteRoutes(app: FastifyInstance) {
     async findByQuote(_quoteId, _tenantId) { return []; },
   };
 
+  // Use in-memory number repo (advisory locks require real PostgreSQL connection)
   const numberRepo = createInMemoryNumberRepo();
   const numberGen = createDocumentNumberGenerator(numberRepo);
   const quoteService = createQuoteService(repo, {

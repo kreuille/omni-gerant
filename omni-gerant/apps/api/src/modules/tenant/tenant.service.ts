@@ -8,6 +8,7 @@ import { detectDefaultTvaRegime, detectActivityType, checkFranchiseThreshold } f
 import type { TvaRegime, FranchiseCheckResult } from './tva-regime.js';
 import { computeFrenchTvaNumber } from '../../lib/vies-client.js';
 import type { EnrichedSiretInfo } from '../../lib/siret-lookup.js';
+import { createTenantRepository } from './tenant.repository.js';
 
 // BUSINESS RULE [CDC-11.1]: Mapping departement → ville du Tribunal de Commerce (RCS)
 const DEPT_TO_RCS: Record<string, string> = {
@@ -108,13 +109,6 @@ export interface TenantProfile {
   deleted_at: Date | null;
 }
 
-// In-memory store for tenant profiles (shared across routes)
-const tenantProfiles = new Map<string, TenantProfile>();
-
-export function getTenantStore() {
-  return tenantProfiles;
-}
-
 function createDefaultProfile(tenantId: string): TenantProfile {
   return {
     id: tenantId,
@@ -158,12 +152,14 @@ function createDefaultProfile(tenantId: string): TenantProfile {
 }
 
 export function createTenantService() {
+  const tenantRepo = createTenantRepository();
+
   return {
     async getProfile(tenantId: string): Promise<Result<TenantProfile, AppError>> {
-      let profile = tenantProfiles.get(tenantId);
+      const profile = await tenantRepo.findById(tenantId);
       if (!profile) {
-        profile = createDefaultProfile(tenantId);
-        tenantProfiles.set(tenantId, profile);
+        // Tenant exists in DB (created during register) but has default settings
+        return ok(createDefaultProfile(tenantId));
       }
       return ok(profile);
     },
@@ -172,7 +168,7 @@ export function createTenantService() {
       tenantId: string,
       input: UpdateTenantProfileInput,
     ): Promise<Result<TenantProfile, AppError>> {
-      let profile = tenantProfiles.get(tenantId);
+      let profile = await tenantRepo.findById(tenantId);
       if (!profile) {
         profile = createDefaultProfile(tenantId);
       }
@@ -210,20 +206,15 @@ export function createTenantService() {
       if (input.insurance_rc_pro_insurer !== undefined) profile.insurance_rc_pro_insurer = input.insurance_rc_pro_insurer;
       if (input.qualifications !== undefined) profile.qualifications = input.qualifications;
 
-      profile.updated_at = new Date();
-      tenantProfiles.set(tenantId, profile);
-      return ok(profile);
+      const updated = await tenantRepo.upsertProfile(tenantId, profile);
+      return ok(updated);
     },
 
-    /**
-     * Auto-fill tenant profile from enriched SIRET lookup result.
-     * Returns the updated profile with auto-detected legal form and TVA regime.
-     */
     async autoFillFromSiret(
       tenantId: string,
       siretInfo: EnrichedSiretInfo,
     ): Promise<Result<TenantProfile, AppError>> {
-      let profile = tenantProfiles.get(tenantId);
+      let profile = await tenantRepo.findById(tenantId);
       if (!profile) {
         profile = createDefaultProfile(tenantId);
       }
@@ -271,14 +262,10 @@ export function createTenantService() {
       // Detect TVA regime from legal form
       profile.tva_regime = detectDefaultTvaRegime(profile.legal_form);
 
-      profile.updated_at = new Date();
-      tenantProfiles.set(tenantId, profile);
-      return ok(profile);
+      const updated = await tenantRepo.upsertProfile(tenantId, profile);
+      return ok(updated);
     },
 
-    /**
-     * Get franchise threshold check for auto-entrepreneurs.
-     */
     getFranchiseCheck(profile: TenantProfile): FranchiseCheckResult | null {
       if (profile.tva_regime !== 'franchise_base') return null;
       const activityType = profile.naf_code
@@ -287,9 +274,6 @@ export function createTenantService() {
       return checkFranchiseThreshold(profile.current_year_revenue_cents, activityType);
     },
 
-    /**
-     * Get legal mentions for this tenant's invoices/quotes.
-     */
     getLegalMentions(profile: TenantProfile): string[] {
       return generateLegalMentions(profile.legal_form, {
         capitalCents: profile.capital_cents ?? undefined,

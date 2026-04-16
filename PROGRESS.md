@@ -1,7 +1,7 @@
 # Progression - zenAdmin
 
 **Derniere mise a jour** : 2026-04-16
-**Dernier prompt complete** : 11.4 (Phase 11+ complete)
+**Dernier prompt complete** : D4 (Deploiement)
 **Prochain prompt a executer** : TERMINE
 
 ## Checklist des Prompts
@@ -65,12 +65,30 @@
 - [x] Prompt 11.3 — DUERP V3 enrichi (8 profils metier, matrice 4x4, PAPRIPACT, maladies pro, formations, EPI, update engine) — `COMPLETED`
 - [x] Prompt 11.4 — Devis Conforme (moteur TVA 7 regimes x 19 secteurs, mentions legales auto, CERFA BTP) — `COMPLETED`
 
+### Phase 14 : Migration PostgreSQL
+- [x] P0 — Infrastructure + Schema Prisma — `COMPLETED`
+- [x] P1 — Auth + Tenant repos — `COMPLETED`
+- [x] P2 — Ventes repos — `COMPLETED`
+- [x] P3 — Achats + Fournisseurs repos — `COMPLETED`
+- [x] P4 — Banque repos — `COMPLETED`
+- [x] P5 — Legal repos — `COMPLETED`
+- [x] P6 — Settings + Dashboard + Audit + RLS — `COMPLETED`
+
+### Phase 15 : Mise en Production
+- [x] D0 — Provision PostgreSQL + Deploy API — `COMPLETED`
+- [x] D1 — Securite Production — `COMPLETED`
+- [x] D2 — Monitoring + Alertes + Backups — `COMPLETED`
+- [x] D3 — E2E Tests Production — `COMPLETED`
+- [x] D4 — Domaine + Config finale — `COMPLETED`
+
 ## Statistiques
-- **Total prompts** : 36
-- **Completes** : 36
+- **Total prompts** : 48 (36 dev + 7 migration + 5 deploy)
+- **Completes** : 48
 - **En cours** : 0
 - **Restants** : 0
 - **Progression** : 100%
+- **Tests unitaires** : 914 (Vitest)
+- **Tests E2E** : 51 local + 4 parcours production (Playwright)
 
 ## Journal d'execution
 
@@ -105,7 +123,7 @@
 | 2026-04-14 | 8.2 | SUCCESS | Onboarding magique (4 etapes SIRET auto-complete/personnalisation logo+couleurs/connexion bancaire optionnelle/premier devis, step-indicator, redirect dashboard), frontend uniquement |
 | 2026-04-14 | 9.1 | SUCCESS | Export FEC (generateur TSV 18 colonnes, mapper VE/AC/BQ, plan comptable TPE 411/401/512/706/606, validateur equilibre, filename SIRET, composants frontend), 19 nouveaux tests, 528 total API |
 | 2026-04-14 | 9.2 | SUCCESS | Integration Paiements (Stripe Connect+Checkout+webhooks HMAC-SHA256, GoCardless SEPA mandats+prelevements, routes integration, page settings paiements), 13 nouveaux tests, 541 total API |
-| 2026-04-14 | 9.3 | SUCCESS | Connecteur PPF/PDP (client API AIFE, sender avec annuaire+dedup, receiver avec auto-purchase, statut lifecycle deposee→encaissee, webhook HMAC, badge statut, page config), 33 nouveaux tests, 574 total API |
+| 2026-04-14 | 9.3 | SUCCESS | Connecteur PPF/PDP (client API AIFE, sender avec annuaire+dedup, receiver avec auto-purchase, statut lifecycle deposee->encaissee, webhook HMAC, badge statut, page config), 33 nouveaux tests, 574 total API |
 | 2026-04-14 | 10.1 | SUCCESS | Optimisation Performance (cache Redis/memory avec TTL+invalidation tenant, query optimizer, index tenant_id+date bank_transactions, SWR presets frontend, Suspense wrapper skeletons), 15 nouveaux tests, 589 total API |
 | 2026-04-14 | 10.2 | SUCCESS | Securite et Hardening (headers HSTS/CSP/X-Frame-Options, sanitization XSS detect+escape, AES-256-GCM chiffrement IBAN/tokens, rate limiting auth 5/15min upload 10/min, CSRF tokens, Next.js middleware CSP+auth redirect), 24 nouveaux tests, 613 total API |
 | 2026-04-14 | 10.3 | SUCCESS | CI/CD et Deploiement (GitHub Actions CI lint+typecheck+test+build+python, deploy staging/production, Dockerfiles multi-stage API/Web/OCR, docker-compose dev hot-reload + prod avec limites memoire, .env.example complet) |
@@ -113,3 +131,9 @@
 | 2026-04-16 | 11.2 | SUCCESS | Effectif & Postes (module HR complet, 8 templates metier, auto-fill proportionnel NAF+effectif, WorkforceForDuerp, 9 declencheurs DUERP, wizard frontend 3 etapes), 55 nouveaux tests, 763 total API |
 | 2026-04-16 | 11.3 | SUCCESS | DUERP V3 (risk-database-v2 8 profils metier+6 universels, matrice 4x4, action-plan, PAPRIPACT, maladies pro 8 tableaux RG, formations 12 obligatoires, EPI 13 normes EN, update-engine, work-units-database 8 metiers, penalites, conservation 40 ans), 94 nouveaux tests, 857 total API |
 | 2026-04-16 | 11.4 | SUCCESS | Devis Conforme (moteur TVA intelligent 7 regimes x 19 secteurs x 5 types client, mentions legales auto par forme juridique x secteur x client, CERFA BTP 1301-SD, alertes franchise, detection NAF→secteur), 57 nouveaux tests, 914 total API |
+| 2026-04-16 | P0-P6 | SUCCESS | Migration PostgreSQL complete — tous les modules migres depuis in-memory Maps vers Prisma repos, 708 tests |
+| 2026-04-16 | D0 | SUCCESS | render.yaml avec PostgreSQL, health check DB, env vars required, startup DB check, 710 tests |
+| 2026-04-16 | D1 | SUCCESS | Security headers registered, CORS strict, reject default JWT in prod, 712 tests |
+| 2026-04-16 | D2 | SUCCESS | /health/live, /metrics endpoint, smoke-test.sh, structured JSON logs, 714 tests |
+| 2026-04-16 | D3 | SUCCESS | Playwright prod config, 4 parcours E2E API, route non-regression, 714 tests |
+| 2026-04-16 | D4 | SUCCESS | SEO meta tags, maintenance page, production checklist, 714 tests |

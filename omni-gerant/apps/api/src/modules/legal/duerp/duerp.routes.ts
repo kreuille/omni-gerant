@@ -1,77 +1,28 @@
 import type { FastifyInstance } from 'fastify';
-import {
-  createDuerpService,
-  type DuerpRepository,
-  type DuerpDocument,
-} from './duerp.service.js';
+import { createDuerpService } from './duerp.service.js';
+import { createPrismaDuerpRepository } from './duerp.repository.js';
 import { createDuerpSchema, updateDuerpSchema } from './duerp.schemas.js';
 import { getRisksByNafCode, detectPurchaseRisks } from './risk-database.js';
 import { generateDuerpHtml } from './duerp-pdf.js';
-import { createDuerpAutoFill, type TenantProfile, type PurchaseInfo, type InsuranceInfo } from './duerp-autofill.js';
+import { createDuerpAutoFill, type PurchaseInfo, type InsuranceInfo } from './duerp-autofill.js';
 import { createSiretLookup } from '../../../lib/siret-lookup.js';
+import { createTenantRepository } from '../../tenant/tenant.repository.js';
 import { authenticate, requirePermission } from '../../../plugins/auth.js';
 import { injectTenant } from '../../../plugins/tenant.js';
 
 // BUSINESS RULE [CDC-2.4]: Routes DUERP avec auto-fill intelligent
 
 export async function duerpRoutes(app: FastifyInstance) {
-  // In-memory repo
-  const documents = new Map<string, DuerpDocument>();
-
-  // In-memory tenant profiles (simulated — will come from tenant module)
-  const tenantProfiles = new Map<string, TenantProfile>();
-
-  const repo: DuerpRepository = {
-    async create(tenantId, data) {
-      const id = crypto.randomUUID();
-      const doc: DuerpDocument = {
-        ...data,
-        id,
-        created_at: new Date(),
-        updated_at: new Date(),
-        deleted_at: null,
-      };
-      documents.set(id, doc);
-      return doc;
-    },
-    async findById(id, tenantId) {
-      const d = documents.get(id);
-      if (!d || d.tenant_id !== tenantId || d.deleted_at) return null;
-      return d;
-    },
-    async findLatest(tenantId) {
-      const docs = [...documents.values()]
-        .filter((d) => d.tenant_id === tenantId && !d.deleted_at)
-        .sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
-      return docs[0] || null;
-    },
-    async update(id, tenantId, data) {
-      const d = documents.get(id);
-      if (!d || d.tenant_id !== tenantId || d.deleted_at) return null;
-      const updated = { ...d, ...data, updated_at: new Date() } as DuerpDocument;
-      documents.set(id, updated);
-      return updated;
-    },
-    async softDelete(id, tenantId) {
-      const d = documents.get(id);
-      if (!d || d.tenant_id !== tenantId) return false;
-      d.deleted_at = new Date();
-      return true;
-    },
-    async list(tenantId) {
-      return [...documents.values()]
-        .filter((d) => d.tenant_id === tenantId && !d.deleted_at)
-        .sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
-    },
-  };
+  const repo = createPrismaDuerpRepository();
+  const tenantRepo = createTenantRepository();
 
   const duerpService = createDuerpService(repo);
   const siretLookup = createSiretLookup();
 
-  // Auto-fill orchestrator
+  // Auto-fill orchestrator — wired to tenant repository
   const autoFill = createDuerpAutoFill({
     lookupSiret: (siret) => siretLookup.lookup(siret),
-    getTenantProfile: async (tenantId) => tenantProfiles.get(tenantId) ?? null,
+    getTenantProfile: async (tenantId) => tenantRepo.findById(tenantId),
     getRecentPurchases: async () => [] as PurchaseInfo[], // TODO: wire to purchases module
     getInsurances: async () => [] as InsuranceInfo[], // TODO: wire to insurance module
     getLatestDuerp: async (tenantId) => repo.findLatest(tenantId),

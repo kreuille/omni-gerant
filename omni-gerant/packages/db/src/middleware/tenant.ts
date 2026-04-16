@@ -11,6 +11,23 @@ const TENANT_SCOPED_MODELS = new Set([
   'Quote',
   'Invoice',
   'Payment',
+  'Supplier',
+  'Purchase',
+  'BankAccount',
+  'BankTransaction',
+  'Duerp',
+  'DuerpUpdateTrigger',
+  'Papripact',
+  'DuerpArchive',
+  'TrainingRecord',
+  'EpiAssignment',
+  'InvoiceHashChain',
+  'Nf525AuditEntry',
+  'IncomingInvoice',
+  'EReportingEntry',
+  'RgpdTreatment',
+  'InsurancePolicy',
+  'TenantSettings',
 ]);
 
 // Models that are not tenant-scoped

@@ -3,8 +3,8 @@ import { createTenantService } from './tenant.service.js';
 import { updateTenantProfileSchema, siretLookupSchema } from './tenant.schemas.js';
 import { createSiretLookup } from '../../lib/siret-lookup.js';
 import { createViesClient } from '../../lib/vies-client.js';
-import { getAllLegalForms, getLegalFormInfo } from './legal-form.js';
-import { getAllTvaRegimes, getTvaRegimeInfo, getApplicableTvaRates } from './tva-regime.js';
+import { getAllLegalForms } from './legal-form.js';
+import { getAllTvaRegimes } from './tva-regime.js';
 import { authenticate, requirePermission } from '../../plugins/auth.js';
 import { injectTenant } from '../../plugins/tenant.js';
 

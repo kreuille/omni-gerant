@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
-import { createSupplierService, type SupplierRepository, type Supplier } from './supplier.service.js';
+import { createSupplierService } from './supplier.service.js';
+import { createPrismaSupplierRepository } from './supplier.repository.js';
 import { createSupplierSchema, updateSupplierSchema, supplierListQuerySchema } from './supplier.schemas.js';
 import { authenticate, requirePermission } from '../../plugins/auth.js';
 import { injectTenant } from '../../plugins/tenant.js';
@@ -7,66 +8,7 @@ import { injectTenant } from '../../plugins/tenant.js';
 // BUSINESS RULE [CDC-2.2]: Endpoints fournisseurs
 
 export async function supplierRoutes(app: FastifyInstance) {
-  // Placeholder in-memory repo
-  const suppliers = new Map<string, Supplier>();
-
-  const repo: SupplierRepository = {
-    async create(data) {
-      const id = crypto.randomUUID();
-      const supplier: Supplier = {
-        id,
-        tenant_id: data.tenant_id,
-        name: data.name,
-        siret: data.siret ?? null,
-        email: data.email ?? null,
-        phone: data.phone ?? null,
-        address: data.address ? (data.address as Record<string, unknown>) : null,
-        iban: data.iban ?? null,
-        bic: data.bic ?? null,
-        payment_terms: data.payment_terms ?? 30,
-        category: data.category ?? null,
-        created_at: new Date(),
-        updated_at: new Date(),
-        deleted_at: null,
-      };
-      suppliers.set(id, supplier);
-      return supplier;
-    },
-    async findById(id, tenantId) {
-      const s = suppliers.get(id);
-      if (!s || s.tenant_id !== tenantId || s.deleted_at) return null;
-      return s;
-    },
-    async update(id, tenantId, data) {
-      const s = suppliers.get(id);
-      if (!s || s.tenant_id !== tenantId || s.deleted_at) return null;
-      const updated = { ...s, ...data, updated_at: new Date() } as Supplier;
-      suppliers.set(id, updated);
-      return updated;
-    },
-    async softDelete(id, tenantId) {
-      const s = suppliers.get(id);
-      if (!s || s.tenant_id !== tenantId) return false;
-      s.deleted_at = new Date();
-      return true;
-    },
-    async list(tenantId, query) {
-      let items = [...suppliers.values()].filter(
-        (s) => s.tenant_id === tenantId && !s.deleted_at,
-      );
-      if (query.search) {
-        const term = query.search.toLowerCase();
-        items = items.filter((s) => s.name.toLowerCase().includes(term));
-      }
-      if (query.category) {
-        items = items.filter((s) => s.category === query.category);
-      }
-      const total = items.length;
-      items = items.slice(0, query.limit);
-      return { items, total };
-    },
-  };
-
+  const repo = createPrismaSupplierRepository();
   const supplierService = createSupplierService(repo);
   const preHandlers = [authenticate, injectTenant];
 

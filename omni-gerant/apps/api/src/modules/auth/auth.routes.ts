@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { createHash } from 'node:crypto';
-import { createAuthService, type AuthRepository, type User } from './auth.service.js';
+import { createAuthService } from './auth.service.js';
+import { createPrismaAuthRepository } from './auth.repository.js';
 import { registerSchema, loginSchema, verify2faSchema, refreshTokenSchema, enable2faSchema } from './auth.schemas.js';
 import { verifyAccessToken, generateTokenPair, type JwtPayload } from './jwt.js';
 import { verifyTotpCode } from './totp.js';
@@ -9,57 +10,7 @@ import { authenticate } from '../../plugins/auth.js';
 // BUSINESS RULE [CDC-6]: Auth endpoints (public + authenticated)
 
 export async function authRoutes(app: FastifyInstance) {
-  // In-memory repo — functional for dev/demo, use Prisma in production
-  const users = new Map<string, User>();
-  const usersByEmail = new Map<string, string>(); // email → id
-  const refreshTokens = new Map<string, { user_id: string; revoked_at: Date | null; expires_at: Date }>();
-
-  const repo: AuthRepository = {
-    async findUserByEmail(email: string) {
-      const id = usersByEmail.get(email.toLowerCase());
-      return id ? users.get(id) ?? null : null;
-    },
-    async findUserById(id: string) {
-      return users.get(id) ?? null;
-    },
-    async createTenantAndUser(data) {
-      const user: User = {
-        id: crypto.randomUUID(),
-        tenant_id: crypto.randomUUID(),
-        email: data.email,
-        password_hash: data.password_hash,
-        first_name: data.first_name,
-        last_name: data.last_name,
-        role: 'owner',
-        totp_secret: null,
-        totp_enabled: false,
-      };
-      users.set(user.id, user);
-      usersByEmail.set(data.email.toLowerCase(), user.id);
-      return user;
-    },
-    async storeRefreshToken(userId, tokenHash, expiresAt) {
-      refreshTokens.set(tokenHash, { user_id: userId, revoked_at: null, expires_at: expiresAt });
-    },
-    async findRefreshToken(tokenHash) {
-      return refreshTokens.get(tokenHash) ?? null;
-    },
-    async revokeRefreshToken(tokenHash) {
-      const token = refreshTokens.get(tokenHash);
-      if (token) refreshTokens.set(tokenHash, { ...token, revoked_at: new Date() });
-    },
-    async revokeAllRefreshTokens(userId) {
-      for (const [hash, token] of refreshTokens) {
-        if (token.user_id === userId) refreshTokens.set(hash, { ...token, revoked_at: new Date() });
-      }
-    },
-    async updateTotpSecret(userId, secret, enabled) {
-      const user = users.get(userId);
-      if (user) users.set(userId, { ...user, totp_secret: secret, totp_enabled: enabled });
-    },
-    async updateLastLogin() {},
-  };
-
+  const repo = createPrismaAuthRepository();
   const authService = createAuthService(repo);
 
   // POST /api/auth/register (public)

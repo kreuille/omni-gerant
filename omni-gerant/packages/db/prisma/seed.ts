@@ -24,7 +24,7 @@ async function main() {
   });
 
   // Seed admin user (password: TestPassword1)
-  await prisma.user.upsert({
+  const user = await prisma.user.upsert({
     where: { tenant_id_email: { tenant_id: tenant.id, email: 'admin@test.com' } },
     update: {},
     create: {
@@ -37,7 +37,61 @@ async function main() {
     },
   });
 
+  // Seed a demo client
+  const client = await prisma.client.upsert({
+    where: { id: '00000000-0000-0000-0000-000000000001' },
+    update: {},
+    create: {
+      id: '00000000-0000-0000-0000-000000000001',
+      tenant_id: tenant.id,
+      type: 'company',
+      company_name: 'Client Demo SAS',
+      siret: '98765432109876',
+      email: 'contact@clientdemo.fr',
+      phone: '01 23 45 67 89',
+      address_line1: '5 Avenue des Champs-Elysees',
+      zip_code: '75008',
+      city: 'Paris',
+      country: 'FR',
+      payment_terms: 30,
+    },
+  });
+
+  // Seed a demo product
+  await prisma.product.upsert({
+    where: { tenant_id_reference: { tenant_id: tenant.id, reference: 'SRV-001' } },
+    update: {},
+    create: {
+      tenant_id: tenant.id,
+      type: 'service',
+      reference: 'SRV-001',
+      name: 'Prestation de conseil',
+      description: 'Conseil en gestion et organisation',
+      unit: 'hour',
+      unit_price_cents: 8000, // 80.00 EUR
+      tva_rate: 2000, // 20%
+      category: 'services',
+    },
+  });
+
+  // Seed default tenant settings
+  const settingsCategories = ['accounting', 'payments', 'ppf', 'connectors'];
+  for (const category of settingsCategories) {
+    await prisma.tenantSettings.upsert({
+      where: { tenant_id_category: { tenant_id: tenant.id, category } },
+      update: {},
+      create: {
+        tenant_id: tenant.id,
+        category,
+        data: {},
+      },
+    });
+  }
+
   console.warn(`Seeded tenant: ${tenant.name} (${tenant.id})`);
+  console.warn(`Seeded user: ${user.email} (${user.id})`);
+  console.warn(`Seeded client: ${client.company_name}`);
+  console.warn('Seeded 1 product, 4 tenant settings');
 }
 
 main()

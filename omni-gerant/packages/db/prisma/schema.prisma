@@ -25,14 +25,18 @@ model Tenant {
   updated_at DateTime @updatedAt
   deleted_at DateTime?
 
-  users     User[]
-  clients   Client[]
-  products  Product[]
-  quotes    Quote[]
-  invoices  Invoice[]
-  suppliers     Supplier[]
-  purchases     Purchase[]
-  bank_accounts BankAccount[]
+  users              User[]
+  clients            Client[]
+  products           Product[]
+  quotes             Quote[]
+  invoices           Invoice[]
+  suppliers          Supplier[]
+  purchases          Purchase[]
+  bank_accounts      BankAccount[]
+  duerps             Duerp[]
+  rgpd_treatments    RgpdTreatment[]
+  insurance_policies InsurancePolicy[]
+  tenant_settings    TenantSettings[]
 
   @@map("tenants")
 }
@@ -407,4 +411,378 @@ model AuditLog {
   @@index([tenant_id, created_at])
   @@index([entity_type, entity_id])
   @@map("audit_logs")
+}
+
+// ====================================================================
+// DUERP — Document Unique d'Evaluation des Risques Professionnels
+// BUSINESS RULE [CDC-2.4]: Module Legal et Conformite
+// ====================================================================
+
+model Duerp {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id       String    @db.Uuid
+  company_name    String
+  siret           String?
+  naf_code        String?
+  activity_label  String?
+  employee_count  Int       @default(1)
+  evaluator_name  String?
+  evaluation_date DateTime  @default(now())
+  status          String    @default("draft") // draft, validated, archived
+  version         Int       @default(1)
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+  deleted_at      DateTime?
+
+  tenant     Tenant @relation(fields: [tenant_id], references: [id])
+  work_units DuerpWorkUnit[]
+  archives   DuerpArchive[]
+  papripact  Papripact?
+  triggers   DuerpUpdateTrigger[]
+
+  @@index([tenant_id, deleted_at])
+  @@map("duerps")
+}
+
+model DuerpWorkUnit {
+  id             String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  duerp_id       String  @db.Uuid
+  name           String
+  description    String?
+  employee_count Int     @default(1)
+
+  risks DuerpRisk[]
+  duerp Duerp     @relation(fields: [duerp_id], references: [id], onDelete: Cascade)
+
+  @@index([duerp_id])
+  @@map("duerp_work_units")
+}
+
+model DuerpRisk {
+  id                  String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  work_unit_id        String  @db.Uuid
+  category            String
+  label               String
+  description         String?
+  gravity             Int     // 1-4
+  probability         Int     // 1-4
+  risk_level          Int     // gravity * probability
+  exposure_situations Json?   // string[]
+  health_consequences Json?   // string[]
+  legal_references    Json?   // string[]
+  residual_risk       Int?
+
+  prevention_measures DuerpPreventionMeasure[]
+  work_unit           DuerpWorkUnit @relation(fields: [work_unit_id], references: [id], onDelete: Cascade)
+
+  @@index([work_unit_id])
+  @@map("duerp_risks")
+}
+
+model DuerpPreventionMeasure {
+  id                  String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  risk_id             String  @db.Uuid
+  label               String
+  type                String  // technical, organizational, individual, formation
+  principle_level     Int     // 1-9 (L4121-2)
+  priority            String  // immediate, short_term, medium_term
+  responsible_role    String?
+  verification_method String?
+  status              String  @default("planned") // planned, in_progress, done
+
+  risk DuerpRisk @relation(fields: [risk_id], references: [id], onDelete: Cascade)
+
+  @@index([risk_id])
+  @@map("duerp_prevention_measures")
+}
+
+// DUERP E8 — Triggers de mise a jour
+model DuerpUpdateTrigger {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id    String    @db.Uuid
+  duerp_id     String    @db.Uuid
+  trigger_type String    // chemical_purchase, equipment_purchase, annual_review, accident, regulatory
+  source_id    String?   @db.Uuid
+  source_type  String?   // purchase, incident
+  description  String
+  severity     String    @default("info") // info, warning, critical
+  status       String    @default("pending") // pending, acknowledged, resolved, dismissed
+  created_at   DateTime  @default(now())
+  resolved_at  DateTime?
+
+  duerp Duerp @relation(fields: [duerp_id], references: [id])
+
+  @@index([tenant_id, status])
+  @@index([duerp_id])
+  @@map("duerp_update_triggers")
+}
+
+// DUERP E9 — PAPRIPACT (Programme Annuel de Prevention)
+model Papripact {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id         String   @db.Uuid
+  duerp_id          String   @db.Uuid @unique
+  year              Int
+  status            String   @default("draft") // draft, validated, in_progress, completed
+  total_budget_cents Int     @default(0)
+  spent_cents       Int      @default(0)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  actions PapripactAction[]
+  duerp   Duerp @relation(fields: [duerp_id], references: [id])
+
+  @@index([tenant_id])
+  @@map("papripacts")
+}
+
+model PapripactAction {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  papripact_id    String    @db.Uuid
+  risk_id         String?   @db.Uuid
+  label           String
+  type            String    // technical, organizational, formation, individual
+  priority        String    // immediate, short_term, medium_term, long_term
+  responsible     String?
+  deadline        DateTime?
+  budget_cents    Int       @default(0)
+  spent_cents     Int       @default(0)
+  status          String    @default("planned") // planned, in_progress, done, cancelled
+  completion_date DateTime?
+
+  papripact Papripact @relation(fields: [papripact_id], references: [id], onDelete: Cascade)
+
+  @@index([papripact_id])
+  @@map("papripact_actions")
+}
+
+// DUERP E10 — Archives (conservation 40 ans)
+model DuerpArchive {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id       String   @db.Uuid
+  duerp_id        String   @db.Uuid
+  version         Int
+  frozen_content  Json     // snapshot complet du DUERP
+  content_hash    String   // SHA-256
+  previous_hash   String?  // chaine de hash
+  archived_at     DateTime @default(now())
+  retention_until DateTime // archived_at + 40 ans
+
+  access_logs DuerpArchiveAccessLog[]
+  duerp       Duerp @relation(fields: [duerp_id], references: [id])
+
+  @@index([tenant_id])
+  @@index([duerp_id, version])
+  @@map("duerp_archives")
+}
+
+model DuerpArchiveAccessLog {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  archive_id String   @db.Uuid
+  user_id    String   @db.Uuid
+  action     String   // view, download, export
+  ip_address String?
+  created_at DateTime @default(now())
+
+  archive DuerpArchive @relation(fields: [archive_id], references: [id])
+
+  @@index([archive_id])
+  @@map("duerp_archive_access_logs")
+}
+
+// DUERP E11 — Formations
+model TrainingRecord {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id       String    @db.Uuid
+  employee_name   String
+  training_code   String    // reference dans TRAININGS_DATABASE
+  training_label  String
+  obtained_date   DateTime
+  expiry_date     DateTime?
+  certificate_url String?
+  status          String    @default("valid") // valid, expiring_soon, expired
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  @@index([tenant_id])
+  @@index([tenant_id, status])
+  @@index([tenant_id, expiry_date])
+  @@map("training_records")
+}
+
+// DUERP E12 — EPI (Equipements de Protection Individuelle)
+model EpiAssignment {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id     String    @db.Uuid
+  employee_name String
+  epi_code      String    // reference dans PPE database
+  epi_label     String
+  assigned_date DateTime
+  expiry_date   DateTime?
+  en_norm       String?
+  status        String    @default("assigned") // assigned, expired, replaced
+  created_at    DateTime  @default(now())
+
+  @@index([tenant_id])
+  @@index([tenant_id, status])
+  @@map("epi_assignments")
+}
+
+// ====================================================================
+// NF525 — Conformite anti-fraude TVA
+// ====================================================================
+
+// NF525 N2-N3 — Chaine de hash des factures
+model InvoiceHashChain {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id       String   @db.Uuid
+  invoice_id      String   @db.Uuid
+  sequence_number Int
+  content_hash    String   // SHA-256 du contenu facture
+  previous_hash   String   // hash precedent ou GENESIS
+  chain_hash      String   // SHA-256(content_hash + previous_hash)
+  created_at      DateTime @default(now())
+
+  @@unique([tenant_id, sequence_number])
+  @@index([tenant_id])
+  @@index([invoice_id])
+  @@map("invoice_hash_chains")
+}
+
+// NF525 — Journal d'audit NF525
+model Nf525AuditEntry {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id   String   @db.Uuid
+  action_type String   // creation, finalization, sending, payment, cancellation, export, verification
+  entity_type String   // invoice, credit_note
+  entity_id   String   @db.Uuid
+  user_id     String   @db.Uuid
+  hash_before String?
+  hash_after  String?
+  metadata    Json?
+  created_at  DateTime @default(now())
+
+  @@index([tenant_id, created_at])
+  @@index([entity_type, entity_id])
+  @@map("nf525_audit_entries")
+}
+
+// NF525 N1 — Factures entrantes
+model IncomingInvoice {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id         String    @db.Uuid
+  supplier_id       String?   @db.Uuid
+  purchase_id       String?   @db.Uuid
+  source            String    // upload, email, webhook
+  status            String    @default("received") // received, validated, matched, accounted, rejected
+  original_filename String?
+  document_url      String?
+  facturx_profile   String?   // MINIMUM, BASIC_WL, BASIC, EN16931, EXTENDED
+  parsed_data       Json?     // ParsedFacturXInvoice
+  sender_siret      String?
+  sender_name       String?
+  invoice_number    String?
+  issue_date        DateTime?
+  total_ht_cents    Int?
+  total_tva_cents   Int?
+  total_ttc_cents   Int?
+  currency          String    @default("EUR")
+  duplicate_of_id   String?   @db.Uuid
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+
+  @@index([tenant_id, status])
+  @@index([tenant_id, sender_siret])
+  @@map("incoming_invoices")
+}
+
+// NF525 N4 — E-Reporting (B2C et international)
+model EReportingEntry {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id       String    @db.Uuid
+  type            String    // b2c, international
+  invoice_id      String?   @db.Uuid
+  period          String    // 2026-01, 2026-Q1
+  total_ht_cents  Int
+  total_tva_cents Int
+  tva_rate        Int
+  status          String    @default("pending") // pending, sent, accepted, rejected
+  ppf_reference   String?
+  sent_at         DateTime?
+  created_at      DateTime  @default(now())
+
+  @@index([tenant_id, period])
+  @@index([tenant_id, status])
+  @@map("e_reporting_entries")
+}
+
+// ====================================================================
+// Legal — RGPD et Assurances
+// ====================================================================
+
+// RGPD — Registre des traitements
+model RgpdTreatment {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id           String    @db.Uuid
+  name                String
+  purpose             String
+  legal_basis         String    // consent, contract, legal_obligation, vital_interest, public_interest, legitimate_interest
+  data_categories     Json      // string[]
+  data_subjects       Json      // string[]
+  recipients          Json?     // string[]
+  retention_days      Int?
+  security_measures   Json?     // string[]
+  transfer_outside_eu Boolean   @default(false)
+  transfer_details    String?
+  dpia_required       Boolean   @default(false)
+  status              String    @default("active") // active, inactive, archived
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @updatedAt
+  deleted_at          DateTime?
+
+  tenant Tenant @relation(fields: [tenant_id], references: [id])
+
+  @@index([tenant_id, deleted_at])
+  @@map("rgpd_treatments")
+}
+
+// Assurances — Coffre-fort numerique
+model InsurancePolicy {
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id            String    @db.Uuid
+  type                 String    // rc_pro, decennale, multirisque, auto, other
+  insurer              String
+  policy_number        String?
+  start_date           DateTime
+  end_date             DateTime
+  premium_cents        Int?
+  coverage_amount_cents Int?
+  document_url         String?
+  status               String    @default("active") // active, expiring_soon, expired
+  created_at           DateTime  @default(now())
+  updated_at           DateTime  @updatedAt
+  deleted_at           DateTime?
+
+  @@index([tenant_id, deleted_at])
+  tenant Tenant @relation(fields: [tenant_id], references: [id])
+
+  @@index([tenant_id, end_date])
+  @@map("insurance_policies")
+}
+
+// ====================================================================
+// Settings — Configuration par tenant
+// ====================================================================
+
+model TenantSettings {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id  String   @db.Uuid
+  category   String   // accounting, payments, ppf, connectors
+  data       Json     // configuration JSON
+  updated_at DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenant_id], references: [id])
+
+  @@unique([tenant_id, category])
+  @@map("tenant_settings")
 }
