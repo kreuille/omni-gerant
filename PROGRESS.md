@@ -1,7 +1,7 @@
 # Progression - Omni-Gerant
 
-**Derniere mise a jour** : 2026-04-14
-**Dernier prompt complete** : 10.3
+**Derniere mise a jour** : 2026-04-16
+**Dernier prompt complete** : B3 (bugfix)
 **Prochain prompt a executer** : TERMINE
 
 ## Checklist des Prompts
@@ -59,12 +59,22 @@
 - [x] Prompt 10.2 — Securite et Hardening — `COMPLETED`
 - [x] Prompt 10.3 — CI/CD et Configuration Deploiement — `COMPLETED`
 
+### Phase 11 : Enrichissements
+- [x] Prompt 11.1 — Profil Entreprise Complet (auto-fill SIRET, detection TVA) — `COMPLETED`
+
+### Bug Fixes
+- [x] B0 — Persistence devis/factures + Calcul TVA — `COMPLETED`
+- [x] B1 — Routes manquantes + RBAC Dashboard — `COMPLETED`
+- [x] B2 — Workflows + Validation + SIRET — `COMPLETED`
+- [x] B3 — Navigation + UI — `COMPLETED`
+
 ## Statistiques
-- **Total prompts** : 32
-- **Completes** : 32
+- **Total prompts** : 33 (+ 4 bugfix)
+- **Completes** : 37
 - **En cours** : 0
 - **Restants** : 0
 - **Progression** : 100%
+- **Tests** : 825 unitaires (Vitest) + 51 E2E (Playwright)
 
 ## Journal d'execution
 
@@ -103,3 +113,8 @@
 | 2026-04-14 | 10.1 | SUCCESS | Optimisation Performance (cache Redis/memory avec TTL+invalidation tenant, query optimizer, index tenant_id+date bank_transactions, SWR presets frontend, Suspense wrapper skeletons), 15 nouveaux tests, 589 total API |
 | 2026-04-14 | 10.2 | SUCCESS | Securite et Hardening (headers HSTS/CSP/X-Frame-Options, sanitization XSS detect+escape, AES-256-GCM chiffrement IBAN/tokens, rate limiting auth 5/15min upload 10/min, CSRF tokens, Next.js middleware CSP+auth redirect), 24 nouveaux tests, 613 total API |
 | 2026-04-14 | 10.3 | SUCCESS | CI/CD et Deploiement (GitHub Actions CI lint+typecheck+test+build+python, deploy staging/production, Dockerfiles multi-stage API/Web/OCR, docker-compose dev hot-reload + prod avec limites memoire, .env.example complet) |
+| 2026-04-16 | 11.1 | SUCCESS | Profil Entreprise Complet (auto-fill SIRET cascade 3 couches Pappers/SIRENE/data.gouv, detection regime TVA, DUERP wizard 5 etapes) |
+| 2026-04-16 | B0 | SUCCESS | Fix persistence factures (stub repo → Map in-memory), TVA basis points → pourcentage (20 au lieu de 2000), guard >100, 825 tests |
+| 2026-04-16 | B1 | SUCCESS | Routes CRUD clients+produits+settings creees, RBAC dashboard:read pour tous roles, POST /api/bank/accounts |
+| 2026-04-16 | B2 | SUCCESS | Quote send/duplicate acceptent body vide, evaluator_name DUERP optionnel, SIRET cascade timeout 5s + erreur SIRET_LOOKUP_UNAVAILABLE |
+| 2026-04-16 | B3 | SUCCESS | /onboarding redirige /step-1, pages settings consolidees sous (dashboard)/settings, /settings redirige /settings/profile |

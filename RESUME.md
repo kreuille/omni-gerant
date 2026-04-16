@@ -16,4 +16,26 @@ Protocole d'execution :
 
 Regles : autonomie totale, tests obligatoires, qualite constante, pas de raccourci.
 
+## Etat actuel (2026-04-16)
+
+- **32 prompts de dev** + **1 prompt enrichissement (11.1)** + **4 bugfix (B0-B3)** = tous COMPLETED
+- **825 tests unitaires** (Vitest) + 51 tests E2E (Playwright)
+- **0 regression**
+
+### Derniers changements (B0-B3, 2026-04-16) :
+- `tva_rate` standardise en **pourcentage** (20, 10, 5.5, 2.1) — plus de basis points
+- Invoice repo in-memory implemente (etait un stub)
+- Routes CRUD `/api/clients`, `/api/products`, `/api/settings/*` creees
+- RBAC : ressource `dashboard` ajoutee (read pour tous les roles)
+- DUERP : `evaluator_name` optionnel (defaut: "Responsable")
+- SIRET cascade : timeout 5s/source, erreur `SIRET_LOOKUP_UNAVAILABLE`
+- Frontend : `/onboarding` → `/step-1`, settings consolides sous `(dashboard)/settings/`
+
+### Prochaines etapes :
+- Migrer in-memory → PostgreSQL + Prisma
+- Service OCR Python
+- Connexion Stripe/GoCardless en mode test
+- Notifications email (Resend/SendGrid)
+- Mode sombre
+
 Commence maintenant.
