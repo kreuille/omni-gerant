@@ -473,6 +473,7 @@ const PLOMBIER: MetierRiskProfile = {
 // ── Imports des modules de metiers ───────────────────────────────────
 
 import { BTP_TRADES } from './trades-btp.js';
+import { ALIMENTAIRE_TRADES } from './trades-alimentaire.js';
 
 // ── Registre complet ────────────────────────────────────────────────
 
@@ -489,6 +490,7 @@ export const METIER_RISK_DATABASE: MetierRiskProfile[] = [
   BUREAU,
   PHARMACIE,
   ...BTP_TRADES,
+  ...ALIMENTAIRE_TRADES,
 ];
 
 // ── Lookup functions ────────────────────────────────────────────────
