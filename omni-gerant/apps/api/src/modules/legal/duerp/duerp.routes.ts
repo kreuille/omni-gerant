@@ -1,9 +1,6 @@
 import type { FastifyInstance } from 'fastify';
-import {
-  createDuerpService,
-  type DuerpRepository,
-  type DuerpDocument,
-} from './duerp.service.js';
+import { createDuerpService } from './duerp.service.js';
+import { createPrismaDuerpRepository } from './duerp.repository.js';
 import { createDuerpSchema, updateDuerpSchema } from './duerp.schemas.js';
 import { getRisksByNafCode, detectPurchaseRisks } from './risk-database.js';
 import { generateDuerpHtml } from './duerp-pdf.js';
@@ -15,55 +12,10 @@ import { injectTenant } from '../../../plugins/tenant.js';
 // BUSINESS RULE [CDC-2.4]: Routes DUERP avec auto-fill intelligent
 
 export async function duerpRoutes(app: FastifyInstance) {
-  // In-memory repo
-  const documents = new Map<string, DuerpDocument>();
+  const repo = createPrismaDuerpRepository();
 
-  // In-memory tenant profiles (simulated — will come from tenant module)
+  // In-memory tenant profiles (simulated — will come from tenant module in P6)
   const tenantProfiles = new Map<string, TenantProfile>();
-
-  const repo: DuerpRepository = {
-    async create(tenantId, data) {
-      const id = crypto.randomUUID();
-      const doc: DuerpDocument = {
-        ...data,
-        id,
-        created_at: new Date(),
-        updated_at: new Date(),
-        deleted_at: null,
-      };
-      documents.set(id, doc);
-      return doc;
-    },
-    async findById(id, tenantId) {
-      const d = documents.get(id);
-      if (!d || d.tenant_id !== tenantId || d.deleted_at) return null;
-      return d;
-    },
-    async findLatest(tenantId) {
-      const docs = [...documents.values()]
-        .filter((d) => d.tenant_id === tenantId && !d.deleted_at)
-        .sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
-      return docs[0] || null;
-    },
-    async update(id, tenantId, data) {
-      const d = documents.get(id);
-      if (!d || d.tenant_id !== tenantId || d.deleted_at) return null;
-      const updated = { ...d, ...data, updated_at: new Date() } as DuerpDocument;
-      documents.set(id, updated);
-      return updated;
-    },
-    async softDelete(id, tenantId) {
-      const d = documents.get(id);
-      if (!d || d.tenant_id !== tenantId) return false;
-      d.deleted_at = new Date();
-      return true;
-    },
-    async list(tenantId) {
-      return [...documents.values()]
-        .filter((d) => d.tenant_id === tenantId && !d.deleted_at)
-        .sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
-    },
-  };
 
   const duerpService = createDuerpService(repo);
   const siretLookup = createSiretLookup();
