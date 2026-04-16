@@ -478,6 +478,15 @@ import { COMMERCE_TRADES } from './trades-commerce.js';
 import { SANTE_TRADES } from './trades-sante.js';
 import { TERTIAIRE_TRADES } from './trades-tertiaire.js';
 import { INDUSTRIE_TRADES } from './trades-industrie.js';
+import { AGRICULTURE_TRADES } from './trades-agriculture.js';
+import { TRANSPORT_TRADES } from './trades-transport.js';
+import { PROPRETE_TRADES } from './trades-proprete.js';
+import { BEAUTE_TRADES } from './trades-beaute.js';
+import { EDUCATION_TRADES } from './trades-education.js';
+import { HOTELLERIE_TRADES } from './trades-hotellerie.js';
+import { SECURITE_TRADES } from './trades-securite.js';
+import { SPORT_LOISIRS_TRADES } from './trades-sport-loisirs.js';
+import { DIVERS_TRADES } from './trades-divers.js';
 
 // ── Registre complet ────────────────────────────────────────────────
 
@@ -499,6 +508,15 @@ export const METIER_RISK_DATABASE: MetierRiskProfile[] = [
   ...SANTE_TRADES,
   ...TERTIAIRE_TRADES,
   ...INDUSTRIE_TRADES,
+  ...AGRICULTURE_TRADES,
+  ...TRANSPORT_TRADES,
+  ...PROPRETE_TRADES,
+  ...BEAUTE_TRADES,
+  ...EDUCATION_TRADES,
+  ...HOTELLERIE_TRADES,
+  ...SECURITE_TRADES,
+  ...SPORT_LOISIRS_TRADES,
+  ...DIVERS_TRADES,
 ];
 
 // ── Lookup functions ────────────────────────────────────────────────
