@@ -1,6 +1,6 @@
 // BUSINESS RULE [CDC-2.4]: E1 — 15 metiers BTP specialises
-// Peintre, Menuisier, Carreleur, Macon, Couvreur, Platrier, Chaudronnier,
-// Serrurier, Terrassement, Construction routes, Solier, Poseur menuiseries, Ascensoriste, Vitrier, Charpentier
+// Peintre, Menuisier, Carreleur, Macon, Couvreur, Platrier, Charpentier,
+// Chaudronnier, Serrurier, Terrassement, Construction routes, Solier, Poseur menuiseries, Ascensoriste, Vitrier
 
 import type { MetierRiskProfile } from './risk-database-v2.js';
 
@@ -179,6 +179,198 @@ export const BTP_TRADES: MetierRiskProfile[] = [
       r('cha-manutention', 'Manutention bois lourds', 'Port de madriers, pannes et bois de charpente (> 50 kg parfois)', 'cha-stockage', ['Dechargement camion', 'Transport bois a bras en atelier', 'Monte sur chantier'], 3, 3, ['Chariot, palonnier'], ['Grue ou palan pour pieces lourdes', 'Limit portage a 2 personnes', 'Chariot a roues tout-terrain']),
       r('cha-intemperies', 'Intemperies / foudre en charpente', 'Travail en exterieur expose au vent, pluie, foudre sur structure haute', 'cha-couverture', ['Vent fort sur structure', 'Orage en cours de levage', 'Bois mouille glissant', 'Froid hivernal'], 3, 3, ['Arret par mauvais temps'], ['Aneometre sur chantier', 'Arret levage si vent > 60 km/h', 'Suivi meteo', 'Vetements thermiques']),
       r('cha-chimique', 'Produits de traitement bois', 'Contact ou inhalation de produits de traitement du bois (insecticide, fongicide)', 'cha-atelier', ['Trempage bois en cuve', 'Application traitement au pistolet', 'Manipulation bois fraichement traite'], 2, 3, ['Gants', 'Ventilation'], ['Masque A2 si pulverisation', 'Gants nitrile longs', 'FDS affichees', 'Lavage mains apres manipulation']),
+    ],
+  },
+
+  // ── Chaudronnier ───────────────────────────────────────────────
+  {
+    metierSlug: 'chaudronnier', label: 'Chaudronnier-Soudeur', category: 'btp_construction',
+    nafCodes: ['25.11Z', '25.29Z'], idcc: '1597',
+    legalReferences: ['Tableau RG 44 (fumees soudage)', 'Art. R4222-1 (ventilation)', 'Directive Machines 2006/42/CE'],
+    workUnits: [
+      wu('chau-soudure', 'Poste de soudure', 'Soudure MIG/MAG, TIG, arc, chalumeau sur pieces metalliques', '2-4'),
+      wu('chau-decoupe', 'Decoupe / meulage', 'Decoupe plasma, oxycoupage, meulage, tronconnage', '1-3'),
+      wu('chau-assemblage', 'Assemblage / montage', 'Assemblage de structures metalliques, cintrage, pliage', '2-4'),
+      wu('chau-chantier', 'Chantier exterieur', 'Interventions de soudure et chaudronnerie sur site client', '2-4'),
+      wu('chau-stockage', 'Stockage / approvisionnement', 'Stockage toles, tubes, gaz de soudage', '1'),
+    ],
+    risks: [
+      r('chau-brulure', 'Brulures (soudure, meulage)', 'Brulure par projection de metal en fusion, contact piece chaude, arc electrique', 'chau-soudure', ['Projection d\'etincelles et de metal en fusion', 'Contact avec piece venant d\'etre soudee', 'Retour de flamme chalumeau', 'Brulure par rayonnement UV/IR'], 3, 4, ['Tablier cuir soudeur', 'Gants soudeur EN 12477'], ['Ecrans de protection entre postes', 'Rideau de soudure pour la zone', 'Kit brulure au poste', 'Marquage des pieces chaudes']),
+      r('chau-fumees', 'Fumees de soudage (RG 44)', 'Inhalation de fumees metalliques (chrome, nickel, manganese) — Tableau RG 44', 'chau-soudure', ['Soudure inox (chrome hexavalent)', 'Soudure galvanise (zinc)', 'Soudure en espace confine', 'Meulage cordons de soudure'], 3, 4, ['Aspiration localisee sur torche', 'Masque FFP2'], ['Torche aspirante obligatoire', 'Masque FFP3 si inox ou galva', 'Controle annuel exposition', 'Suivi medical renforce (pneumologue)', 'Ventilation generale atelier']),
+      r('chau-bruit', 'Bruit (meulage, martelage)', 'Exposition au bruit des meuleuses, marteaux et outils de decoupe (> 95 dB)', 'chau-decoupe', ['Meulage cordons', 'Tronconnage a disque', 'Martelage de redressage', 'Decoupe plasma'], 3, 4, ['Bouchons d\'oreilles'], ['Casque antibruit EN 352 obligatoire en atelier', 'Outils silencieux si disponibles', 'Encoffrement poste de meulage', 'Audiogramme annuel']),
+      r('chau-rayonnement', 'Rayonnement UV/IR (soudure)', 'Lesions oculaires (photokeratite, coup d\'arc) et cutanees par rayonnement', 'chau-soudure', ['Arc de soudure sans protection', 'Reflexion sur piece metallique', 'Coup d\'arc par poste voisin'], 3, 3, ['Cagoule de soudeur teinte auto'], ['Cagoule electronique teinte variable obligatoire', 'Ecrans de protection inter-postes', 'Manches longues et col montant', 'Protection UV pour la peau exposee']),
+      r('chau-manutention', 'Manutention (toles, tubes lourds)', 'Port de toles et tubes metalliques lourds (> 30 kg), postures contraignantes', 'chau-assemblage', ['Manipulation toles grand format', 'Port de tubes acier', 'Positionnement pieces sur marbre', 'Retournement pieces lourdes'], 3, 3, ['Palan, pont roulant'], ['Vireur de soudage pour pieces lourdes', 'Potence de levage au poste', 'Limitation port manuel a 25 kg', 'Formation gestes et postures']),
+      r('chau-coupure', 'Coupures (toles, bavures)', 'Coupure par aretes vives de toles, bavures de soudure, meulage', 'chau-decoupe', ['Manipulation toles brutes', 'Ebavurage pieces', 'Nettoyage copeaux metalliques'], 2, 4, ['Gants anti-coupure EN 388'], ['Ebavurage systematique apres decoupe', 'Gants EN 388 niveau 5 obligatoires', 'Bac de recuperation copeaux', 'Lunettes EN 166 au meulage']),
+      r('chau-incendie', 'Incendie / explosion (gaz, solvants)', 'Risque d\'incendie par etincelles de soudure pres de materiaux inflammables', 'chau-stockage', ['Soudure pres de produits inflammables', 'Fuite bouteille gaz (acetylene)', 'Stockage solvants de degraissage'], 4, 2, ['Extincteurs', 'Permis de feu'], ['Permis de feu obligatoire hors atelier', 'Stockage gaz conforme (local ventile, chaines)', 'Couverture anti-feu au poste', 'Controle fuites gaz hebdomadaire']),
+      r('chau-electrique', 'Risque electrique (poste a souder)', 'Electrisation par poste a souder defectueux ou cable endommage', 'chau-soudure', ['Cable de masse mal connecte', 'Isolation du poste defectueuse', 'Travail en milieu humide'], 3, 2, ['Verification visuelle cables', 'Poste a souder conforme'], ['Verification electrique annuelle des postes', 'Gants isolants pour le raccordement', 'Remplacement immediat cables endommages', 'Interdiction soudure si sol mouille']),
+    ],
+  },
+
+  // ── Serrurier-Metallier ────────────────────────────────────────
+  {
+    metierSlug: 'serrurier-metallier', label: 'Serrurier-Metallier', category: 'btp_construction',
+    nafCodes: ['25.12Z', '43.32B'], idcc: '1597',
+    legalReferences: ['Directive Machines 2006/42/CE', 'Art. R4323-58 (hauteur)', 'Art. R4412-1 (chimique)'],
+    workUnits: [
+      wu('ser-atelier', 'Atelier fabrication', 'Decoupe, soudure, assemblage de pieces metalliques (portails, garde-corps, escaliers)', '2-5'),
+      wu('ser-meulage', 'Poste meulage / finition', 'Meulage, ponçage, ebavurage, peinture metallerie', '1-3'),
+      wu('ser-pose', 'Chantier pose / depannage', 'Pose de menuiseries metalliques, serrures, garde-corps sur chantier', '1-3'),
+      wu('ser-soudure', 'Poste de soudure', 'Soudure MIG, TIG, arc sur acier, inox, aluminium', '1-3'),
+      wu('ser-vehicule', 'Vehicule / deplacements', 'Deplacements inter-chantiers et depannages', '1'),
+    ],
+    risks: [
+      r('ser-coupure', 'Coupures (metal, meulage)', 'Coupure par toles, bavures metalliques, meule, scie a ruban', 'ser-atelier', ['Manipulation toles brutes', 'Scie a ruban metal', 'Ebavurage pieces', 'Manipulation barreaux, grilles'], 3, 4, ['Gants anti-coupure EN 388'], ['Gants EN 388 niveau 5 obligatoires', 'Lunettes EN 166 au meulage', 'Ebavurage systematique', 'Carter sur scie a ruban']),
+      r('ser-bruit', 'Bruit (meulage, martelage, soudure)', 'Exposition au bruit des meuleuses (> 100 dB), marteaux, perceuses', 'ser-meulage', ['Disqueuse de meulage', 'Martelage de redressage', 'Perceuse a colonne metal', 'Poinconneuse'], 3, 4, ['Bouchons d\'oreilles'], ['Casque antibruit EN 352', 'Meules de qualite (moins bruyantes)', 'Encoffrement machines fixes', 'Audiogramme annuel']),
+      r('ser-fumees', 'Fumees de soudure', 'Inhalation fumees metalliques lors de la soudure acier, inox, aluminium', 'ser-soudure', ['Soudure MIG en atelier', 'Soudure TIG inox', 'Soudure en chantier confine'], 3, 3, ['Aspiration localisee', 'Masque FFP2'], ['Torche aspirante en atelier', 'Masque FFP3 si inox/galva', 'Ventilation renforcee si chantier confine', 'Suivi medical renforce']),
+      r('ser-chute-hauteur', 'Chute de hauteur (pose)', 'Chute depuis echelle, echafaudage lors de la pose de garde-corps, escaliers', 'ser-pose', ['Pose garde-corps en hauteur', 'Intervention sur toiture (verriere)', 'Echelle appuyee en facade', 'Pose fenetre metallique'], 4, 2, ['Echafaudage roulant', 'Harnais'], ['PIRL ou nacelle plutot qu\'echelle', 'Harnais si pas de protection collective', 'Formation travail en hauteur', 'Verification echafaudage avant chaque poste']),
+      r('ser-manutention', 'Manutention (portails, escaliers)', 'Port de pieces lourdes et encombrantes (portails, garde-corps, escaliers metalliques)', 'ser-atelier', ['Deplacement portail en atelier', 'Chargement camion', 'Montee escalier metallique en etage'], 3, 3, ['Palan, chariot'], ['Potence de levage', 'Ventouses pour panneaux', 'Manutention a 2 personnes obligatoire > 25 kg', 'Chariot de transport adapte']),
+      r('ser-projection', 'Projections (meulage, soudure)', 'Projection d\'etincelles, particules metalliques dans les yeux', 'ser-meulage', ['Meulage sans ecran', 'Soudure sans ecran lateral', 'Percage metal'], 2, 4, ['Lunettes de protection'], ['Lunettes EN 166 obligatoires en atelier', 'Ecran facial pour meulage prolonge', 'Ecrans inter-postes', 'Affichage EPI par zone']),
+      r('ser-chimique', 'Risque chimique (peintures, solvants)', 'Inhalation vapeurs de peinture metallerie, degraissant, antirouille', 'ser-meulage', ['Application peinture epoxy', 'Degraissage pieces au solvant', 'Application antirouille'], 2, 3, ['Ventilation atelier', 'Gants nitrile'], ['Cabine de peinture ventilee', 'Substitution solvants par aqueux', 'Masque A2 si pulverisation', 'FDS affichees']),
+      r('ser-routier', 'Risque routier', 'Accidents lors des deplacements pour pose et depannages', 'ser-vehicule', ['Trajet inter-chantiers', 'Vehicule charge (portails)', 'Urgence depannage serrurerie'], 3, 2, ['Vehicule entretenu'], ['Arrimage materiel et pieces', 'Planning avec temps de trajet', 'Formation eco-conduite']),
+    ],
+  },
+
+  // ── Terrassement-Demolition ────────────────────────────────────
+  {
+    metierSlug: 'terrassement-demolition', label: 'Terrassement et Demolition', category: 'btp_construction',
+    nafCodes: ['43.12A', '43.12B', '43.11Z'], idcc: '1597',
+    legalReferences: ['Art. R4534-1 (BTP)', 'Decret 2012-639 (amiante)', 'Art. R4541-1 (manutention)', 'Tableau RG 69 (vibrations)'],
+    workUnits: [
+      wu('terr-fouilles', 'Fouilles / terrassement', 'Creusement de tranchees, fouilles, terrassements en pleine masse', '2-6'),
+      wu('terr-demolition', 'Demolition structures', 'Demolition de batiments, murs, dalles avec engins ou manuellement', '2-6'),
+      wu('terr-engins', 'Conduite engins', 'Pelle mecanique, mini-pelle, chargeuse, camion benne', '1-3'),
+      wu('terr-amiante', 'Zone amiante / desamiantage', 'Intervention sur materiaux amiantiferes, confinement, retrait', '2-4'),
+      wu('terr-stockage', 'Zone de stockage / tri', 'Tri et stockage des materiaux de demolition, bennes', '1-2'),
+    ],
+    risks: [
+      r('terr-ensevelissement', 'Ensevelissement (fouilles)', 'Eboulement de parois de tranchee ou de fouille non blindee — risque mortel', 'terr-fouilles', ['Fouille > 1.30m sans blindage', 'Terrain meuble apres pluie', 'Vibrations d\'engins a proximite', 'Surcharge en bord de fouille'], 4, 3, ['Blindage tranchees', 'Etude de sol prealable'], ['Blindage systematique > 1.30m', 'Interdiction stockage en bord de fouille (1m min)', 'Evacuation si fortes pluies', 'Inspection quotidienne parois', 'Echelle d\'evacuation tous les 25m']),
+      r('terr-ecrasement-engin', 'Ecrasement par engin', 'Heurt ou ecrasement par pelle mecanique, chargeuse ou camion benne', 'terr-engins', ['Recul d\'engin sans visibilite', 'Pelle en rotation', 'Camion benne en manoeuvre', 'Travail dans la zone d\'evolution'], 4, 3, ['Gilet haute visibilite', 'Bip de recul sur engins'], ['Zone d\'exclusion autour des engins (rayon giration)', 'Radio entre machiniste et sol', 'Camera de recul sur engins', 'Formation CACES conducteur et signaleur au sol']),
+      r('terr-amiante', 'Amiante (demolition)', 'Exposition aux fibres d\'amiante lors de demolition de batiments anciens', 'terr-amiante', ['Depose materiaux amiantiferes', 'Cassage beton avec amiante', 'Transport dechets amiante', 'Poussiere lors de la demolition'], 4, 3, ['Diagnostic amiante avant travaux'], ['Formation SS3 obligatoire', 'Confinement zone de retrait', 'Masque TM3P APR', 'Combinaison jetable + sur-chaussures', 'Sas de decontamination', 'Suivi medical amiante 40 ans']),
+      r('terr-vibrations', 'Vibrations corps entier (engins) — RG 69', 'Vibrations transmises au corps entier par la conduite d\'engins', 'terr-engins', ['Conduite pelle sur terrain accidente', 'Utilisation BRH (brise-roche)', 'Chargeuse sur sols irreguliers', 'Mini-pelle sur chantier'], 3, 4, ['Siege suspendu sur engins'], ['Limiteur de vibrations sur engins', 'Rotation des conducteurs (max 4h continues)', 'Entretien pistes de chantier', 'Suivi medical renforce', 'Outils basse vibration (BRH)']),
+      r('terr-chute-objets', 'Chute d\'objets / projections', 'Chute de materiaux de demolition, projection de gravats, eclats de beton', 'terr-demolition', ['Demolition de murs (chute gravats)', 'Projection lors de cassage beton', 'Chute d\'elements de structure', 'Benne de tri dechets'], 4, 3, ['Casque EN 397', 'Lunettes EN 166'], ['Zone d\'exclusion sous demolition', 'Filets de protection', 'Arrosage anti-poussiere', 'Protection collective avant individuelle']),
+      r('terr-poussieres', 'Poussieres (demolition, terrassement)', 'Inhalation de poussieres de beton, platre, silice lors de la demolition', 'terr-demolition', ['Cassage beton a la pelle', 'BRH sur dalle', 'Balayage gravats', 'Chargement benne dechets'], 3, 3, ['Masque FFP2', 'Arrosage sommaire'], ['Arrosage systematique anti-poussiere', 'Masque FFP3 si silice ou amiante possible', 'Confinement si interieur', 'Aspiration a la source si possible']),
+      r('terr-bruit', 'Bruit (BRH, engins)', 'Exposition au bruit des engins de demolition, BRH (> 100 dB)', 'terr-demolition', ['BRH en fonctionnement', 'Pelle mecanique', 'Compresseur', 'Marteau-piqueur'], 3, 3, ['Bouchons d\'oreilles'], ['Casque antibruit EN 352 obligatoire', 'Limitation duree exposition', 'Rotation des operateurs', 'Audiogramme annuel']),
+      r('terr-routier', 'Risque routier (engins sur voie)', 'Collision entre engins de chantier et vehicules de circulation', 'terr-engins', ['Engin traversant une voie publique', 'Camion benne en circulation', 'Entree/sortie de chantier'], 4, 2, ['Balisage chantier', 'Gilets haute visibilite'], ['Signalisation temporaire conforme', 'Plan de circulation chantier', 'Guide de manoeuvre a la sortie', 'Gyrophare sur tous les engins']),
+    ],
+  },
+
+  // ── Construction de routes ─────────────────────────────────────
+  {
+    metierSlug: 'construction-routes', label: 'Construction de routes et voiries', category: 'btp_construction',
+    nafCodes: ['42.11Z', '42.12Z'], idcc: '1597',
+    legalReferences: ['Art. R4534-1 (BTP)', 'Arrete du 15/09/1999 (signalisation temporaire)', 'Tableau RG 16 bis (goudrons)'],
+    workUnits: [
+      wu('route-chaussee', 'Chaussee / voirie', 'Mise en oeuvre enrobes, compactage, revetements de chaussee', '4-10'),
+      wu('route-signalisation', 'Signalisation / balisage', 'Pose de signalisation temporaire et definitive, marquage au sol', '1-3'),
+      wu('route-terrassement', 'Terrassement routier', 'Preparation de la plateforme, decaissement, remblai', '3-8'),
+      wu('route-engins', 'Engins / materiels', 'Conduite finisseur, compacteur, repandeur de liant', '2-4'),
+      wu('route-vehicule', 'Vehicules / base de vie', 'Deplacements, base de vie, vestiaires', '1-3'),
+    ],
+    risks: [
+      r('route-circulation', 'Heurt par vehicules en circulation', 'Collision avec un vehicule de circulation lors de travaux sur voie ouverte', 'route-chaussee', ['Travail sur voie ouverte a la circulation', 'Balisage insuffisant', 'Vehicule forçant la zone de chantier', 'Nuit ou faible visibilite'], 4, 4, ['Gilet haute visibilite EN 20471 classe 3', 'Signalisation temporaire'], ['Signalisation temporaire conforme a l\'arrete', 'Alternat avec feux tricolores', 'Fourgon fleche a l\'amont', 'Eclairage chantier de nuit', 'Formation signalisation temporaire']),
+      r('route-bitume', 'Brulure (bitume chaud, enrobes)', 'Brulure par bitume chaud (160-180°C), enrobes, liant', 'route-chaussee', ['Application enrobe chaud', 'Eclaboussure de bitume', 'Contact finisseur', 'Point a temps (joints)'], 3, 3, ['Gants cuir longs', 'Vetements couvrants'], ['Gants resistants chaleur EN 407', 'Chaussures hautes cuir', 'Kit brulure sur le chantier', 'Formation premiers secours brulure']),
+      r('route-chimique', 'Risque chimique (bitume, solvants)', 'Inhalation de fumees de bitume (HAP), solvants de nettoyage, emulsions', 'route-chaussee', ['Fumees de bitume chaud', 'Nettoyage au gasoil/solvant', 'Epandage emulsion de coupure', 'Application primaire'], 3, 3, ['Masque FFP2 si bitume chaud'], ['Masque FFP2 obligatoire lors de l\'application', 'Substitution nettoyage gasoil par bio-nettoyant', 'Enrobes tiedes plutot que chauds quand possible', 'Suivi medical renforce (HAP)']),
+      r('route-ecrasement-engin', 'Ecrasement par engins', 'Heurt ou ecrasement par compacteur, finisseur, camion benne', 'route-engins', ['Recul compacteur', 'Zone d\'evolution du finisseur', 'Camion benne en dechargement', 'Repandeur de liant'], 4, 3, ['Gilet EN 20471', 'Bip de recul'], ['Zone d\'exclusion autour de chaque engin', 'Guide au sol pour les manoeuvres', 'Camera de recul sur tous les engins', 'Radio entre machiniste et sol']),
+      r('route-uv', 'UV / intemperies', 'Exposition prolongee au soleil, chaleur, froid, pluie en exterieur', 'route-chaussee', ['Travail plein soleil en ete', 'Bitume + soleil (temperature au sol > 60°C)', 'Pluie prolongee', 'Vent froid hivernal'], 2, 4, ['Eau fraiche', 'Casquette'], ['Creme solaire SPF50 fournie', 'Amenagement horaires ete (debut 6h)', 'Abri sur chantier (base de vie)', 'Vetements anti-UV', 'Plan canicule chantier']),
+      r('route-vibrations', 'Vibrations (compacteur, BRH)', 'Vibrations corps entier par conduite de compacteur et engins', 'route-engins', ['Compacteur vibrant', 'Plaque vibrante manuelle', 'Conduite prolongee sur terrain irregulier'], 3, 3, ['Siege suspendu'], ['Rotation conducteurs (max 4h)', 'Plaque vibrante avec amortisseur', 'Entretien piste chantier', 'Suivi medical vibrations']),
+      r('route-bruit', 'Bruit (engins, BRH)', 'Bruit des engins de terrassement, raboteuse, BRH (> 90 dB)', 'route-terrassement', ['Raboteuse', 'BRH', 'Concasseur mobile', 'Compacteur vibrant'], 3, 3, ['Bouchons d\'oreilles'], ['Casque antibruit EN 352', 'Rotation des operateurs', 'Limitation duree exposition', 'Audiogramme annuel']),
+      r('route-manutention', 'Manutention (bordures, regards)', 'Port de bordures beton (30-50 kg), plaques de regard, paves', 'route-terrassement', ['Pose de bordures beton', 'Manipulation plaques fonte', 'Paves et dalles', 'Grilles d\'avaloir'], 3, 3, ['Pince a bordures'], ['Pince mecanique a bordures obligatoire', 'Limite 25 kg port manuel', 'Mini-grue pour plaques lourdes', 'Formation gestes et postures']),
+    ],
+  },
+
+  // ── Solier-Moquettiste ─────────────────────────────────────────
+  {
+    metierSlug: 'solier-moquettiste', label: 'Solier-Moquettiste', category: 'btp_construction',
+    nafCodes: ['43.33Z'], idcc: '1597',
+    legalReferences: ['Tableau RG 84 (solvants)', 'Art. R4412-1 (chimique)', 'Art. R4541-1 (manutention)'],
+    workUnits: [
+      wu('sol-pose', 'Zone de pose', 'Pose de revetements souples (moquette, PVC, lino, parquet colle)', '1-4'),
+      wu('sol-prep', 'Preparation support', 'Ragréage, primaire, decoupe, soudure de les', '1-3'),
+      wu('sol-decoupe', 'Poste de decoupe', 'Decoupe de revetements au cutter, outils speciaux', '1-2'),
+      wu('sol-stockage', 'Stockage rouleaux', 'Stockage rouleaux (30-50 kg), colles, ragréages', '1'),
+      wu('sol-vehicule', 'Vehicule / deplacements', 'Transport rouleaux et materiel sur chantier', '1'),
+    ],
+    risks: [
+      r('sol-chimique', 'Risque chimique (colles, solvants) — RG 84', 'Inhalation de vapeurs de colles neoprene, solvants de nettoyage, primaires', 'sol-pose', ['Application colle neoprene', 'Nettoyage au solvant', 'Application primaire epoxy', 'Soudure chimique des les PVC'], 3, 4, ['Ventilation du local', 'Gants nitrile'], ['Colles aqueuses en substitution quand possible', 'Masque A2 obligatoire si colle solvantee', 'Ventilation forcee si local confine', 'FDS affichees sur chantier', 'Suivi medical renforce']),
+      r('sol-tms-genoux', 'TMS genoux (position agenouille)', 'Atteinte des genoux (hygroma, gonarthrose) par position agenouille prolongee', 'sol-pose', ['Pose revetement au sol (8h a genoux)', 'Ragréage a genoux', 'Soudure de les au sol', 'Maroufle en position basse'], 3, 4, ['Genouilleres disponibles'], ['Genouilleres ergonomiques EN 14404 obligatoires', 'Tapis de protection genoux mousse', 'Alternance taches (decoupe debout / pose)', 'Pauses toutes les 45 min', 'Suivi medical genoux']),
+      r('sol-coupure', 'Coupures (cutter, grattoir)', 'Laceration par cutter, grattoir, couteau a enduire ou araseur', 'sol-decoupe', ['Decoupe moquette au cutter', 'Arasement PVC', 'Grattoir pour retrait ancien revetement', 'Couteau a enduire'], 3, 3, ['Gants anti-coupure fins'], ['Cutter a lame retractable automatique', 'Gants EN 388 fins (dexterite)', 'Collecteur de lames usagees', 'Position de decoupe stable (regle de guidage)']),
+      r('sol-manutention', 'Manutention (rouleaux lourds)', 'Port de rouleaux de moquette/PVC (30-80 kg), sacs de ragréage (25 kg)', 'sol-stockage', ['Dechargement rouleaux du camion', 'Monte en etage sans ascenseur', 'Deplacement de rouleaux dans les couloirs', 'Sacs de ragréage'], 3, 3, ['Diable a rouleaux'], ['Chariot porte-rouleaux', 'Monte-materiaux si etages', 'Limite port manuel 25 kg', 'Manutention a 2 pour grands rouleaux']),
+      r('sol-poussieres', 'Poussieres (ponçage, ragréage)', 'Inhalation de poussieres lors du ponçage de ragréage ou retrait ancien revetement', 'sol-prep', ['Ponçage ragréage sec', 'Retrait ancien carrelage', 'Grattage ancienne colle', 'Balayage a sec'], 2, 3, ['Masque FFP2'], ['Ponceuse avec aspiration integree', 'Masque FFP2 systematique', 'Nettoyage par aspiration (pas soufflette)', 'Aeration du local']),
+      r('sol-glissade', 'Chute de plain-pied', 'Glissade sur revetement non fixe, colle au sol, chutes de rouleaux', 'sol-pose', ['Revetement en cours de pose (non fixe)', 'Colle au sol', 'Encombrement du local par les rouleaux'], 2, 3, ['Chaussures antiderapantes'], ['Balisage zone de pose', 'Nettoyage continu de la colle au sol', 'Eclairage suffisant', 'Rangement des chutes au fur et a mesure']),
+      r('sol-electrique', 'Risque electrique', 'Contact avec cables lors de la pose pres de prises ou passage au sol', 'sol-pose', ['Decoupe pres de prises', 'Passage de cables sous revetement', 'Branchement outils electriques'], 3, 1, ['Detecteur de cables'], ['Consignation electrique si intervention pres de prises', 'Detecteur de cables avant decoupe', 'Rallonge electrique avec differentiel']),
+      r('sol-routier', 'Risque routier', 'Accidents lors des deplacements avec vehicule charge de rouleaux', 'sol-vehicule', ['Trajet inter-chantiers', 'Vehicule surcharge de rouleaux', 'Fatigue fin de journee'], 3, 2, ['Vehicule entretenu'], ['Arrimage des rouleaux obligatoire', 'Respect charge utile vehicule', 'Planning avec temps de trajet']),
+    ],
+  },
+
+  // ── Poseur de menuiseries exterieures ──────────────────────────
+  {
+    metierSlug: 'poseur-menuiseries-ext', label: 'Poseur de menuiseries exterieures', category: 'btp_construction',
+    nafCodes: ['43.32A'], idcc: '1597',
+    legalReferences: ['Art. R4323-58 (hauteur)', 'Art. R4541-1 (manutention)', 'Art. R4412-1 (chimique)'],
+    workUnits: [
+      wu('pmx-pose', 'Pose fenetres / portes', 'Depose et pose de fenetres, portes, baies vitrees, volets', '2-4'),
+      wu('pmx-hauteur', 'Travail en hauteur', 'Intervention en facade avec echafaudage, nacelle', '1-3'),
+      wu('pmx-atelier', 'Atelier preparation', 'Preparation des menuiseries, debit accessoires, pre-montage', '1-2'),
+      wu('pmx-stockage', 'Stockage / manutention', 'Stockage fenetres, portes, vitrages', '1'),
+      wu('pmx-vehicule', 'Vehicule / livraison', 'Transport des menuiseries sur chantier', '1-2'),
+    ],
+    risks: [
+      r('pmx-chute-hauteur', 'Chute de hauteur (pose en facade)', 'Chute depuis echafaudage ou nacelle lors de la pose de fenetres en etage', 'pmx-hauteur', ['Pose fenetre en etage sans protection', 'Penchement par la baie pour reglage', 'Echafaudage instable', 'Nacelle mal positionnee'], 4, 3, ['Echafaudage conforme', 'Harnais si nacelle'], ['Garde-corps temporaires a la baie', 'Nacelle plutot qu\'echelle pour les etages', 'Harnais si pas de protection collective', 'Formation travail en hauteur (recyclage 3 ans)', 'Interdiction de se pencher hors de la baie']),
+      r('pmx-coupure-verre', 'Coupure (verre, aluminium)', 'Coupure par vitrage casse, aretes d\'aluminium, tole pliee', 'pmx-pose', ['Manipulation de vitrage', 'Depose ancienne fenetre (verre casse)', 'Decoupe profiles aluminium', 'Manipulation bavures de tole'], 3, 3, ['Gants anti-coupure'], ['Gants EN 388 niveau 5 pour manipulation vitrages', 'Ventouses pour vitrages lourds', 'Lunettes EN 166 a la decoupe', 'Evacuation immediate des vitrages casses']),
+      r('pmx-manutention', 'Manutention (fenetres, baies vitrees)', 'Port de menuiseries lourdes et encombrantes (baies vitrees 50-100 kg)', 'pmx-stockage', ['Dechargement camion', 'Monte en etage', 'Positionnement dans la baie', 'Manipulation portes d\'entree blindees'], 3, 3, ['Ventouses, chariot'], ['Ventouses professionnelles pour vitrages', 'Leve-vitre mecanique', 'Manutention a 2 obligatoire > 30 kg', 'Chariot de transport adapte', 'Monte-materiaux si etages']),
+      r('pmx-chute-objet', 'Chute d\'objets (vitrage, menuiserie)', 'Chute d\'une fenetre ou d\'un vitrage depuis la zone de pose sur les personnes en bas', 'pmx-hauteur', ['Basculement fenetre avant fixation', 'Vitrage lache lors de la pose', 'Outil tombe de l\'echafaudage'], 4, 2, ['Zone d\'exclusion au sol'], ['Balisage zone inferieure obligatoire', 'Calage systematique avant lachage', 'Pochettes outils accrochees', 'Filet de protection si necessaire']),
+      r('pmx-poussieres', 'Poussieres (percage, decoupe)', 'Inhalation de poussieres de beton, bois, PVC lors du percage de fixation', 'pmx-pose', ['Percage murs beton', 'Decoupe profiles PVC', 'Ajustement au rabot', 'Meulage pierre'], 2, 3, ['Masque FFP2'], ['Perforateur avec aspiration', 'Masque FFP2 au percage interieur', 'Decoupe a l\'exterieur si possible']),
+      r('pmx-chimique', 'Risque chimique (mousse PU, silicone)', 'Contact ou inhalation de mousse polyurethane, mastic silicone, primaires', 'pmx-pose', ['Application mousse PU expansive', 'Joint silicone', 'Primaire d\'accrochage', 'Nettoyage au solvant'], 2, 3, ['Gants', 'Ventilation naturelle'], ['Gants nitrile pour mousse PU (irreversible sur la peau)', 'Masque A2 si utilisation importante', 'Produits a faible emission de COV', 'FDS sur chantier']),
+      r('pmx-electrique', 'Risque electrique', 'Contact avec cables electriques lors du percage ou depose d\'anciennes fenetres', 'pmx-pose', ['Percage pres de prises', 'Cables dans l\'embrasure', 'Volet roulant electrique'], 3, 2, ['Detecteur de cables'], ['Consignation volet roulant electrique', 'Detecteur de cables avant percage', 'Coordination avec electricien']),
+      r('pmx-routier', 'Risque routier', 'Accidents lors du transport de menuiseries avec vehicule surcharge', 'pmx-vehicule', ['Transport de baies vitrees', 'Vehicule surcharge', 'Arrimage insuffisant'], 3, 2, ['Vehicule entretenu', 'Arrimage'], ['Rack de transport pour menuiseries', 'Respect charge utile', 'Calage et arrimage avant depart', 'Formation eco-conduite']),
+    ],
+  },
+
+  // ── Ascensoriste ───────────────────────────────────────────────
+  {
+    metierSlug: 'ascensoriste', label: 'Ascensoriste', category: 'btp_construction',
+    nafCodes: ['43.29A', '33.12Z'], idcc: '1597',
+    legalReferences: ['NF C 18-510 (habilitation electrique)', 'NF EN 81-20/50 (ascenseurs)', 'Art. R4323-58 (hauteur)', 'Directive ATEX'],
+    workUnits: [
+      wu('asc-gaine', 'Gaine d\'ascenseur', 'Intervention dans la gaine : montage guides, contrepoids, cables', '1-3'),
+      wu('asc-machinerie', 'Machinerie / local technique', 'Intervention sur moteur, armoire de commande, treuil', '1-2'),
+      wu('asc-cabine', 'Cabine / portes palieres', 'Montage, reglage et maintenance de la cabine et des portes', '1-3'),
+      wu('asc-fosse', 'Fosse d\'ascenseur', 'Intervention en fosse de cuvette (espace confine)', '1-2'),
+      wu('asc-vehicule', 'Vehicule / deplacements', 'Deplacements entre sites de maintenance', '1'),
+    ],
+    risks: [
+      r('asc-chute-gaine', 'Chute dans la gaine (risque mortel)', 'Chute dans la gaine d\'ascenseur ouverte lors du montage ou de la maintenance', 'asc-gaine', ['Ouverture porte paliere sans cabine', 'Travail en toit de cabine sans garde-corps', 'Passage d\'un etage a l\'autre par la gaine', 'Chute d\'outils dans la gaine'], 4, 3, ['Harnais antichute', 'Point d\'ancrage en gaine'], ['Double verification presence cabine avant ouverture', 'Garde-corps perimetriques en gaine', 'Ligne de vie verticale dans la gaine', 'Formation specifique ascensoriste (recyclage 2 ans)', 'Procedure d\'ouverture paliere formalisee']),
+      r('asc-electrocution', 'Electrocution (armoire, moteur)', 'Electrisation ou electrocution lors d\'intervention sur armoire de commande ou moteur', 'asc-machinerie', ['Intervention armoire sous tension', 'Defaut d\'isolation moteur', 'Remise sous tension intempestive', 'Cable endommage dans la gaine'], 4, 3, ['Habilitation electrique BR/B2V', 'VAT', 'Consignation'], ['Procedure de consignation ecrite et cadenas individuel', 'Outillage isole 1000V', 'EPI arc flash adaptes', 'Formation habilitation electrique (recyclage 3 ans)', 'Verification annuelle installations']),
+      r('asc-espace-confine', 'Espace confine (fosse, machinerie)', 'Travail en espace confine dans la fosse de cuvette ou local technique exigu', 'asc-fosse', ['Intervention en fosse (profondeur 1.5-3m)', 'Local machinerie non ventile', 'Accumulation de gaz/CO2', 'Travail seul en fosse'], 4, 2, ['Ventilation portable', 'Detecteur 4 gaz'], ['Detecteur 4 gaz obligatoire avant entree', 'Ventilation forcee de la fosse', 'Procedure travailleur isole (PTI)', 'Surveillance exterieure permanente', 'Plan de sauvetage affiche']),
+      r('asc-ecrasement', 'Ecrasement (cabine, contrepoids)', 'Ecrasement par mouvement inattendu de la cabine ou du contrepoids', 'asc-gaine', ['Cabine en mouvement pendant l\'intervention', 'Contrepoids en descente', 'Pied coince entre cabine et gaine', 'Travail sous le contrepoids'], 4, 2, ['Arret et condamnation de la cabine'], ['Verification double de l\'arret cabine', 'Consignation electrique avant intervention', 'Interdiction de passer sous le contrepoids', 'Procedure de mise en securite ecrite']),
+      r('asc-manutention', 'Manutention (moteur, cables, portes)', 'Port de composants lourds dans des espaces exigus (local technique, gaine)', 'asc-machinerie', ['Remplacement moteur de treuil (100-200 kg)', 'Manipulation cables acier', 'Transport portes palieres en etages', 'Acces difficile (escaliers etroits)'], 3, 3, ['Palan portatif', 'Chariot pliant'], ['Palan ou treuil pour pieces lourdes', 'Acces ascenseur de service si existant', 'Manipulation a 2 personnes obligatoire', 'Gants anti-coupure pour cables acier']),
+      r('asc-bruit', 'Bruit (machinerie, percage)', 'Bruit du moteur d\'ascenseur, percage en gaine, travaux de fixation', 'asc-machinerie', ['Fonctionnement moteur ancien (> 80 dB)', 'Percage en gaine (reverberation)', 'Meulage guides'], 2, 3, ['Bouchons d\'oreilles'], ['Casque antibruit EN 352 en gaine', 'Limitation duree percage continu', 'Protection auditive systematique en gaine (reverberation)']),
+      r('asc-chute-plain-pied', 'Chute de plain-pied', 'Glissade sur sol de local technique, cables au sol, huile de treuil', 'asc-machinerie', ['Huile de treuil au sol', 'Cables au sol en gaine', 'Local technique encombre', 'Acces etroit fosse'], 2, 3, ['Chaussures de securite antiderapantes'], ['Nettoyage huile immediate', 'Eclairage suffisant local technique', 'Rangement cables', 'Bac de retention sous treuil']),
+      r('asc-routier', 'Risque routier', 'Accidents lors des deplacements entre sites de maintenance', 'asc-vehicule', ['Tournee de maintenance (5-8 sites/jour)', 'Vehicule charge d\'outillage', 'Urgence depannage personnes bloquees'], 3, 3, ['Vehicule entretenu'], ['Planning avec temps de trajet', 'Arrimage outillage dans vehicule', 'Procedure d\'urgence (depannage personne bloquee)', 'Formation eco-conduite']),
+    ],
+  },
+
+  // ── Vitrier ────────────────────────────────────────────────────
+  {
+    metierSlug: 'vitrier', label: 'Vitrier-Miroitier', category: 'btp_construction',
+    nafCodes: ['23.12Z', '43.34Z'], idcc: '1597',
+    legalReferences: ['Art. R4323-58 (hauteur)', 'Art. R4541-1 (manutention)', 'NF EN 12150 (verre trempe)'],
+    workUnits: [
+      wu('vit-atelier', 'Atelier decoupe / faconnage', 'Decoupe, meulage, perçage de vitrages en atelier', '1-3'),
+      wu('vit-pose', 'Chantier pose', 'Pose de vitrages, miroirs, verrières sur chantier', '1-3'),
+      wu('vit-hauteur', 'Travail en hauteur', 'Pose de vitrages en facade, verrieres de toiture', '1-2'),
+      wu('vit-stockage', 'Stockage vitrages', 'Stockage des vitrages sur chevalets, rack', '1'),
+      wu('vit-vehicule', 'Vehicule / transport', 'Transport de vitrages fragiles et lourds', '1'),
+    ],
+    risks: [
+      r('vit-coupure', 'Coupure par verre (risque grave)', 'Laceration profonde par aretes de verre lors de la manipulation, decoupe ou casse accidentelle', 'vit-atelier', ['Decoupe de verre a la molette', 'Manipulation de vitrages bruts (aretes vives)', 'Vitrage casse accidentellement', 'Nettoyage des eclats de verre'], 3, 4, ['Gants anti-coupure EN 388 niveau 5', 'Manchettes de protection'], ['Gants EN 388 niveau F (lame) obligatoires', 'Manchettes anti-coupure bras', 'Ventouses pour manipulation (eviter contact aretes)', 'Bac de recuperation des chutes de verre', 'Kit premiers secours avec pansements compressifs']),
+      r('vit-chute-hauteur', 'Chute de hauteur (pose facade)', 'Chute depuis echafaudage, nacelle ou echelle lors de la pose de vitrages en facade', 'vit-hauteur', ['Pose vitrage en etage', 'Verriere de toiture', 'Miroir en hauteur', 'Porte d\'entree vitree'], 4, 3, ['Echafaudage conforme', 'Harnais'], ['Nacelle ou echafaudage obligatoire (pas d\'echelle avec vitrage)', 'Harnais si pas de protection collective', 'Formation travail en hauteur', 'Interdiction de porter un vitrage en montant echelle']),
+      r('vit-manutention', 'Manutention (vitrages lourds)', 'Port de vitrages lourds et encombrants (double vitrage 30-80 kg), miroirs grand format', 'vit-stockage', ['Dechargement camion (vitrages sur chevalet)', 'Transport interieur', 'Mise en place dans chassis', 'Basculement chevalet de stockage'], 3, 3, ['Ventouses professionnelles', 'Chariot a vitrages'], ['Ventouses a pompe pour chaque vitrage', 'Chariot specifique vitrages', 'Manutention a 2 pour double vitrage > 30 kg', 'Chevalets anti-basculement', 'Leve-vitre electrique si vitrages lourds']),
+      r('vit-projection', 'Projection d\'eclats de verre', 'Projection d\'eclats de verre lors de la decoupe, du percage ou d\'une casse', 'vit-atelier', ['Decoupe de verre trempe', 'Percage de miroir', 'Eclatement de vitrage pendant la manipulation', 'Meulage des aretes'], 3, 3, ['Lunettes de protection EN 166'], ['Lunettes EN 166 obligatoires en atelier', 'Ecran facial pour meulage', 'Protection des yeux + visage si verre trempe', 'Table de decoupe avec rebords']),
+      r('vit-chute-vitrage', 'Chute de vitrage sur les personnes', 'Chute d\'un vitrage manipule en hauteur sur les personnes en contrebas', 'vit-hauteur', ['Vitrage lache depuis l\'echafaudage', 'Basculement lors de la pose', 'Ventouse qui lache'], 4, 2, ['Zone d\'exclusion au sol'], ['Balisage perimetre obligatoire', 'Ventouses de qualite professionnelle verifiees', 'Elingue de securite sur vitrage pendant la pose', 'Communication radio entre equipe sol et hauteur']),
+      r('vit-tms', 'TMS (postures, port charges)', 'Douleurs dos et epaules par le port de vitrages lourds et les postures de pose', 'vit-pose', ['Port de vitrage a bout de bras', 'Posture penchee pour le calage', 'Serrage prolonge des fixations'], 2, 4, ['Leve-vitre si disponible'], ['Leve-vitre electrique pour vitrages lourds', 'Ventouses ergonomiques (2 mains)', 'Rotation des postes', 'Pauses actives toutes les 2h']),
+      r('vit-chimique', 'Risque chimique (mastics, nettoyants)', 'Contact cutane ou inhalation de mastic silicone, nettoyants speciaux, acides', 'vit-pose', ['Application mastic silicone', 'Nettoyage au solvant', 'Detachant acide pour pierre'], 2, 3, ['Gants nitrile', 'Ventilation naturelle'], ['Mastics et nettoyants a faible emission COV', 'Gants nitrile systématiques', 'FDS sur chantier']),
+      r('vit-routier', 'Risque routier', 'Accidents lors du transport de vitrages fragiles avec vehicule equipe', 'vit-vehicule', ['Transport vitrages sur chevalet vehicule', 'Freinage brusque (vitrages glissent)', 'Chargement/dechargement bord de route'], 3, 2, ['Chevalet dans vehicule', 'Arrimage'], ['Chevalet conforme avec calage et sangles', 'Vitesse adaptee en charge', 'Stationnement securise pour dechargement', 'Formation chargement vitrages']),
     ],
   },
 ];
