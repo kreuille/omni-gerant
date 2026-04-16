@@ -3,6 +3,7 @@ import cors from '@fastify/cors';
 import { loadConfig } from './config.js';
 import { registerErrorHandler } from './plugins/error-handler.js';
 import { registerRateLimiter } from './plugins/rate-limiter.js';
+import { registerSecurityPlugin } from './plugins/security.js';
 import { registerDatabasePlugin } from './plugins/database.js';
 import { registerAuthPlugin } from './plugins/auth.js';
 import { registerTenantPlugin } from './plugins/tenant.js';
@@ -42,11 +43,16 @@ export async function buildApp() {
     genReqId: () => crypto.randomUUID(),
   });
 
-  // CORS
+  // CORS — strict origin in production
   await app.register(cors, {
     origin: config.CORS_ORIGIN.split(','),
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Correlation-Id'],
     credentials: true,
   });
+
+  // Security headers (HSTS, CSP, X-Frame-Options, etc.)
+  await registerSecurityPlugin(app);
 
   // Request context (correlation_id, tenant_id, user_id)
   app.addHook('onRequest', (request, _reply, done) => {

@@ -30,7 +30,20 @@ export function loadConfig(): Env {
     throw new Error(`Invalid environment variables:\n${errorMessages}`);
   }
 
-  _config = result.data;
+  const config = result.data;
+
+  // BUSINESS RULE [D1]: Reject default/insecure secrets in production
+  if (config.NODE_ENV === 'production') {
+    const INSECURE_SECRETS = [
+      'change-me-to-a-random-64-char-string',
+      'omni-gerant-prod-secret-key-at-least-32-characters-long',
+    ];
+    if (INSECURE_SECRETS.includes(config.JWT_SECRET)) {
+      throw new Error('JWT_SECRET must be changed from default value in production');
+    }
+  }
+
+  _config = config;
   return _config;
 }
 
