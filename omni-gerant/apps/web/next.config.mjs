@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Monorepo: transpile workspace packages
-  transpilePackages: ['@omni-gerant/shared'],
+  transpilePackages: ['@zenadmin/shared'],
 
   // Output standalone for Docker/production
   output: 'standalone',
