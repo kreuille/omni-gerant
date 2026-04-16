@@ -13,7 +13,7 @@ const mockProduct: Product = {
   description: 'Pose de carrelage au m2',
   unit: 'm2',
   unit_price_cents: 4500, // 45.00 EUR
-  tva_rate: 1000, // 10%
+  tva_rate: 10, // 10%
   category: 'Carrelage',
   is_active: true,
   created_at: new Date(),
@@ -44,7 +44,7 @@ describe('ProductService', () => {
         name: 'Pose de carrelage',
         unit: 'm2',
         unit_price_cents: 4500,
-        tva_rate: 1000,
+        tva_rate: 10,
       });
 
       expect(result.ok).toBe(true);
@@ -143,7 +143,7 @@ describe('ProductService', () => {
       }
       // Verify only 1 product was sent to createMany
       expect(repo.createMany).toHaveBeenCalledWith([
-        expect.objectContaining({ name: 'Valid', unit_price_cents: 1000, tva_rate: 2000 }),
+        expect.objectContaining({ name: 'Valid', unit_price_cents: 1000, tva_rate: 20 }),
       ]);
     });
 
@@ -166,28 +166,28 @@ describe('ProductService', () => {
     it('calculates TVA at 20% correctly', () => {
       // Product at 100.00 EUR HT → TVA 20.00 EUR
       const ht = money(10000);
-      const tva = tvaAmount(ht, 2000);
+      const tva = tvaAmount(ht, 20);
       expect(tva.amount_cents).toBe(2000);
     });
 
     it('calculates TVA at 10% correctly', () => {
       // Product at 45.00 EUR HT → TVA 4.50 EUR
       const ht = money(4500);
-      const tva = tvaAmount(ht, 1000);
+      const tva = tvaAmount(ht, 10);
       expect(tva.amount_cents).toBe(450);
     });
 
     it('calculates TVA at 5.5% correctly', () => {
       // Product at 200.00 EUR HT → TVA 11.00 EUR
       const ht = money(20000);
-      const tva = tvaAmount(ht, 550);
+      const tva = tvaAmount(ht, 5.5);
       expect(tva.amount_cents).toBe(1100);
     });
 
     it('calculates TVA at 2.1% correctly', () => {
       // Product at 50.00 EUR HT → TVA 1.05 EUR
       const ht = money(5000);
-      const tva = tvaAmount(ht, 210);
+      const tva = tvaAmount(ht, 2.1);
       expect(tva.amount_cents).toBe(105);
     });
 

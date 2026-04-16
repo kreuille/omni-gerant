@@ -25,10 +25,10 @@ function createValidData(): FacturxInvoiceData {
       country_code: 'FR',
     },
     lines: [
-      { position: 1, label: 'Service', quantity: 1, unit: 'unit', unit_price_cents: 10000, tva_rate: 2000, total_ht_cents: 10000 },
+      { position: 1, label: 'Service', quantity: 1, unit: 'unit', unit_price_cents: 10000, tva_rate: 20, total_ht_cents: 10000 },
     ],
     tax_groups: [
-      { tva_rate: 2000, base_ht_cents: 10000, tva_cents: 2000 },
+      { tva_rate: 20, base_ht_cents: 10000, tva_cents: 2000 },
     ],
     total_ht_cents: 10000,
     total_tva_cents: 2000,

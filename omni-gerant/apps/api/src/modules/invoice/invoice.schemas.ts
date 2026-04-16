@@ -9,7 +9,7 @@ const invoiceLineSchema = z.object({
   quantity: z.number().min(0).default(1),
   unit: z.string().max(20).default('unit'),
   unit_price_cents: z.number().int().min(0).default(0),
-  tva_rate: z.number().int().min(0).max(10000).default(2000),
+  tva_rate: z.number().min(0).max(100).default(20),
 });
 
 export const createInvoiceSchema = z.object({

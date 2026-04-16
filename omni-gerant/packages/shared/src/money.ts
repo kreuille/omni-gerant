@@ -45,24 +45,27 @@ export function formatMoney(m: Money): string {
   return `${sign}${formatted} ${m.currency}`;
 }
 
-// BUSINESS RULE [CDC-2.1]: Gestion des taux de TVA multiples (20%, 10%, 5,5%) sur un meme document
-// Rates are in basis points: 2000 = 20%, 1000 = 10%, 550 = 5.5%, 210 = 2.1%
-export function tvaAmount(ht: Money, rateBasisPoints: number): Money {
-  if (!Number.isInteger(rateBasisPoints) || rateBasisPoints < 0) {
-    throw new Error(`TVA rate must be a non-negative integer (basis points), got ${rateBasisPoints}`);
+// BUSINESS RULE [CDC-2.1]: Gestion des taux de TVA multiples (20%, 10%, 5.5%) sur un meme document
+// Rates are in percentage: 20 = 20%, 10 = 10%, 5.5 = 5.5%, 2.1 = 2.1%
+export function tvaAmount(ht: Money, ratePercent: number): Money {
+  if (ratePercent < 0) {
+    throw new Error(`TVA rate must be non-negative, got ${ratePercent}`);
   }
-  // ht.amount_cents * rate / 10000, rounded to nearest centime
-  return money(Math.round((ht.amount_cents * rateBasisPoints) / 10000), ht.currency);
+  if (ratePercent > 100) {
+    throw new Error('TVA rate seems in basis points, expected percentage (e.g. 20 for 20%)');
+  }
+  // ht.amount_cents * rate / 100, rounded to nearest centime
+  return money(Math.round((ht.amount_cents * ratePercent) / 100), ht.currency);
 }
 
-export function ttcFromHt(ht: Money, rateBasisPoints: number): Money {
-  const tva = tvaAmount(ht, rateBasisPoints);
+export function ttcFromHt(ht: Money, ratePercent: number): Money {
+  const tva = tvaAmount(ht, ratePercent);
   return addMoney(ht, tva);
 }
 
-export function htFromTtc(ttc: Money, rateBasisPoints: number): Money {
-  // HT = TTC / (1 + rate/10000)
-  const htCents = Math.round((ttc.amount_cents * 10000) / (10000 + rateBasisPoints));
+export function htFromTtc(ttc: Money, ratePercent: number): Money {
+  // HT = TTC / (1 + rate/100)
+  const htCents = Math.round((ttc.amount_cents * 100) / (100 + ratePercent));
   return money(htCents, ttc.currency);
 }
 

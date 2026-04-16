@@ -87,7 +87,7 @@ export function calculatePurchaseLineTotals(lines: PurchaseLineInput[]): {
 
   const computed_lines = lines.map((line) => {
     const line_ht = Math.round(line.quantity * line.unit_price_cents);
-    const line_tva = Math.round((line_ht * line.tva_rate) / 10000);
+    const line_tva = Math.round((line_ht * line.tva_rate) / 100);
     total_ht_cents += line_ht;
     total_tva_cents += line_tva;
     return { ...line, total_ht_cents: line_ht };

@@ -40,7 +40,7 @@ function createMockQuote(overrides?: Partial<Quote>): Quote {
         quantity: 1,
         unit: 'unit',
         unit_price_cents: 10000,
-        tva_rate: 2000,
+        tva_rate: 20,
         discount_type: null,
         discount_value: null,
         total_ht_cents: 10000,
@@ -100,8 +100,8 @@ describe('QuoteService', () => {
       const result = await service.create(TENANT_ID, {
         client_id: CLIENT_ID,
         lines: [
-          { position: 1, type: 'line', label: 'Service A', quantity: 2, unit: 'h', unit_price_cents: 5000, tva_rate: 2000 },
-          { position: 2, type: 'line', label: 'Service B', quantity: 1, unit: 'unit', unit_price_cents: 3000, tva_rate: 1000 },
+          { position: 1, type: 'line', label: 'Service A', quantity: 2, unit: 'h', unit_price_cents: 5000, tva_rate: 20 },
+          { position: 2, type: 'line', label: 'Service B', quantity: 1, unit: 'unit', unit_price_cents: 3000, tva_rate: 10 },
         ],
       });
 
@@ -124,7 +124,7 @@ describe('QuoteService', () => {
         client_id: CLIENT_ID,
         lines: [
           { position: 1, type: 'section', label: 'Phase 1', quantity: 0, unit: 'unit', unit_price_cents: 0, tva_rate: 0 },
-          { position: 2, type: 'line', label: 'Travaux', quantity: 1, unit: 'unit', unit_price_cents: 10000, tva_rate: 2000 },
+          { position: 2, type: 'line', label: 'Travaux', quantity: 1, unit: 'unit', unit_price_cents: 10000, tva_rate: 20 },
           { position: 3, type: 'comment', label: 'Delai: 2 semaines', quantity: 0, unit: 'unit', unit_price_cents: 0, tva_rate: 0 },
         ],
       });
@@ -149,7 +149,7 @@ describe('QuoteService', () => {
             quantity: 1,
             unit: 'unit',
             unit_price_cents: 10000,
-            tva_rate: 2000,
+            tva_rate: 20,
             discount_type: 'percentage',
             discount_value: 1000, // 10%
           },

@@ -8,11 +8,13 @@ import { injectTenant } from '../../plugins/tenant.js';
 // BUSINESS RULE [CDC-2.1]: Endpoints factures
 
 export async function invoiceRoutes(app: FastifyInstance) {
-  // Placeholder repo
+  // In-memory repo — functional for dev/demo, use Prisma in production
+  const invoices = new Map<string, Invoice>();
+
   const repo: InvoiceRepository = {
     async create(data) {
       const id = crypto.randomUUID();
-      return {
+      const invoice: Invoice = {
         id,
         tenant_id: data.tenant_id,
         client_id: data.client_id,
@@ -44,12 +46,55 @@ export async function invoiceRoutes(app: FastifyInstance) {
           description: l.description ?? null,
         })),
       };
+      invoices.set(id, invoice);
+      return invoice;
     },
-    async findById(_id, _tenantId) { return null; },
-    async findMany(_params) { return { items: [], next_cursor: null, has_more: false }; },
-    async updateStatus(_id, _tenantId, _status, _extra) { return null; },
-    async updatePayment(_id, _tenantId, _paid, _remaining, _status, _paidAt) { return null; },
-    async delete(_id, _tenantId) { return true; },
+    async findById(id, tenantId) {
+      const invoice = invoices.get(id);
+      if (!invoice || invoice.tenant_id !== tenantId || invoice.deleted_at) return null;
+      return invoice;
+    },
+    async findMany(params) {
+      let items = Array.from(invoices.values())
+        .filter((inv) => inv.tenant_id === params.tenant_id && !inv.deleted_at);
+      if (params.status) items = items.filter((inv) => inv.status === params.status);
+      if (params.type) items = items.filter((inv) => inv.type === params.type);
+      if (params.client_id) items = items.filter((inv) => inv.client_id === params.client_id);
+      if (params.search) {
+        const s = params.search.toLowerCase();
+        items = items.filter((inv) => inv.number.toLowerCase().includes(s));
+      }
+      items.sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
+      const limit = params.limit ?? 20;
+      return { items: items.slice(0, limit), next_cursor: null, has_more: items.length > limit };
+    },
+    async updateStatus(id, tenantId, status, extra) {
+      const invoice = invoices.get(id);
+      if (!invoice || invoice.tenant_id !== tenantId || invoice.deleted_at) return null;
+      const updated = { ...invoice, status, ...extra, updated_at: new Date() };
+      invoices.set(id, updated);
+      return updated;
+    },
+    async updatePayment(id, tenantId, paidCents, remainingCents, status, paidAt) {
+      const invoice = invoices.get(id);
+      if (!invoice || invoice.tenant_id !== tenantId || invoice.deleted_at) return null;
+      const updated = {
+        ...invoice,
+        paid_cents: paidCents,
+        remaining_cents: remainingCents,
+        status,
+        paid_at: paidAt ?? invoice.paid_at,
+        updated_at: new Date(),
+      };
+      invoices.set(id, updated);
+      return updated;
+    },
+    async delete(id, tenantId) {
+      const invoice = invoices.get(id);
+      if (!invoice || invoice.tenant_id !== tenantId) return false;
+      invoices.set(id, { ...invoice, deleted_at: new Date() });
+      return true;
+    },
   };
 
   const numberRepo = createInMemoryNumberRepo();

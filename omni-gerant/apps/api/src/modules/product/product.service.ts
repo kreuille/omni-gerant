@@ -127,16 +127,15 @@ export function createProductService(repo: ProductRepository) {
           continue;
         }
 
-        // Map TVA rate to basis points
-        let tvaRate = 2000; // default 20%
+        // Validate TVA rate (percentage)
+        const validRates = [20, 10, 5.5, 2.1, 0];
+        let tvaRate = 20; // default 20%
         if (row.tva_rate !== undefined) {
-          const rateMap: Record<number, number> = { 20: 2000, 10: 1000, 5.5: 550, 2.1: 210, 0: 0 };
-          const mapped = rateMap[row.tva_rate];
-          if (mapped === undefined) {
+          if (!validRates.includes(row.tva_rate)) {
             errors.push({ row: i + 1, error: `Invalid TVA rate: ${row.tva_rate}` });
             continue;
           }
-          tvaRate = mapped;
+          tvaRate = row.tva_rate;
         }
 
         validProducts.push({

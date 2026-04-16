@@ -114,74 +114,74 @@ describe('Money helpers', () => {
   describe('TVA calculations', () => {
     describe('tvaAmount()', () => {
       it('calculates 20% TVA', () => {
-        // 10000 cents * 2000 / 10000 = 2000 cents
-        const tva = tvaAmount(money(10000), 2000);
+        // 10000 cents * 20 / 100 = 2000 cents
+        const tva = tvaAmount(money(10000), 20);
         expect(tva.amount_cents).toBe(2000);
       });
 
       it('calculates 10% TVA', () => {
-        const tva = tvaAmount(money(10000), 1000);
+        const tva = tvaAmount(money(10000), 10);
         expect(tva.amount_cents).toBe(1000);
       });
 
       it('calculates 5.5% TVA', () => {
-        // 10000 * 550 / 10000 = 550
-        const tva = tvaAmount(money(10000), 550);
+        // 10000 * 5.5 / 100 = 550
+        const tva = tvaAmount(money(10000), 5.5);
         expect(tva.amount_cents).toBe(550);
       });
 
       it('calculates 2.1% TVA', () => {
-        // 10000 * 210 / 10000 = 210
-        const tva = tvaAmount(money(10000), 210);
+        // 10000 * 2.1 / 100 = 210
+        const tva = tvaAmount(money(10000), 2.1);
         expect(tva.amount_cents).toBe(210);
       });
 
       it('rounds correctly for odd amounts', () => {
-        // 1999 * 2000 / 10000 = 399.8 → 400
-        const tva = tvaAmount(money(1999), 2000);
+        // 1999 * 20 / 100 = 399.8 → 400
+        const tva = tvaAmount(money(1999), 20);
         expect(tva.amount_cents).toBe(400);
       });
 
       it('handles 5.5% with rounding', () => {
-        // 333 * 550 / 10000 = 18.315 → 18
-        const tva = tvaAmount(money(333), 550);
+        // 333 * 5.5 / 100 = 18.315 → 18
+        const tva = tvaAmount(money(333), 5.5);
         expect(tva.amount_cents).toBe(18);
       });
 
       it('handles zero amount', () => {
-        expect(tvaAmount(money(0), 2000).amount_cents).toBe(0);
+        expect(tvaAmount(money(0), 20).amount_cents).toBe(0);
       });
 
       it('rejects negative rate', () => {
-        expect(() => tvaAmount(money(1000), -100)).toThrow('non-negative integer');
+        expect(() => tvaAmount(money(1000), -5)).toThrow('non-negative');
       });
 
-      it('rejects non-integer rate', () => {
-        expect(() => tvaAmount(money(1000), 20.5)).toThrow('non-negative integer');
+      it('rejects rate > 100 (basis points by mistake)', () => {
+        expect(() => tvaAmount(money(1000), 2000)).toThrow('basis points');
       });
     });
 
     describe('ttcFromHt()', () => {
       it('calculates TTC from HT at 20%', () => {
-        const ttc = ttcFromHt(money(10000), 2000);
+        const ttc = ttcFromHt(money(10000), 20);
         expect(ttc.amount_cents).toBe(12000);
       });
 
       it('calculates TTC from HT at 5.5%', () => {
-        const ttc = ttcFromHt(money(10000), 550);
+        const ttc = ttcFromHt(money(10000), 5.5);
         expect(ttc.amount_cents).toBe(10550);
       });
     });
 
     describe('htFromTtc()', () => {
       it('reverse-calculates HT from TTC at 20%', () => {
-        const ht = htFromTtc(money(12000), 2000);
+        const ht = htFromTtc(money(12000), 20);
         expect(ht.amount_cents).toBe(10000);
       });
 
       it('reverse-calculates HT from TTC at 5.5%', () => {
-        // 10550 * 10000 / 10550 = 10000
-        const ht = htFromTtc(money(10550), 550);
+        // 10550 * 100 / 105.5 = 10000
+        const ht = htFromTtc(money(10550), 5.5);
         expect(ht.amount_cents).toBe(10000);
       });
     });
@@ -193,9 +193,9 @@ describe('Money helpers', () => {
         const line2_ht = money(8000); // 80.00 EUR at 10%
         const line3_ht = money(5000); // 50.00 EUR at 5.5%
 
-        const tva1 = tvaAmount(line1_ht, 2000); // 3000
-        const tva2 = tvaAmount(line2_ht, 1000); // 800
-        const tva3 = tvaAmount(line3_ht, 550); // 275
+        const tva1 = tvaAmount(line1_ht, 20); // 3000
+        const tva2 = tvaAmount(line2_ht, 10); // 800
+        const tva3 = tvaAmount(line3_ht, 5.5); // 275
 
         const total_ht = addMoney(line1_ht, line2_ht, line3_ht);
         const total_tva = addMoney(tva1, tva2, tva3);

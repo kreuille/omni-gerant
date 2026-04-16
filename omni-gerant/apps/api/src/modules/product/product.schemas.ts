@@ -12,11 +12,10 @@ export const createProductSchema = z.object({
   unit_price_cents: z.number().int().min(0).max(999_999_99),
   tva_rate: z
     .number()
-    .int()
-    .refine((v) => [2000, 1000, 550, 210, 0].includes(v), {
-      message: 'TVA rate must be 2000 (20%), 1000 (10%), 550 (5.5%), 210 (2.1%), or 0',
+    .refine((v) => [20, 10, 5.5, 2.1, 0].includes(v), {
+      message: 'TVA rate must be 20 (20%), 10 (10%), 5.5 (5.5%), 2.1 (2.1%), or 0',
     })
-    .default(2000),
+    .default(20),
   category: z.string().max(100).optional(),
   is_active: z.boolean().default(true),
 });
@@ -30,8 +29,7 @@ export const updateProductSchema = z.object({
   unit_price_cents: z.number().int().min(0).max(999_999_99).optional(),
   tva_rate: z
     .number()
-    .int()
-    .refine((v) => [2000, 1000, 550, 210, 0].includes(v))
+    .refine((v) => [20, 10, 5.5, 2.1, 0].includes(v))
     .optional(),
   category: z.string().max(100).optional().nullable(),
   is_active: z.boolean().optional(),

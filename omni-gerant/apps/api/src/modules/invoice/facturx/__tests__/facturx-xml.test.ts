@@ -26,10 +26,10 @@ function createTestData(overrides?: Partial<FacturxInvoiceData>): FacturxInvoice
       country_code: 'FR',
     },
     lines: [
-      { position: 1, label: 'Service A', quantity: 2, unit: 'h', unit_price_cents: 5000, tva_rate: 2000, total_ht_cents: 10000 },
+      { position: 1, label: 'Service A', quantity: 2, unit: 'h', unit_price_cents: 5000, tva_rate: 20, total_ht_cents: 10000 },
     ],
     tax_groups: [
-      { tva_rate: 2000, base_ht_cents: 10000, tva_cents: 2000 },
+      { tva_rate: 20, base_ht_cents: 10000, tva_cents: 2000 },
     ],
     total_ht_cents: 10000,
     total_tva_cents: 2000,
@@ -99,12 +99,12 @@ describe('Factur-X XML Generation', () => {
   it('handles multi-rate TVA', () => {
     const data = createTestData({
       lines: [
-        { position: 1, label: 'Service 20%', quantity: 1, unit: 'unit', unit_price_cents: 10000, tva_rate: 2000, total_ht_cents: 10000 },
-        { position: 2, label: 'Service 10%', quantity: 1, unit: 'unit', unit_price_cents: 5000, tva_rate: 1000, total_ht_cents: 5000 },
+        { position: 1, label: 'Service 20%', quantity: 1, unit: 'unit', unit_price_cents: 10000, tva_rate: 20, total_ht_cents: 10000 },
+        { position: 2, label: 'Service 10%', quantity: 1, unit: 'unit', unit_price_cents: 5000, tva_rate: 10, total_ht_cents: 5000 },
       ],
       tax_groups: [
-        { tva_rate: 2000, base_ht_cents: 10000, tva_cents: 2000 },
-        { tva_rate: 1000, base_ht_cents: 5000, tva_cents: 500 },
+        { tva_rate: 20, base_ht_cents: 10000, tva_cents: 2000 },
+        { tva_rate: 10, base_ht_cents: 5000, tva_cents: 500 },
       ],
       total_ht_cents: 15000,
       total_tva_cents: 2500,
@@ -135,7 +135,7 @@ describe('Factur-X XML Generation', () => {
 
   it('escapes XML special characters', () => {
     const data = createTestData({
-      lines: [{ position: 1, label: 'A & B <test>', quantity: 1, unit: 'unit', unit_price_cents: 1000, tva_rate: 2000, total_ht_cents: 1000 }],
+      lines: [{ position: 1, label: 'A & B <test>', quantity: 1, unit: 'unit', unit_price_cents: 1000, tva_rate: 20, total_ht_cents: 1000 }],
     });
     const xml = generateFacturxXml(data);
     expect(xml).toContain('A &amp; B &lt;test&gt;');
@@ -144,8 +144,8 @@ describe('Factur-X XML Generation', () => {
 
   it('handles zero amounts', () => {
     const data = createTestData({
-      lines: [{ position: 1, label: 'Free', quantity: 1, unit: 'unit', unit_price_cents: 0, tva_rate: 2000, total_ht_cents: 0 }],
-      tax_groups: [{ tva_rate: 2000, base_ht_cents: 0, tva_cents: 0 }],
+      lines: [{ position: 1, label: 'Free', quantity: 1, unit: 'unit', unit_price_cents: 0, tva_rate: 20, total_ht_cents: 0 }],
+      tax_groups: [{ tva_rate: 20, base_ht_cents: 0, tva_cents: 0 }],
       total_ht_cents: 0,
       total_tva_cents: 0,
       total_ttc_cents: 0,
@@ -159,7 +159,7 @@ describe('Factur-X XML Generation', () => {
       total_ht_cents: 99999999,
       total_tva_cents: 19999999,
       total_ttc_cents: 119999998,
-      tax_groups: [{ tva_rate: 2000, base_ht_cents: 99999999, tva_cents: 19999999 }],
+      tax_groups: [{ tva_rate: 20, base_ht_cents: 99999999, tva_cents: 19999999 }],
     });
     const xml = generateFacturxXml(data);
     expect(xml).toContain('<ram:GrandTotalAmount>1199999.98</ram:GrandTotalAmount>');

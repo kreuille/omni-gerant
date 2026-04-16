@@ -6,7 +6,7 @@ export interface LineInput {
   type: 'line' | 'section' | 'subtotal' | 'comment';
   quantity: number; // Decimal (e.g., 2.5)
   unit_price_cents: number;
-  tva_rate: number; // Basis points: 2000 = 20%
+  tva_rate: number; // Percentage: 20 = 20%, 5.5 = 5.5%
   discount_type?: 'percentage' | 'fixed' | null;
   discount_value?: number | null; // Basis points for percentage, centimes for fixed
 }
@@ -107,8 +107,9 @@ export function calculateQuoteTotals(
 
     adjustedHt = Math.max(0, adjustedHt);
 
-    // BUSINESS RULE [CDC-2.1]: TVA = round(HT * rate / 10000)
-    const tvaCents = Math.round((adjustedHt * rate) / 10000);
+    // BUSINESS RULE [CDC-2.1]: TVA = round(HT * rate / 100)
+    if (rate > 100) throw new Error('TVA rate seems in basis points, expected percentage (e.g. 20 for 20%)');
+    const tvaCents = Math.round((adjustedHt * rate) / 100);
 
     breakdown.push({
       tva_rate: rate,

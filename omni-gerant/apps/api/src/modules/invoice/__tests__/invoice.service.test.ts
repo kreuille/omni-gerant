@@ -41,7 +41,7 @@ function createMockInvoice(overrides?: Partial<Invoice>): Invoice {
       quantity: 1,
       unit: 'unit',
       unit_price_cents: 10000,
-      tva_rate: 2000,
+      tva_rate: 20,
       total_ht_cents: 10000,
     }],
     ...overrides,
@@ -111,7 +111,7 @@ describe('InvoiceService', () => {
       const result = await service.create(TENANT_ID, {
         client_id: CLIENT_ID,
         lines: [
-          { position: 1, label: 'Service A', quantity: 2, unit: 'h', unit_price_cents: 5000, tva_rate: 2000 },
+          { position: 1, label: 'Service A', quantity: 2, unit: 'h', unit_price_cents: 5000, tva_rate: 20 },
         ],
       });
 
@@ -135,7 +135,7 @@ describe('InvoiceService', () => {
         type: 'deposit',
         deposit_percent: 3000, // 30%
         lines: [
-          { position: 1, label: 'Service complet', quantity: 1, unit: 'forfait', unit_price_cents: 100000, tva_rate: 2000 },
+          { position: 1, label: 'Service complet', quantity: 1, unit: 'forfait', unit_price_cents: 100000, tva_rate: 20 },
         ],
       });
 
@@ -156,7 +156,7 @@ describe('InvoiceService', () => {
         client_id: CLIENT_ID,
         quote_id: 'quote-123',
         lines: [
-          { position: 1, label: 'Prestation', quantity: 1, unit: 'unit', unit_price_cents: 10000, tva_rate: 2000 },
+          { position: 1, label: 'Prestation', quantity: 1, unit: 'unit', unit_price_cents: 10000, tva_rate: 20 },
         ],
       });
 

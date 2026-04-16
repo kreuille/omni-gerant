@@ -109,7 +109,7 @@ export function calculateSituationAmounts(
   const lines: SituationLine[] = productLines.map((ql) => {
     totalQuoteHt += ql.total_ht_cents;
     const lineHt = Math.round((ql.total_ht_cents * situationPercent) / 10000);
-    const lineTva = Math.round((lineHt * ql.tva_rate) / 10000);
+    const lineTva = Math.round((lineHt * ql.tva_rate) / 100);
     const lineCumulativeHt = Math.round((ql.total_ht_cents * cumulativePercent) / 10000);
 
     invoiceHt += lineHt;
