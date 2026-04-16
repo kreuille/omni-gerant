@@ -1,15 +1,53 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
+import { api } from '@/lib/api-client';
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [companyName, setCompanyName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const result = await api.post<{
+        tokens: { access_token: string; refresh_token: string };
+        user: { id: string; email: string; role: string; tenant_id: string };
+      }>('/api/auth/register', {
+        company_name: companyName,
+        first_name: firstName,
+        last_name: lastName,
+        email,
+        password,
+      });
+
+      if (result.ok) {
+        localStorage.setItem('access_token', result.value.tokens.access_token);
+        localStorage.setItem('refresh_token', result.value.tokens.refresh_token);
+        router.push('/');
+      } else {
+        setError(result.error.message ?? 'Erreur lors de l\'inscription');
+      }
+    } catch {
+      setError('Impossible de contacter le serveur');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
@@ -20,14 +58,33 @@ export default function RegisterPage() {
         </div>
         <Card>
           <CardContent className="pt-6">
-            <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+            <form className="space-y-4" onSubmit={handleSubmit}>
               <Input
                 id="company"
                 label="Nom de l'entreprise"
                 placeholder="Ma Societe SARL"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
+                required
               />
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  id="firstName"
+                  label="Prenom"
+                  placeholder="Jean"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                />
+                <Input
+                  id="lastName"
+                  label="Nom"
+                  placeholder="Dupont"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                />
+              </div>
               <Input
                 id="email"
                 label="Email"
@@ -35,6 +92,7 @@ export default function RegisterPage() {
                 placeholder="vous@entreprise.fr"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                required
               />
               <Input
                 id="password"
@@ -43,9 +101,13 @@ export default function RegisterPage() {
                 placeholder="8 caracteres minimum"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                required
               />
-              <Button type="submit" className="w-full">
-                Creer mon compte
+              {error && (
+                <p className="text-sm text-red-600 bg-red-50 rounded px-3 py-2">{error}</p>
+              )}
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Creation...' : 'Creer mon compte'}
               </Button>
             </form>
             <p className="mt-4 text-center text-sm text-gray-600">

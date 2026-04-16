@@ -9,6 +9,41 @@ import type { TvaRegime, FranchiseCheckResult } from './tva-regime.js';
 import { computeFrenchTvaNumber } from '../../lib/vies-client.js';
 import type { EnrichedSiretInfo } from '../../lib/siret-lookup.js';
 
+// BUSINESS RULE [CDC-11.1]: Mapping departement → ville du Tribunal de Commerce (RCS)
+const DEPT_TO_RCS: Record<string, string> = {
+  '01': 'Bourg-en-Bresse', '02': 'Laon', '03': 'Cusset', '04': 'Manosque', '05': 'Gap',
+  '06': 'Nice', '07': 'Aubenas', '08': 'Sedan', '09': 'Foix', '10': 'Troyes',
+  '11': 'Narbonne', '12': 'Rodez', '13': 'Marseille', '14': 'Caen', '15': 'Aurillac',
+  '16': 'Angouleme', '17': 'La Rochelle', '18': 'Bourges', '19': 'Brive-la-Gaillarde',
+  '21': 'Dijon', '22': 'Saint-Brieuc', '23': 'Gueret', '24': 'Bergerac', '25': 'Besancon',
+  '26': 'Romans-sur-Isere', '27': 'Bernay', '28': 'Chartres', '29': 'Brest',
+  '30': 'Nimes', '31': 'Toulouse', '32': 'Auch', '33': 'Bordeaux', '34': 'Montpellier',
+  '35': 'Rennes', '36': 'Chateauroux', '37': 'Tours', '38': 'Grenoble', '39': 'Lons-le-Saunier',
+  '40': 'Dax', '41': 'Blois', '42': 'Saint-Etienne', '43': 'Le Puy-en-Velay', '44': 'Nantes',
+  '45': 'Orleans', '46': 'Cahors', '47': 'Agen', '48': 'Mende', '49': 'Angers',
+  '50': 'Coutances', '51': 'Chalons-en-Champagne', '52': 'Chaumont', '53': 'Laval', '54': 'Nancy',
+  '55': 'Bar-le-Duc', '56': 'Vannes', '57': 'Metz', '58': 'Nevers', '59': 'Lille',
+  '60': 'Compiegne', '61': 'Alencon', '62': 'Boulogne-sur-Mer', '63': 'Clermont-Ferrand',
+  '64': 'Bayonne', '65': 'Tarbes', '66': 'Perpignan', '67': 'Strasbourg', '68': 'Mulhouse',
+  '69': 'Lyon', '70': 'Vesoul', '71': 'Macon', '72': 'Le Mans', '73': 'Chambery',
+  '74': 'Annecy', '75': 'Paris', '76': 'Rouen', '77': 'Meaux', '78': 'Versailles',
+  '79': 'Niort', '80': 'Amiens', '81': 'Castres', '82': 'Montauban', '83': 'Toulon',
+  '84': 'Avignon', '85': 'La Roche-sur-Yon', '86': 'Poitiers', '87': 'Limoges', '88': 'Epinal',
+  '89': 'Auxerre', '90': 'Belfort', '91': 'Evry', '92': 'Nanterre', '93': 'Bobigny',
+  '94': 'Creteil', '95': 'Pontoise',
+  '971': 'Pointe-a-Pitre', '972': 'Fort-de-France', '973': 'Cayenne', '974': 'Saint-Denis', '976': 'Mamoudzou',
+};
+
+function detectRcsCity(zipCode: string): string | null {
+  if (!zipCode || zipCode.length < 2) return null;
+  // DOM-TOM: 3-digit prefix
+  if (zipCode.startsWith('97')) {
+    return DEPT_TO_RCS[zipCode.slice(0, 3)] ?? null;
+  }
+  // Metropolitan: 2-digit prefix
+  return DEPT_TO_RCS[zipCode.slice(0, 2)] ?? null;
+}
+
 // BUSINESS RULE [CDC-11.1]: Profil entreprise complet avec auto-fill SIRET
 
 export interface TenantProfile {
@@ -215,11 +250,17 @@ export function createTenantService() {
         profile.dirigeants = siretInfo.dirigeants;
       }
 
-      if (siretInfo.etablissements.length > 0) {
-        // Enrichment data available
+      // Capital social from Pappers suggestions (free enrichment)
+      if (siretInfo.capital_cents && siretInfo.capital_cents > 0) {
+        profile.capital_cents = siretInfo.capital_cents;
       }
 
-      // Detect legal form from INSEE code or label
+      // Auto-detect RCS city from zip code
+      if (!profile.rcs_city && siretInfo.address.zip_code) {
+        profile.rcs_city = detectRcsCity(siretInfo.address.zip_code);
+      }
+
+      // Detect legal form from INSEE code or label (or Pappers label)
       const legalFormCode = siretInfo.legal_form;
       if (legalFormCode && /^\d+$/.test(legalFormCode)) {
         profile.legal_form = detectLegalForm(legalFormCode);
