@@ -21,7 +21,7 @@
 - **Restants** : 0
 
 ## Pre-requis
-- Chantier 14 (Migration PostgreSQL P0-P6) : doit etre COMPLETED
+- Chantier 14 (Migration PostgreSQL P0-P6) : ✅ COMPLETED
 
 ## Journal d'execution
 
@@ -31,4 +31,4 @@
 | 2026-04-16 | D1 | COMPLETED | 712 pass, 0 fail | e834d85 | Security headers registered, CORS strict, reject default JWT in prod |
 | 2026-04-16 | D2 | COMPLETED | 714 pass, 0 fail | 96a91ac | /health/live, /metrics endpoint, smoke-test.sh, structured JSON logs |
 | 2026-04-16 | D3 | COMPLETED | 714 pass, 0 fail | 99f6a07 | Playwright prod config, 4 parcours E2E API, route non-regression |
-| 2026-04-16 | D4 | COMPLETED | 714 pass, 0 fail | — | SEO meta tags, maintenance page, production checklist |
+| 2026-04-16 | D4 | COMPLETED | 714 pass, 0 fail | 61e3ab2 | SEO meta tags, maintenance page, production checklist |
