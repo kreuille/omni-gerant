@@ -20,7 +20,7 @@ Objectif Zero Saisie, Conformite Native (Factur-X 2026), Pilotage Proactif.
 - **Database** : In-memory Maps (PostgreSQL 16 + Prisma ORM prevu)
 - **AI/OCR** : Python FastAPI + LayoutLM/Donut (prevu)
 - **Monorepo** : pnpm workspaces + Turborepo
-- **Tests** : Vitest (694 tests, 61 fichiers) + Playwright E2E (51 tests)
+- **Tests** : Vitest (825 tests, 72 fichiers) + Playwright E2E (51 tests)
 
 ## Structure Monorepo
 ```
@@ -44,54 +44,65 @@ omni-gerant/
 ### 1. Authentification & Securite
 - JWT (access + refresh tokens), 2FA TOTP
 - RBAC (owner, admin, member, accountant)
-- Ressources : tenant, user, client, product, quote, invoice, purchase, bank, audit, settings, billing, export, **legal**
+- Ressources : tenant, user, client, product, quote, invoice, purchase, bank, audit, settings, billing, export, legal, **dashboard**
 - Middleware CSP, rate limiting, audit trail
 
 ### 2. Ventes (Devis & Factures)
 - CRUD devis avec workflow (draft -> sent -> accepted -> invoiced -> cancelled)
-- CRUD factures avec numerotation sequentielle (FAC-YYYY-NNN)
-- Calcul TVA multi-taux France (20%, 10%, 5.5%, 2.1%)
+- CRUD factures avec numerotation sequentielle (FAC-YYYY-NNN) et persistence in-memory
+- Calcul TVA multi-taux France (20%, 10%, 5.5%, 2.1%) — **tva_rate en pourcentage** (20, pas 2000)
 - Generation PDF, Factur-X XML
 - Partage de devis par lien public (/share/quote/[token])
+- Envoi de devis avec body optionnel (POST /api/quotes/:id/send)
 - Relances automatiques pour factures impayees
 
-### 3. Achats & Fournisseurs
+### 3. Clients & Produits
+- CRUD clients (entreprise/particulier) avec recherche et filtrage
+- CRUD produits/services avec catalogue, reference unique, import CSV
+
+### 4. Achats & Fournisseurs
 - CRUD fournisseurs avec lookup SIRET
 - CRUD achats avec validation workflow
 - OCR upload pour extraction automatique
 - Detection automatique de risques chimiques/equipements dans les achats
 
-### 4. Banque
+### 5. Banque
 - Connexion bancaire (Open Banking / GoCardless)
+- Creation manuelle de comptes bancaires (POST /api/bank/accounts)
 - Rapprochement bancaire automatique
 - Previsions de tresorerie
 - Graphique CA mensuel sur le dashboard
 
-### 5. Legal & Conformite
+### 6. Legal & Conformite
 - **DUERP** : Document Unique d'Evaluation des Risques Professionnels
   - Base complete de risques pour **73 codes NAF** (tous les secteurs francais 01-99)
   - Chargement automatique des risques par code NAF
   - Matrice des risques (gravite x probabilite)
   - Generation PDF
   - Detection de risques depuis les achats
+  - `evaluator_name` optionnel (defaut: "Responsable")
 - **RGPD** : Registre des traitements
 - **Assurances** : Coffre-fort numerique
 
-### 6. Parametres
-- Paiements (Stripe Connect, GoCardless)
-- PPF (Portail Public de Facturation)
-- Comptabilite (plan comptable, export FEC)
-- Connecteurs (API tierces)
+### 7. Parametres
+- Paiements (Stripe Connect, GoCardless) — `/settings/payments`
+- PPF (Portail Public de Facturation) — `/settings/ppf`
+- Comptabilite (plan comptable, export FEC) — `/settings/accounting`
+- Connecteurs (API tierces) — `/settings/connectors`
+- Profil entreprise — `/settings/profile`
+- API Settings : GET/PUT `/api/settings/accounting`, `/api/settings/payments`, `/api/settings/ppf`
 
-### 7. Onboarding
+### 8. Onboarding
 - Wizard 4 etapes (entreprise, activite, coordonnees, validation)
-- Lookup SIRET automatique
+- Lookup SIRET automatique avec cascade 3 couches (Pappers -> SIRENE -> data.gouv.fr) + timeout 5s/source
+- `/onboarding` redirige vers `/step-1`
 
-### 8. Dashboard
+### 9. Dashboard
 - KPIs : CA, creances, dettes, reste a vivre
 - Graphique CA mensuel
 - Echeances de la semaine
 - Activite recente
+- Accessible par tous les roles (owner, admin, member, accountant)
 
 ## API Endpoints Principaux
 
@@ -102,12 +113,19 @@ omni-gerant/
 - `POST /api/auth/2fa/setup` - Configurer 2FA
 - `POST /api/auth/2fa/verify` - Verifier 2FA
 
+### Clients & Produits
+- `GET/POST /api/clients` - Clients (CRUD)
+- `GET/PATCH/DELETE /api/clients/:id` - Client par ID
+- `GET/POST /api/products` - Produits (CRUD)
+- `GET/PATCH/DELETE /api/products/:id` - Produit par ID
+
 ### Ventes
 - `GET/POST /api/quotes` - Devis (CRUD)
-- `POST /api/quotes/:id/send` - Envoyer un devis
+- `POST /api/quotes/:id/send` - Envoyer un devis (body optionnel)
+- `POST /api/quotes/:id/duplicate` - Dupliquer un devis (body optionnel)
 - `POST /api/quotes/:id/accept` - Accepter un devis
 - `POST /api/quotes/:id/convert` - Convertir en facture
-- `GET/POST /api/invoices` - Factures (CRUD)
+- `GET/POST /api/invoices` - Factures (CRUD) avec persistence in-memory
 - `GET /api/invoices/:id/pdf` - PDF facture
 - `GET /api/invoices/:id/facturx` - XML Factur-X
 
@@ -145,12 +163,14 @@ Jamais d'exceptions metier. Toujours retourner `Result<T, E>`.
 type Result<T, E = AppError> = { ok: true; value: T } | { ok: false; error: E };
 ```
 
-### R02 - Montants en Centimes
+### R02 - Montants en Centimes + TVA en Pourcentage
 Tous les montants financiers sont des **entiers** (centimes). Jamais de float.
+Les taux de TVA sont en **pourcentage** (20, 10, 5.5, 2.1) — jamais en basis points.
 ```typescript
-// BON : price_cents: 1500 (= 15.00 EUR)
-// MAUVAIS : price: 15.00
+// BON : price_cents: 1500 (= 15.00 EUR), tva_rate: 20 (= 20%)
+// MAUVAIS : price: 15.00, tva_rate: 2000
 ```
+Un guard rejette `tva_rate > 100` dans tous les calculateurs.
 
 ### R03 - Multi-Tenant avec RLS
 Chaque table a une colonne `tenant_id UUID NOT NULL`.
@@ -167,7 +187,7 @@ Les queries par defaut filtrent `WHERE deleted_at IS NULL`.
 - Couverture globale : >= 80%
 - Code financier (calculs, montants) : >= 95%
 - Chaque prompt doit inclure ses tests
-- **Tests actuels** : 694 tests unitaires (Vitest), 51 tests E2E (Playwright)
+- **Tests actuels** : 825 tests unitaires (Vitest), 51 tests E2E (Playwright)
 
 ### R07 - Commentaires Business Rule
 Chaque regle metier est annotee :
@@ -280,7 +300,7 @@ Chaque profil contient des risques specifiques au secteur + 6 risques communs (r
 | 024 | bank-sync | Synchronisation transactions bancaires | 6.1 |
 | 025 | matching-algo | Algorithme rapprochement bancaire | 6.2 |
 | 026 | forecast-engine | Moteur previsionnel tresorerie | 6.3 |
-| 027 | siret-lookup | Lookup entreprise via SIRET | 8.3 |
+| 027 | siret-lookup | Lookup entreprise via SIRET (cascade 3 sources + timeout 5s) | 8.3 |
 | 028 | sepa-generator | Generation fichier SEPA XML | 5.1 |
 | 029 | fec-export | Export FEC conforme | 9.1 |
 | 030 | stripe-integration | Integration Stripe payments | 9.2 |
@@ -336,6 +356,31 @@ Chaque profil contient des risques specifiques au secteur + 6 risques communs (r
 - CDC-5 : Roadmap
 - CDC-6 : Securite
 - CDC-7 : Business Model
+
+---
+
+## Bug Fixes Appliques (B0-B3, 2026-04-16)
+
+### B0 — Persistence + TVA (CRITIQUE)
+- Invoice in-memory repo implemente (etait un stub non-fonctionnel)
+- `tva_rate` standardise de basis points (2000=20%) vers pourcentage (20=20%) dans tout le code
+- Guard `tva_rate > 100` dans tous les calculateurs et `tvaAmount()` du shared package
+
+### B1 — Routes + RBAC (MAJEUR)
+- Routes CRUD creees : `/api/clients`, `/api/products`
+- Routes settings creees : `/api/settings/accounting`, `/api/settings/payments`, `/api/settings/ppf`
+- `dashboard` ajoute comme ressource RBAC (read pour tous les roles)
+- `POST /api/bank/accounts` ajoute pour creation manuelle de comptes
+
+### B2 — Workflows + Validation (MAJEUR)
+- `POST /api/quotes/:id/send` et `/duplicate` acceptent un body vide
+- `evaluator_name` optionnel dans le schema DUERP (defaut: "Responsable")
+- Cascade SIRET avec timeout 5s/source et erreur `SIRET_LOOKUP_UNAVAILABLE`
+
+### B3 — Navigation + UI (MINEUR)
+- `/onboarding` redirige vers `/step-1`
+- Pages settings consolidees sous `(dashboard)/settings/` (payments, ppf deplacees)
+- `/settings` redirige vers `/settings/profile`
 
 ---
 
