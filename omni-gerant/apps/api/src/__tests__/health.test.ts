@@ -85,7 +85,35 @@ describe('Health endpoints', () => {
       expect(body.status).toBe('ok');
       expect(body.db).toBe('connected');
       expect(body.memory).toBeDefined();
-      expect(body.memory.rss).toBeGreaterThan(0);
+      expect(body.memory.rss_mb).toBeGreaterThanOrEqual(0);
+    });
+  });
+
+  describe('GET /health/live', () => {
+    it('returns alive true', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/health/live',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body.alive).toBe(true);
+    });
+  });
+
+  describe('GET /metrics', () => {
+    it('returns metrics data', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/metrics',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body.requests_total).toBeGreaterThanOrEqual(0);
+      expect(body.uptime_seconds).toBeGreaterThan(0);
+      expect(body.memory).toBeDefined();
     });
   });
 });

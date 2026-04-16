@@ -8,6 +8,7 @@ import { registerDatabasePlugin } from './plugins/database.js';
 import { registerAuthPlugin } from './plugins/auth.js';
 import { registerTenantPlugin } from './plugins/tenant.js';
 import { healthRoutes } from './routes/health.js';
+import { metricsRoutes, registerMetricsHook } from './routes/metrics.js';
 import { authRoutes } from './modules/auth/auth.routes.js';
 import { tenantRoutes } from './modules/tenant/tenant.routes.js';
 import { auditRoutes } from './modules/audit/audit.routes.js';
@@ -62,6 +63,9 @@ export async function buildApp() {
     runWithContext(context, () => done());
   });
 
+  // Metrics counter hook
+  registerMetricsHook(app);
+
   // Error handler
   registerErrorHandler(app);
 
@@ -75,6 +79,7 @@ export async function buildApp() {
 
   // Routes
   await app.register(healthRoutes);
+  await app.register(metricsRoutes);
   await app.register(authRoutes);
   await app.register(tenantRoutes);
   await app.register(auditRoutes);

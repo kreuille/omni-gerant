@@ -12,13 +12,17 @@ export async function healthRoutes(app: FastifyInstance) {
     };
   });
 
+  // Simple liveness — Kubernetes-style
+  app.get('/health/live', async () => {
+    return { alive: true };
+  });
+
   // Readiness probe - is the service ready to handle requests?
   // Used by Render health check
   app.get('/health/ready', async (_request, reply) => {
     const checks: Record<string, string> = {};
     let healthy = true;
 
-    // Check DB connection
     try {
       await prisma.$queryRaw`SELECT 1`;
       checks['database'] = 'ok';
@@ -53,8 +57,9 @@ export async function healthRoutes(app: FastifyInstance) {
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       memory: {
-        rss: Math.round(process.memoryUsage().rss / 1024 / 1024),
-        heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+        rss_mb: Math.round(process.memoryUsage().rss / 1024 / 1024),
+        heap_used_mb: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+        heap_total_mb: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
       },
     };
   });
