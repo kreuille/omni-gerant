@@ -21,7 +21,7 @@ Objectif Zero Saisie, Conformite Native (Factur-X 2026), Pilotage Proactif.
 - **Database** : PostgreSQL 16 + Prisma ORM (migre depuis in-memory Maps)
 - **AI/OCR** : Python FastAPI + LayoutLM/Donut (prevu)
 - **Monorepo** : pnpm workspaces + Turborepo
-- **Tests** : Vitest (914 tests, 63 fichiers) + Playwright E2E (51 tests + 4 parcours prod)
+- **Tests** : Vitest (1011 tests, 66 fichiers) + Playwright E2E (51 tests + 4 parcours prod)
 
 ## Structure Monorepo
 ```
@@ -176,6 +176,15 @@ zenadmin/
 - `GET/PUT /api/settings/payments` - Paiements
 - `GET/PUT /api/settings/ppf` - PPF
 
+### NF525 Certification (Kiwiz)
+- `POST /api/invoices/:id/certify` - Re-tenter la certification NF525
+- `GET /api/invoices/:id/nf525` - Statut certification d'une facture
+- `GET /api/invoices/:id/nf525/verify` - Details verification
+- `GET /api/invoices/:id/nf525/download` - Telecharger PDF certifie Kiwiz
+- `GET /api/nf525/dashboard` - Dashboard conformite NF525
+- `POST /api/admin/nf525/retry-all` - Batch retry certification (admin)
+- `GET /api/admin/nf525/status` - Compteurs certifie/non-certifie
+
 ### Monitoring
 - `GET /health` - Liveness probe (status, uptime)
 - `GET /health/ready` - Readiness probe avec check DB
@@ -215,7 +224,7 @@ Les queries par defaut filtrent `WHERE deleted_at IS NULL`.
 - Couverture globale : >= 80%
 - Code financier (calculs, montants) : >= 95%
 - Chaque prompt doit inclure ses tests
-- **Tests actuels** : 914 tests unitaires (Vitest, 63 fichiers), 51 tests E2E local + 4 parcours E2E prod (Playwright)
+- **Tests actuels** : 1011 tests unitaires (Vitest, 66 fichiers), 51 tests E2E local + 4 parcours E2E prod (Playwright)
 
 ### R07 - Commentaires Business Rule
 Chaque regle metier est annotee :
@@ -389,6 +398,7 @@ Routier, psychosocial, biologique, incendie, chute de plain-pied, electrique.
 ## Chantiers Termines
 - [x] Migration PostgreSQL (P0-P6) — tous les modules migres depuis in-memory Maps
 - [x] Mise en production (D0-D4) — render.yaml, securite, monitoring, E2E, checklist
+- [x] NF525 Kiwiz (K0-K5) — certification factures/avoirs, retry batch, dashboard, souscriptions
 
 ## Prochaines Etapes
 - [ ] Acheter et configurer le domaine custom (zenadmin.fr)

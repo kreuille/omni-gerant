@@ -81,13 +81,21 @@
 - [x] D3 — E2E Tests Production — `COMPLETED`
 - [x] D4 — Domaine + Config finale — `COMPLETED`
 
+### Phase 16 : NF525 Certification Kiwiz
+- [x] K0 — Client Kiwiz + Config + Mapper — `COMPLETED`
+- [x] K1 — Certification factures a la validation — `COMPLETED`
+- [x] K2 — Certification avoirs (credit memos) — `COMPLETED`
+- [x] K3 — Job retry batch automatique — `COMPLETED`
+- [x] K4 — Verification + Dashboard + Download PDF — `COMPLETED`
+- [x] K5 — Mode revendeur + souscriptions tenant — `COMPLETED`
+
 ## Statistiques
-- **Total prompts** : 48 (36 dev + 7 migration + 5 deploy)
-- **Completes** : 48
+- **Total prompts** : 54 (36 dev + 7 migration + 5 deploy + 6 NF525)
+- **Completes** : 54
 - **En cours** : 0
 - **Restants** : 0
 - **Progression** : 100%
-- **Tests unitaires** : 914 (Vitest)
+- **Tests unitaires** : 1011 (Vitest)
 - **Tests E2E** : 51 local + 4 parcours production (Playwright)
 
 ## Journal d'execution
@@ -137,3 +145,6 @@
 | 2026-04-16 | D2 | SUCCESS | /health/live, /metrics endpoint, smoke-test.sh, structured JSON logs, 714 tests |
 | 2026-04-16 | D3 | SUCCESS | Playwright prod config, 4 parcours E2E API, route non-regression, 714 tests |
 | 2026-04-16 | D4 | SUCCESS | SEO meta tags, maintenance page, production checklist, 714 tests |
+| 2026-04-17 | K0 | SUCCESS | Client HTTP Kiwiz, config, mapper centimes→float, 25 tests, 971 total API |
+| 2026-04-17 | K1+K2 | SUCCESS | Certification factures + avoirs via Kiwiz, non-bloquant, 16 tests, 987 total |
+| 2026-04-17 | K3+K4+K5 | SUCCESS | Retry batch, dashboard NF525, download PDF, souscriptions, 24 tests, 1011 total |
