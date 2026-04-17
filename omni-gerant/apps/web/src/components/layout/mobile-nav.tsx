@@ -52,7 +52,9 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
         </div>
         <nav className="mt-4 px-2 space-y-1">
           {navItems.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+            const isActive = item.href === '/'
+              ? pathname === '/' || pathname === '/dashboard'
+              : pathname === item.href || pathname.startsWith(item.href + '/');
             return (
               <Link
                 key={item.href}

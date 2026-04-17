@@ -35,16 +35,22 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error?.message ?? 'Erreur de connexion');
+        const msg = data.error?.message ?? '';
+        const translations: Record<string, string> = {
+          'Invalid email or password': 'Email ou mot de passe incorrect',
+          'User not found': 'Aucun compte avec cet email',
+          'Invalid password': 'Mot de passe incorrect',
+        };
+        setError(translations[msg] || msg || 'Erreur de connexion');
         return;
       }
       // Store tokens
-      document.cookie = `auth_token=${data.tokens.access_token}; path=/; max-age=900`;
+      document.cookie = `auth_token=${data.tokens.access_token}; path=/; max-age=${60*60*24*7}; SameSite=Lax`;
       localStorage.setItem('access_token', data.tokens.access_token);
       localStorage.setItem('refresh_token', data.tokens.refresh_token);
       localStorage.setItem('user', JSON.stringify(data.user));
       // Redirect to dashboard
-      window.location.href = '/quotes';
+      window.location.href = '/';
     } catch {
       setError('Impossible de contacter le serveur');
     } finally {
