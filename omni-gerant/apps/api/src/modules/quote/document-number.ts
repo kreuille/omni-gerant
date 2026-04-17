@@ -45,7 +45,7 @@ export function createInMemoryNumberRepo(): DocumentNumberRepository {
 // BUSINESS RULE [CDC-2.1]: Numerotation sequentielle sans trou via PostgreSQL
 // Uses advisory lock to prevent concurrent duplicates
 export function createPrismaNumberRepo(): DocumentNumberRepository {
-  const { prisma } = require('@omni-gerant/db') as { prisma: import('@prisma/client').PrismaClient };
+  const { prisma } = require('@zenadmin/db') as { prisma: import('@prisma/client').PrismaClient };
 
   return {
     async getNextSequence(tenantId: string, prefix: string, year: number): Promise<number> {

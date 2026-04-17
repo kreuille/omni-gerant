@@ -1,4 +1,4 @@
-import { prisma } from '@omni-gerant/db';
+import { prisma } from '@zenadmin/db';
 import type { Prisma } from '@prisma/client';
 import type { RgpdRepository, RgpdRegistry, RgpdTreatment } from './rgpd.service.js';
 

@@ -1,4 +1,4 @@
-import { prisma } from '@omni-gerant/db';
+import { prisma } from '@zenadmin/db';
 import type { TenantProfile } from './tenant.service.js';
 
 // BUSINESS RULE [R03]: Tenant profile persistence via Prisma

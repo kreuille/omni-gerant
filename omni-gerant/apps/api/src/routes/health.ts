@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { prisma } from '@omni-gerant/db';
+import { prisma } from '@zenadmin/db';
 
 // BUSINESS RULE [R67]: Health check endpoints
 export async function healthRoutes(app: FastifyInstance) {
