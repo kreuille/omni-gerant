@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { ReceivablesWidget } from '@/components/dashboard/receivables-widget';
 import { PayablesWidget } from '@/components/dashboard/payables-widget';
 import { CashWidget } from '@/components/dashboard/cash-widget';
@@ -7,40 +8,61 @@ import { UpcomingPayments } from '@/components/dashboard/upcoming-payments';
 import { RecentActivity } from '@/components/dashboard/recent-activity';
 import { RevenueChart } from '@/components/dashboard/revenue-chart';
 import { KpiCard } from '@/components/dashboard/kpi-card';
+import { api } from '@/lib/api-client';
 
 // BUSINESS RULE [CDC-4]: Dashboard principal actionnable
 
-// Demo data — replaced by API call GET /api/dashboard in production
-const DEMO_DATA = {
+interface DashboardKpis {
+  receivables_cents: number;
+  payables_cents: number;
+  bank_balance_cents: number;
+  real_cash_cents: number;
+  revenue_month_cents: number;
+  revenue_prev_month_cents: number;
+  revenue_trend_pct: number;
+}
+
+interface UpcomingPaymentItem {
+  id: string;
+  type: 'receivable' | 'payable';
+  entity_name: string;
+  amount_cents: number;
+  due_date: string;
+  document_number: string;
+}
+
+interface RecentActivityItem {
+  id: string;
+  type: string;
+  description: string;
+  timestamp: string;
+}
+
+interface MonthlyRevenueItem {
+  month: string;
+  revenue_cents: number;
+}
+
+interface DashboardData {
+  kpis: DashboardKpis;
+  upcoming_payments: UpcomingPaymentItem[];
+  recent_activity: RecentActivityItem[];
+  monthly_revenue: MonthlyRevenueItem[];
+}
+
+const EMPTY_DATA: DashboardData = {
   kpis: {
-    receivables_cents: 1250000,
-    payables_cents: 480000,
-    bank_balance_cents: 3200000,
-    real_cash_cents: 3970000,
-    revenue_month_cents: 850000,
-    revenue_prev_month_cents: 720000,
-    revenue_trend_pct: 18,
+    receivables_cents: 0,
+    payables_cents: 0,
+    bank_balance_cents: 0,
+    real_cash_cents: 0,
+    revenue_month_cents: 0,
+    revenue_prev_month_cents: 0,
+    revenue_trend_pct: 0,
   },
-  upcoming_payments: [
-    { id: '1', type: 'receivable' as const, entity_name: 'Client Martin', amount_cents: 250000, due_date: '2026-04-16', document_number: 'FAC-2026-012' },
-    { id: '2', type: 'payable' as const, entity_name: 'Leroy Merlin', amount_cents: 85000, due_date: '2026-04-17', document_number: 'ACH-2026-045' },
-    { id: '3', type: 'receivable' as const, entity_name: 'SCI Dupont', amount_cents: 480000, due_date: '2026-04-19', document_number: 'FAC-2026-013' },
-  ],
-  recent_activity: [
-    { id: '1', type: 'invoice_paid', description: 'Facture FAC-2026-011 payee par Client Durand', timestamp: '2026-04-14T14:30:00Z' },
-    { id: '2', type: 'quote_sent', description: 'Devis DEV-2026-018 envoye a Mairie de Lyon', timestamp: '2026-04-14T10:15:00Z' },
-    { id: '3', type: 'purchase_created', description: 'Facture fournisseur Point.P enregistree', timestamp: '2026-04-13T16:45:00Z' },
-    { id: '4', type: 'bank_sync', description: 'Synchronisation bancaire terminee (12 transactions)', timestamp: '2026-04-13T06:00:00Z' },
-    { id: '5', type: 'quote_signed', description: 'Devis DEV-2026-015 signe par Client Bernard', timestamp: '2026-04-12T11:20:00Z' },
-  ],
-  monthly_revenue: [
-    { month: '2025-11', revenue_cents: 680000 },
-    { month: '2025-12', revenue_cents: 520000 },
-    { month: '2026-01', revenue_cents: 710000 },
-    { month: '2026-02', revenue_cents: 780000 },
-    { month: '2026-03', revenue_cents: 720000 },
-    { month: '2026-04', revenue_cents: 850000 },
-  ],
+  upcoming_payments: [],
+  recent_activity: [],
+  monthly_revenue: [],
 };
 
 function formatCents(cents: number): string {
@@ -49,11 +71,49 @@ function formatCents(cents: number): string {
 }
 
 export default function DashboardPage() {
-  const data = DEMO_DATA;
+  const [data, setData] = useState<DashboardData>(EMPTY_DATA);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function fetchDashboard() {
+      setLoading(true);
+      setError(null);
+
+      const result = await api.get<DashboardData>('/api/dashboard', controller.signal);
+
+      if (controller.signal.aborted) return;
+
+      if (result.ok) {
+        setData(result.value);
+      } else {
+        setError(result.error.message ?? 'Impossible de charger le tableau de bord');
+        // Keep EMPTY_DATA as fallback — UI shows 0 values instead of crashing
+      }
+      setLoading(false);
+    }
+
+    fetchDashboard();
+
+    return () => controller.abort();
+  }, []);
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Tableau de bord</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Tableau de bord</h1>
+        {loading && (
+          <span className="text-sm text-gray-500 animate-pulse">Chargement...</span>
+        )}
+      </div>
+
+      {error && (
+        <div className="mb-4 rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
 
       {/* KPI principaux — toujours visibles */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
