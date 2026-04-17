@@ -37,9 +37,25 @@ export default function NewQuotePage() {
     setSaving(true);
     setError(null);
 
+    // Ensure we have a client_id — create a default client if none selected
+    let resolvedClientId = clientId;
+    if (!resolvedClientId) {
+      const clientResult = await api.post<{ id: string }>('/api/clients', {
+        name: 'Client sans nom',
+        payment_terms: 30,
+      });
+      if (clientResult.ok) {
+        resolvedClientId = clientResult.value.id;
+      } else {
+        setSaving(false);
+        setError('Impossible de creer le client. Veuillez reessayer.');
+        return;
+      }
+    }
+
     const result = await api.post<{ id: string }>('/api/quotes', {
-      client_id: clientId || crypto.randomUUID(), // fallback if no client selected
-      title: title || undefined,
+      client_id: resolvedClientId,
+      title: title || 'Devis sans titre',
       validity_days: validityDays,
       notes: notes || undefined,
       lines: lines.map((l, i) => ({

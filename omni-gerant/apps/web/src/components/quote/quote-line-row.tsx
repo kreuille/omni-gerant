@@ -92,13 +92,18 @@ export function QuoteLineRow({ line, onChange, onRemove }: QuoteLineRowProps) {
         />
       </td>
       <td className="px-2 py-2 w-20">
-        <Input
-          type="number"
+        <input
+          type="text"
+          inputMode="decimal"
           value={line.quantity}
-          onChange={(e) => onChange(line.id, 'quantity', parseFloat(e.target.value) || 0)}
-          className="text-sm text-right"
-          step="0.001"
-          min="0"
+          onChange={(e) => {
+            const val = e.target.value.replace(',', '.');
+            const num = parseFloat(val);
+            if (!isNaN(num) || val === '' || val === '0') {
+              onChange(line.id, 'quantity', isNaN(num) ? 0 : num);
+            }
+          }}
+          className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
         />
       </td>
       <td className="px-2 py-2 w-16">
@@ -109,13 +114,18 @@ export function QuoteLineRow({ line, onChange, onRemove }: QuoteLineRowProps) {
         />
       </td>
       <td className="px-2 py-2 w-28">
-        <Input
-          type="number"
+        <input
+          type="text"
+          inputMode="decimal"
           value={line.unit_price_cents / 100}
-          onChange={(e) => onChange(line.id, 'unit_price_cents', Math.round((parseFloat(e.target.value) || 0) * 100))}
-          className="text-sm text-right"
-          step="0.01"
-          min="0"
+          onChange={(e) => {
+            const val = e.target.value.replace(',', '.');
+            const num = parseFloat(val);
+            if (!isNaN(num) || val === '' || val === '0') {
+              onChange(line.id, 'unit_price_cents', Math.round((isNaN(num) ? 0 : num) * 100));
+            }
+          }}
+          className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
         />
       </td>
       <td className="px-2 py-2 w-20">
