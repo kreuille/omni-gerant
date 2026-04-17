@@ -35,3 +35,5 @@ services:
         fromDatabase:
           name: zenadmin-db
           property: connectionString
+      - key: KIWIZ_API_URL
+        value: https://api.kiwiz.io
