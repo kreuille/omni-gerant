@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { api } from '@/lib/api-client';
 
 const STATUS_LABELS: Record<string, { label: string; variant: 'default' | 'success' | 'warning' | 'error' | 'info' }> = {
   draft: { label: 'Brouillon', variant: 'default' },
@@ -21,20 +22,43 @@ function formatCents(cents: number): string {
   return (cents / 100).toFixed(2).replace('.', ',') + ' EUR';
 }
 
+interface InvoiceItem {
+  id: string;
+  number: string;
+  client_id: string;
+  type: string;
+  status: string;
+  total_ht_cents: number;
+  total_tva_cents: number;
+  total_ttc_cents: number;
+  paid_cents: number;
+  remaining_cents: number;
+  issue_date: string;
+  due_date: string;
+  created_at: string;
+}
+
 export default function InvoicesPage() {
   const [search, setSearch] = useState('');
+  const [invoices, setInvoices] = useState<InvoiceItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const invoices: Array<{
-    id: string;
-    number: string;
-    client_name: string;
-    type: string;
-    status: string;
-    total_ttc_cents: number;
-    remaining_cents: number;
-    issue_date: string;
-    due_date: string;
-  }> = [];
+  useEffect(() => {
+    setLoading(true);
+    setErrorMsg(null);
+    const params = new URLSearchParams();
+    if (search.trim()) params.set('search', search.trim());
+    api.get<{ items: InvoiceItem[]; has_more: boolean }>(`/api/invoices?${params.toString()}`)
+      .then((result) => {
+        if (result.ok) {
+          setInvoices(result.value.items);
+        } else {
+          setErrorMsg(result.error.message || 'Erreur lors du chargement des factures');
+        }
+      })
+      .finally(() => setLoading(false));
+  }, [search]);
 
   return (
     <div>
@@ -54,7 +78,19 @@ export default function InvoicesPage() {
         />
       </div>
 
-      {invoices.length === 0 ? (
+      {errorMsg && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">
+          {errorMsg}
+        </div>
+      )}
+
+      {loading ? (
+        <Card>
+          <CardContent className="py-12 text-center text-gray-500">
+            <p className="text-sm">Chargement...</p>
+          </CardContent>
+        </Card>
+      ) : invoices.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-gray-500">
             <p className="text-lg mb-2">Aucune facture pour le moment</p>
@@ -85,13 +121,15 @@ export default function InvoicesPage() {
                           {inv.number}
                         </Link>
                       </td>
-                      <td className="px-4 py-3 text-gray-900">{inv.client_name}</td>
+                      <td className="px-4 py-3 text-gray-900">{inv.client_id}</td>
                       <td className="px-4 py-3">
                         <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
                       </td>
                       <td className="px-4 py-3 text-right font-medium">{formatCents(inv.total_ttc_cents)}</td>
                       <td className="px-4 py-3 text-right">{formatCents(inv.remaining_cents)}</td>
-                      <td className="px-4 py-3 text-gray-500">{inv.due_date}</td>
+                      <td className="px-4 py-3 text-gray-500">
+                        {new Date(inv.due_date).toLocaleDateString('fr-FR')}
+                      </td>
                     </tr>
                   );
                 })}
