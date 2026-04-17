@@ -1,4 +1,4 @@
-import { prisma } from '@omni-gerant/db';
+import { prisma } from '@zenadmin/db';
 import type { Decimal } from '@prisma/client/runtime/library';
 import type { ProductRepository, Product } from './product.service.js';
 import type { CreateProductInput, UpdateProductInput, ProductListQuery } from './product.schemas.js';

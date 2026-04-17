@@ -1,7 +1,7 @@
 import { buildApp } from './app.js';
 import { loadConfig } from './config.js';
 import { setupGracefulShutdown } from './lib/shutdown.js';
-import { prisma } from '@omni-gerant/db';
+import { prisma } from '@zenadmin/db';
 
 async function start() {
   const config = loadConfig();

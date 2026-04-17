@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import fp from 'fastify-plugin';
-import { prisma } from '@omni-gerant/db';
+import { prisma } from '@zenadmin/db';
 
 declare module 'fastify' {
   interface FastifyInstance {

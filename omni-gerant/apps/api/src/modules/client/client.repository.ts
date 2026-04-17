@@ -1,4 +1,4 @@
-import { prisma } from '@omni-gerant/db';
+import { prisma } from '@zenadmin/db';
 import type { ClientRepository, Client } from './client.service.js';
 import type { CreateClientInput, UpdateClientInput, ClientListQuery } from './client.schemas.js';
 

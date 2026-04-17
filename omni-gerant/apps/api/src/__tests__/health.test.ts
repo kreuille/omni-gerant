@@ -3,7 +3,7 @@ import { buildApp } from '../app.js';
 import type { FastifyInstance } from 'fastify';
 
 // Mock prisma to avoid needing a real database in tests
-vi.mock('@omni-gerant/db', () => {
+vi.mock('@zenadmin/db', () => {
   const mockPrisma = {
     $connect: vi.fn().mockResolvedValue(undefined),
     $disconnect: vi.fn().mockResolvedValue(undefined),

@@ -1,4 +1,4 @@
-import { prisma } from '@omni-gerant/db';
+import { prisma } from '@zenadmin/db';
 import type { InsuranceRepository, InsuranceDocument } from './insurance.service.js';
 
 // BUSINESS RULE [CDC-2.4]: Insurance vault Prisma repository

@@ -1,4 +1,4 @@
-import { prisma } from '@omni-gerant/db';
+import { prisma } from '@zenadmin/db';
 import type { DuerpRepository, DuerpDocument } from './duerp.service.js';
 
 // BUSINESS RULE [CDC-2.4]: DUERP Prisma repository

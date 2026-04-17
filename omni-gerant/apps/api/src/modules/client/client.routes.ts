@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { prisma } from '@omni-gerant/db';
+import { prisma } from '@zenadmin/db';
 import { createClientService } from './client.service.js';
 import { createPrismaClientRepository } from './client.repository.js';
 import { createClientSchema, clientListQuerySchema } from './client.schemas.js';

@@ -1,4 +1,4 @@
-import { prisma } from '@omni-gerant/db';
+import { prisma } from '@zenadmin/db';
 import type { AuthRepository, User } from './auth.service.js';
 
 // BUSINESS RULE [CDC-6]: Auth repository — Prisma implementation
