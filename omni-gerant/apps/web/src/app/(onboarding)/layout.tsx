@@ -9,7 +9,7 @@ export default function OnboardingLayout({
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b px-6 py-4">
         <div className="max-w-2xl mx-auto">
-          <h1 className="text-xl font-bold text-gray-900">Omni-Gerant</h1>
+          <h1 className="text-xl font-bold text-gray-900">zenAdmin</h1>
         </div>
       </header>
       <main className="max-w-2xl mx-auto px-6 py-8">

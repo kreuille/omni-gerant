@@ -4,7 +4,7 @@ import {
   encryptCredentials,
   decryptCredentials,
 } from '../connector-base.js';
-import { ok, err, appError } from '@omni-gerant/shared';
+import { ok, err, appError } from '@zenadmin/shared';
 
 describe('ConnectorBase', () => {
   describe('withRetry', () => {

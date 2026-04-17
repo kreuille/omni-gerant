@@ -1,6 +1,6 @@
-import type { Result } from '@omni-gerant/shared';
-import { ok, err } from '@omni-gerant/shared';
-import type { AppError } from '@omni-gerant/shared';
+import type { Result } from '@zenadmin/shared';
+import { ok, err } from '@zenadmin/shared';
+import type { AppError } from '@zenadmin/shared';
 import { generateFacturxXml, getTypeCode, type FacturxInvoiceData, type FacturxParty } from './facturx-xml.js';
 import { validateFacturxData, validateFacturxXml } from './facturx-validator.js';
 import { embedXmlInPdf, type FacturxPdfResult } from './facturx-pdf.js';

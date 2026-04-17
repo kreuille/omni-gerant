@@ -158,18 +158,18 @@ describe('AttachmentDetector', () => {
 
   describe('isAlreadyProcessed', () => {
     it('returns true when email has processed label', () => {
-      const email = createEmail({ flags: ['OmniGerant/Traite'] });
-      expect(isAlreadyProcessed(email, 'OmniGerant/Traite')).toBe(true);
+      const email = createEmail({ flags: ['ZenAdmin/Traite'] });
+      expect(isAlreadyProcessed(email, 'ZenAdmin/Traite')).toBe(true);
     });
 
     it('returns false when email is not processed', () => {
       const email = createEmail({ flags: ['\\Seen'] });
-      expect(isAlreadyProcessed(email, 'OmniGerant/Traite')).toBe(false);
+      expect(isAlreadyProcessed(email, 'ZenAdmin/Traite')).toBe(false);
     });
 
     it('returns false when no flags', () => {
       const email = createEmail({ flags: undefined });
-      expect(isAlreadyProcessed(email, 'OmniGerant/Traite')).toBe(false);
+      expect(isAlreadyProcessed(email, 'ZenAdmin/Traite')).toBe(false);
     });
   });
 });

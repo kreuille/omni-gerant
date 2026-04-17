@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ['@omni-gerant/shared'],
+  transpilePackages: ['@zenadmin/shared'],
 };
 
 module.exports = nextConfig;

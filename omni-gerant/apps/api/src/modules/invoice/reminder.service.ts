@@ -1,6 +1,6 @@
-import type { Result } from '@omni-gerant/shared';
-import { ok } from '@omni-gerant/shared';
-import type { AppError } from '@omni-gerant/shared';
+import type { Result } from '@zenadmin/shared';
+import { ok } from '@zenadmin/shared';
+import type { AppError } from '@zenadmin/shared';
 
 // BUSINESS RULE [CDC-2.1]: Module de relance automatique intelligent
 // Sequence: J-3, J+1, J+7, J+15, J+30

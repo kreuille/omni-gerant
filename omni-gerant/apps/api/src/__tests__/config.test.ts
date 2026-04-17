@@ -34,4 +34,20 @@ describe('Config', () => {
     expect(() => loadConfig()).toThrow('Invalid environment variables');
     process.env['NODE_ENV'] = 'test';
   });
+
+  it('rejects default JWT_SECRET in production', () => {
+    process.env['NODE_ENV'] = 'production';
+    process.env['JWT_SECRET'] = 'change-me-to-a-random-64-char-string';
+    expect(() => loadConfig()).toThrow('JWT_SECRET must be changed from default value');
+    process.env['NODE_ENV'] = 'test';
+  });
+
+  it('accepts custom JWT_SECRET in production', () => {
+    process.env['NODE_ENV'] = 'production';
+    process.env['JWT_SECRET'] = 'a-real-production-secret-that-is-at-least-32-characters';
+    const config = loadConfig();
+    expect(config.NODE_ENV).toBe('production');
+    // Cleanup
+    process.env['NODE_ENV'] = 'test';
+  });
 });

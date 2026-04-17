@@ -1,5 +1,5 @@
-import { ok } from '@omni-gerant/shared';
-import type { Result, AppError } from '@omni-gerant/shared';
+import { ok } from '@zenadmin/shared';
+import type { Result, AppError } from '@zenadmin/shared';
 
 // BUSINESS RULE [CDC-4]: Dashboard principal avec KPIs actionnables
 // BUSINESS RULE [CDC-4]: Trois indicateurs : "Ce qu'on me doit", "Ce que je dois", "Mon reste a vivre reel"

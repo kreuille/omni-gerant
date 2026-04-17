@@ -7,7 +7,7 @@ import {
   listConnectorInfo,
 } from '../connector-registry.js';
 import type { ConnectorBase } from '../connector-base.js';
-import { ok } from '@omni-gerant/shared';
+import { ok } from '@zenadmin/shared';
 
 const mockConnector: ConnectorBase = {
   type: 'test',

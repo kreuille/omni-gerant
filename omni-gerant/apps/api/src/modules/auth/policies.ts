@@ -1,4 +1,4 @@
-import type { UserRole } from '@omni-gerant/shared';
+import type { UserRole } from '@zenadmin/shared';
 import type { Resource, Action } from './rbac.js';
 import { hasPermission } from './rbac.js';
 

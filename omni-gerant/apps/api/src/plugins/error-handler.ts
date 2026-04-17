@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyError } from 'fastify';
-import type { AppError, ErrorCode } from '@omni-gerant/shared';
+import type { AppError, ErrorCode } from '@zenadmin/shared';
 
 // BUSINESS RULE [R13]: Format standard erreurs API
 interface ApiErrorResponse {

@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
-import type { UserRole } from '@omni-gerant/shared';
+import type { UserRole } from '@zenadmin/shared';
 import { verifyAccessToken } from '../modules/auth/jwt.js';
 import { checkPermission, type Resource, type Action } from '../modules/auth/rbac.js';
 import { getRequestContext } from '../middleware/request-context.js';

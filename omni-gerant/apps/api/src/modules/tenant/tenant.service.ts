@@ -1,6 +1,6 @@
-import type { Result } from '@omni-gerant/shared';
-import { ok, err, notFound, appError } from '@omni-gerant/shared';
-import type { AppError } from '@omni-gerant/shared';
+import type { Result } from '@zenadmin/shared';
+import { ok, err, notFound, appError } from '@zenadmin/shared';
+import type { AppError } from '@zenadmin/shared';
 import type { UpdateTenantProfileInput } from './tenant.schemas.js';
 import { detectLegalForm, detectLegalFormFromLabel, generateLegalMentions } from './legal-form.js';
 import type { LegalForm } from './legal-form.js';
@@ -8,6 +8,42 @@ import { detectDefaultTvaRegime, detectActivityType, checkFranchiseThreshold } f
 import type { TvaRegime, FranchiseCheckResult } from './tva-regime.js';
 import { computeFrenchTvaNumber } from '../../lib/vies-client.js';
 import type { EnrichedSiretInfo } from '../../lib/siret-lookup.js';
+import { createTenantRepository } from './tenant.repository.js';
+
+// BUSINESS RULE [CDC-11.1]: Mapping departement → ville du Tribunal de Commerce (RCS)
+const DEPT_TO_RCS: Record<string, string> = {
+  '01': 'Bourg-en-Bresse', '02': 'Laon', '03': 'Cusset', '04': 'Manosque', '05': 'Gap',
+  '06': 'Nice', '07': 'Aubenas', '08': 'Sedan', '09': 'Foix', '10': 'Troyes',
+  '11': 'Narbonne', '12': 'Rodez', '13': 'Marseille', '14': 'Caen', '15': 'Aurillac',
+  '16': 'Angouleme', '17': 'La Rochelle', '18': 'Bourges', '19': 'Brive-la-Gaillarde',
+  '21': 'Dijon', '22': 'Saint-Brieuc', '23': 'Gueret', '24': 'Bergerac', '25': 'Besancon',
+  '26': 'Romans-sur-Isere', '27': 'Bernay', '28': 'Chartres', '29': 'Brest',
+  '30': 'Nimes', '31': 'Toulouse', '32': 'Auch', '33': 'Bordeaux', '34': 'Montpellier',
+  '35': 'Rennes', '36': 'Chateauroux', '37': 'Tours', '38': 'Grenoble', '39': 'Lons-le-Saunier',
+  '40': 'Dax', '41': 'Blois', '42': 'Saint-Etienne', '43': 'Le Puy-en-Velay', '44': 'Nantes',
+  '45': 'Orleans', '46': 'Cahors', '47': 'Agen', '48': 'Mende', '49': 'Angers',
+  '50': 'Coutances', '51': 'Chalons-en-Champagne', '52': 'Chaumont', '53': 'Laval', '54': 'Nancy',
+  '55': 'Bar-le-Duc', '56': 'Vannes', '57': 'Metz', '58': 'Nevers', '59': 'Lille',
+  '60': 'Compiegne', '61': 'Alencon', '62': 'Boulogne-sur-Mer', '63': 'Clermont-Ferrand',
+  '64': 'Bayonne', '65': 'Tarbes', '66': 'Perpignan', '67': 'Strasbourg', '68': 'Mulhouse',
+  '69': 'Lyon', '70': 'Vesoul', '71': 'Macon', '72': 'Le Mans', '73': 'Chambery',
+  '74': 'Annecy', '75': 'Paris', '76': 'Rouen', '77': 'Meaux', '78': 'Versailles',
+  '79': 'Niort', '80': 'Amiens', '81': 'Castres', '82': 'Montauban', '83': 'Toulon',
+  '84': 'Avignon', '85': 'La Roche-sur-Yon', '86': 'Poitiers', '87': 'Limoges', '88': 'Epinal',
+  '89': 'Auxerre', '90': 'Belfort', '91': 'Evry', '92': 'Nanterre', '93': 'Bobigny',
+  '94': 'Creteil', '95': 'Pontoise',
+  '971': 'Pointe-a-Pitre', '972': 'Fort-de-France', '973': 'Cayenne', '974': 'Saint-Denis', '976': 'Mamoudzou',
+};
+
+function detectRcsCity(zipCode: string): string | null {
+  if (!zipCode || zipCode.length < 2) return null;
+  // DOM-TOM: 3-digit prefix
+  if (zipCode.startsWith('97')) {
+    return DEPT_TO_RCS[zipCode.slice(0, 3)] ?? null;
+  }
+  // Metropolitan: 2-digit prefix
+  return DEPT_TO_RCS[zipCode.slice(0, 2)] ?? null;
+}
 
 // BUSINESS RULE [CDC-11.1]: Profil entreprise complet avec auto-fill SIRET
 
@@ -73,13 +109,6 @@ export interface TenantProfile {
   deleted_at: Date | null;
 }
 
-// In-memory store for tenant profiles (shared across routes)
-const tenantProfiles = new Map<string, TenantProfile>();
-
-export function getTenantStore() {
-  return tenantProfiles;
-}
-
 function createDefaultProfile(tenantId: string): TenantProfile {
   return {
     id: tenantId,
@@ -123,12 +152,14 @@ function createDefaultProfile(tenantId: string): TenantProfile {
 }
 
 export function createTenantService() {
+  const tenantRepo = createTenantRepository();
+
   return {
     async getProfile(tenantId: string): Promise<Result<TenantProfile, AppError>> {
-      let profile = tenantProfiles.get(tenantId);
+      const profile = await tenantRepo.findById(tenantId);
       if (!profile) {
-        profile = createDefaultProfile(tenantId);
-        tenantProfiles.set(tenantId, profile);
+        // Tenant exists in DB (created during register) but has default settings
+        return ok(createDefaultProfile(tenantId));
       }
       return ok(profile);
     },
@@ -137,7 +168,7 @@ export function createTenantService() {
       tenantId: string,
       input: UpdateTenantProfileInput,
     ): Promise<Result<TenantProfile, AppError>> {
-      let profile = tenantProfiles.get(tenantId);
+      let profile = await tenantRepo.findById(tenantId);
       if (!profile) {
         profile = createDefaultProfile(tenantId);
       }
@@ -175,20 +206,15 @@ export function createTenantService() {
       if (input.insurance_rc_pro_insurer !== undefined) profile.insurance_rc_pro_insurer = input.insurance_rc_pro_insurer;
       if (input.qualifications !== undefined) profile.qualifications = input.qualifications;
 
-      profile.updated_at = new Date();
-      tenantProfiles.set(tenantId, profile);
-      return ok(profile);
+      const updated = await tenantRepo.upsertProfile(tenantId, profile);
+      return ok(updated);
     },
 
-    /**
-     * Auto-fill tenant profile from enriched SIRET lookup result.
-     * Returns the updated profile with auto-detected legal form and TVA regime.
-     */
     async autoFillFromSiret(
       tenantId: string,
       siretInfo: EnrichedSiretInfo,
     ): Promise<Result<TenantProfile, AppError>> {
-      let profile = tenantProfiles.get(tenantId);
+      let profile = await tenantRepo.findById(tenantId);
       if (!profile) {
         profile = createDefaultProfile(tenantId);
       }
@@ -215,11 +241,17 @@ export function createTenantService() {
         profile.dirigeants = siretInfo.dirigeants;
       }
 
-      if (siretInfo.etablissements.length > 0) {
-        // Enrichment data available
+      // Capital social from Pappers suggestions (free enrichment)
+      if (siretInfo.capital_cents && siretInfo.capital_cents > 0) {
+        profile.capital_cents = siretInfo.capital_cents;
       }
 
-      // Detect legal form from INSEE code or label
+      // Auto-detect RCS city from zip code
+      if (!profile.rcs_city && siretInfo.address.zip_code) {
+        profile.rcs_city = detectRcsCity(siretInfo.address.zip_code);
+      }
+
+      // Detect legal form from INSEE code or label (or Pappers label)
       const legalFormCode = siretInfo.legal_form;
       if (legalFormCode && /^\d+$/.test(legalFormCode)) {
         profile.legal_form = detectLegalForm(legalFormCode);
@@ -230,14 +262,10 @@ export function createTenantService() {
       // Detect TVA regime from legal form
       profile.tva_regime = detectDefaultTvaRegime(profile.legal_form);
 
-      profile.updated_at = new Date();
-      tenantProfiles.set(tenantId, profile);
-      return ok(profile);
+      const updated = await tenantRepo.upsertProfile(tenantId, profile);
+      return ok(updated);
     },
 
-    /**
-     * Get franchise threshold check for auto-entrepreneurs.
-     */
     getFranchiseCheck(profile: TenantProfile): FranchiseCheckResult | null {
       if (profile.tva_regime !== 'franchise_base') return null;
       const activityType = profile.naf_code
@@ -246,9 +274,6 @@ export function createTenantService() {
       return checkFranchiseThreshold(profile.current_year_revenue_cents, activityType);
     },
 
-    /**
-     * Get legal mentions for this tenant's invoices/quotes.
-     */
     getLegalMentions(profile: TenantProfile): string[] {
       return generateLegalMentions(profile.legal_form, {
         capitalCents: profile.capital_cents ?? undefined,

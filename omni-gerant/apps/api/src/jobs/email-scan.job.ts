@@ -36,11 +36,11 @@ export function createEmailScanProcessor(deps: {
     tenantId: string,
     messages: import('../modules/purchase/email-parser/attachment-detector.js').EmailMessage[],
     knownEmails: Set<string>,
-  ) => Promise<import('@omni-gerant/shared').Result<unknown[], import('@omni-gerant/shared').AppError>>;
+  ) => Promise<import('@zenadmin/shared').Result<unknown[], import('@zenadmin/shared').AppError>>;
   markProcessed: (
     config: import('../modules/purchase/email-parser/email-scanner.js').ImapConfig,
     messageId: string,
-  ) => Promise<import('@omni-gerant/shared').Result<void, import('@omni-gerant/shared').AppError>>;
+  ) => Promise<import('@zenadmin/shared').Result<void, import('@zenadmin/shared').AppError>>;
 }) {
   return async function processEmailScanJob(
     data: EmailScanJobData,

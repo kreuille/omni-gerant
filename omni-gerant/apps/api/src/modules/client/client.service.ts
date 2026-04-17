@@ -1,6 +1,6 @@
-import type { Result, PaginatedResult } from '@omni-gerant/shared';
-import { ok, err, notFound, validationError } from '@omni-gerant/shared';
-import type { AppError } from '@omni-gerant/shared';
+import type { Result, PaginatedResult } from '@zenadmin/shared';
+import { ok, err, notFound, validationError } from '@zenadmin/shared';
+import type { AppError } from '@zenadmin/shared';
 import type { CreateClientInput, UpdateClientInput, ClientListQuery } from './client.schemas.js';
 
 // BUSINESS RULE [R07]: Cursor-based pagination par defaut

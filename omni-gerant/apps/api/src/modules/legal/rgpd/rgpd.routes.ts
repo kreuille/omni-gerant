@@ -1,10 +1,6 @@
 import type { FastifyInstance } from 'fastify';
-import {
-  createRgpdService,
-  type RgpdRepository,
-  type RgpdRegistry,
-  type RgpdTreatment,
-} from './rgpd.service.js';
+import { createRgpdService } from './rgpd.service.js';
+import { createPrismaRgpdRepository } from './rgpd.repository.js';
 import {
   createRegistrySchema,
   updateRegistrySchema,
@@ -17,70 +13,7 @@ import { injectTenant } from '../../../plugins/tenant.js';
 // BUSINESS RULE [CDC-2.4]: Routes Registre RGPD
 
 export async function rgpdRoutes(app: FastifyInstance) {
-  // Placeholder in-memory repo
-  const registries = new Map<string, RgpdRegistry>();
-
-  const repo: RgpdRepository = {
-    async createRegistry(tenantId, data) {
-      const id = crypto.randomUUID();
-      const registry: RgpdRegistry = {
-        ...data,
-        id,
-        created_at: new Date(),
-        updated_at: new Date(),
-        deleted_at: null,
-      };
-      registries.set(tenantId, registry);
-      return registry;
-    },
-    async findRegistry(tenantId) {
-      const r = registries.get(tenantId);
-      if (!r || r.deleted_at) return null;
-      return r;
-    },
-    async updateRegistry(tenantId, data) {
-      const r = registries.get(tenantId);
-      if (!r || r.deleted_at) return null;
-      const updated = { ...r, ...data, updated_at: new Date() } as RgpdRegistry;
-      registries.set(tenantId, updated);
-      return updated;
-    },
-    async deleteRegistry(tenantId) {
-      const r = registries.get(tenantId);
-      if (!r || r.deleted_at) return false;
-      r.deleted_at = new Date();
-      return true;
-    },
-    async addTreatment(registryId, data) {
-      const registry = [...registries.values()].find((r) => r.id === registryId);
-      if (!registry) throw new Error('Registry not found');
-      const treatment: RgpdTreatment = {
-        ...data,
-        id: crypto.randomUUID(),
-        created_at: new Date(),
-        updated_at: new Date(),
-      };
-      registry.treatments.push(treatment);
-      return treatment;
-    },
-    async updateTreatment(registryId, treatmentId, data) {
-      const registry = [...registries.values()].find((r) => r.id === registryId);
-      if (!registry) return null;
-      const idx = registry.treatments.findIndex((t) => t.id === treatmentId);
-      if (idx === -1) return null;
-      registry.treatments[idx] = { ...registry.treatments[idx]!, ...data, updated_at: new Date() } as RgpdTreatment;
-      return registry.treatments[idx]!;
-    },
-    async deleteTreatment(registryId, treatmentId) {
-      const registry = [...registries.values()].find((r) => r.id === registryId);
-      if (!registry) return false;
-      const idx = registry.treatments.findIndex((t) => t.id === treatmentId);
-      if (idx === -1) return false;
-      registry.treatments.splice(idx, 1);
-      return true;
-    },
-  };
-
+  const repo = createPrismaRgpdRepository();
   const rgpdService = createRgpdService(repo);
   const preHandlers = [authenticate, injectTenant];
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { UserRole } from '@omni-gerant/shared';
+import type { UserRole } from '@zenadmin/shared';
 import { hasPermission, checkPermission, getRolePermissions, isValidRole, VALID_ROLES } from '../rbac.js';
 import { evaluatePolicy, type PolicyContext } from '../policies.js';
 

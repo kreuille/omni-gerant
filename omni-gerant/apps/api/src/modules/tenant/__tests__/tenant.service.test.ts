@@ -1,12 +1,31 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { createTenantService, getTenantStore } from '../tenant.service.js';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { EnrichedSiretInfo } from '../../../lib/siret-lookup.js';
+import type { TenantProfile } from '../tenant.service.js';
+
+// Mock the tenant repository so tests run without a database
+const mockStore = new Map<string, TenantProfile>();
+
+vi.mock('../tenant.repository.js', () => ({
+  createTenantRepository: () => ({
+    async findById(tenantId: string) {
+      return mockStore.get(tenantId) ?? null;
+    },
+    async upsertProfile(tenantId: string, profile: TenantProfile) {
+      const updated = { ...profile, id: tenantId, updated_at: new Date() };
+      mockStore.set(tenantId, updated);
+      return updated;
+    },
+  }),
+}));
+
+// Import after mock setup
+const { createTenantService } = await import('../tenant.service.js');
 
 describe('tenant.service — profile', () => {
   const service = createTenantService();
 
   beforeEach(() => {
-    getTenantStore().clear();
+    mockStore.clear();
   });
 
   describe('getProfile', () => {

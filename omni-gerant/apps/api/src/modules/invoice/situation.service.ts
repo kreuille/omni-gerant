@@ -1,6 +1,6 @@
-import type { Result } from '@omni-gerant/shared';
-import { ok, err, forbidden, notFound } from '@omni-gerant/shared';
-import type { AppError } from '@omni-gerant/shared';
+import type { Result } from '@zenadmin/shared';
+import { ok, err, forbidden, notFound } from '@zenadmin/shared';
+import type { AppError } from '@zenadmin/shared';
 
 // BUSINESS RULE [CDC-2.1]: Situations de travaux - facturer l'avancement d'un chantier
 // BUSINESS RULE [CDC-2.1]: Calcul automatique du reste a facturer

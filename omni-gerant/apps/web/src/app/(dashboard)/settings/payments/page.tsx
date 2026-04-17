@@ -1,7 +1,7 @@
 'use client';
 
-import { StripeConnectButton } from '../../../components/payment/stripe-connect-button';
-import { GoCardlessMandate } from '../../../components/payment/gocardless-mandate';
+import { StripeConnectButton } from '@/components/payment/stripe-connect-button';
+import { GoCardlessMandate } from '@/components/payment/gocardless-mandate';
 
 // BUSINESS RULE [CDC-3.2]: Page configuration paiements
 

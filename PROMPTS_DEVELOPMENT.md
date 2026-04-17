@@ -1,4 +1,4 @@
-# Prompts de Developpement - Omni-Gerant
+# Prompts de Developpement - zenAdmin
 
 > **Derniere mise a jour** : 2026-04-15
 
@@ -24,7 +24,7 @@
 - **51 tests E2E** (Playwright)
 - **73 profils de risques NAF** (DUERP, tous secteurs francais 01-99)
 - **Deploiement** : Frontend Vercel + API Render (free plan, in-memory)
-- **Repo** : https://github.com/kreuille/omni-gerant
+- **Repo** : https://github.com/kreuille/zenadmin
 
 ---
 
@@ -32,11 +32,11 @@
 
 Lis les skills 001 (result-pattern), 005 (zod-validation).
 
-Cree le monorepo Omni-Gerant avec pnpm workspaces et Turborepo.
+Cree le monorepo zenAdmin avec pnpm workspaces et Turborepo.
 
 **Structure a creer :**
 ```
-omni-gerant/
+zenadmin/
   package.json              # Root workspace
   pnpm-workspace.yaml
   turbo.json
@@ -1709,7 +1709,7 @@ apps/web/src/
    - Changement de local : si l'adresse du tenant change
 
 7. ARCHIVAGE 40 ANS (GCS) :
-   - Bucket dedie : omni-gerant-duerp-archive
+   - Bucket dedie : zenadmin-duerp-archive
    - Retention policy : 40 ans, locked (irreversible)
    - Storage class : ARCHIVE (cout minimal long terme)
    - Location : EU (conformite RGPD)

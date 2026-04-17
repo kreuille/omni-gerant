@@ -1,5 +1,5 @@
-import { ok, err } from '@omni-gerant/shared';
-import type { Result, AppError } from '@omni-gerant/shared';
+import { ok, err } from '@zenadmin/shared';
+import type { Result, AppError } from '@zenadmin/shared';
 import type { BankTransaction } from '../bank.service.js';
 import type { MatchCandidate } from './rules.js';
 import { rankCandidates, type MatchScore } from './scorer.js';

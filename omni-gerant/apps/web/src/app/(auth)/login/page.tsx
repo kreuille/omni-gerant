@@ -15,9 +15,19 @@ export default function LoginPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+
+    if (!email.trim()) {
+      setError('Veuillez saisir votre email');
+      return;
+    }
+    if (!password) {
+      setError('Veuillez saisir votre mot de passe');
+      return;
+    }
+
     setLoading(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://omni-gerant-api.onrender.com';
       const res = await fetch(`${apiUrl}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -25,16 +35,22 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error?.message ?? 'Erreur de connexion');
+        const msg = data.error?.message ?? '';
+        const translations: Record<string, string> = {
+          'Invalid email or password': 'Email ou mot de passe incorrect',
+          'User not found': 'Aucun compte avec cet email',
+          'Invalid password': 'Mot de passe incorrect',
+        };
+        setError(translations[msg] || msg || 'Erreur de connexion');
         return;
       }
       // Store tokens
-      document.cookie = `auth_token=${data.tokens.access_token}; path=/; max-age=900`;
+      document.cookie = `auth_token=${data.tokens.access_token}; path=/; max-age=${60*60*24*7}; SameSite=Lax`;
       localStorage.setItem('access_token', data.tokens.access_token);
       localStorage.setItem('refresh_token', data.tokens.refresh_token);
       localStorage.setItem('user', JSON.stringify(data.user));
       // Redirect to dashboard
-      window.location.href = '/quotes';
+      window.location.href = '/';
     } catch {
       setError('Impossible de contacter le serveur');
     } finally {
@@ -46,7 +62,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-primary-700">Omni-Gerant</h1>
+          <h1 className="text-3xl font-bold text-primary-700">zenAdmin</h1>
           <p className="mt-2 text-gray-600">Connectez-vous a votre espace</p>
         </div>
         <Card>

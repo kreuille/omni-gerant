@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { runMatching, type CandidateProvider, type TransactionMatcher } from '../matcher.js';
 import type { BankTransaction } from '../../bank.service.js';
 import type { MatchCandidate } from '../rules.js';
-import { ok } from '@omni-gerant/shared';
+import { ok } from '@zenadmin/shared';
 
 const TENANT_ID = '00000000-0000-0000-0000-000000000001';
 

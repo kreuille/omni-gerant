@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Monorepo: transpile workspace packages
-  transpilePackages: ['@omni-gerant/shared'],
+  transpilePackages: ['@zenadmin/shared'],
 
   // Output standalone for Docker/production
   output: 'standalone',
@@ -12,7 +12,8 @@ const nextConfig = {
 
   // Environment variables available at build time
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL
+      ?? (process.env.VERCEL ? 'https://omni-gerant-api.onrender.com' : 'http://localhost:3001'),
   },
 };
 

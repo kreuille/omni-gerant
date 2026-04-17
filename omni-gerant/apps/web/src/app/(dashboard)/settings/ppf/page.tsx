@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { PpfStatusBadge } from '../../../components/invoice/ppf-status-badge';
+import { PpfStatusBadge } from '@/components/invoice/ppf-status-badge';
 import { api } from '@/lib/api-client';
 
 // BUSINESS RULE [CDC-3.2]: Page configuration PPF/PDP

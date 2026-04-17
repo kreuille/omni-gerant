@@ -3,9 +3,12 @@ import cors from '@fastify/cors';
 import { loadConfig } from './config.js';
 import { registerErrorHandler } from './plugins/error-handler.js';
 import { registerRateLimiter } from './plugins/rate-limiter.js';
+import { registerSecurityPlugin } from './plugins/security.js';
+import { registerDatabasePlugin } from './plugins/database.js';
 import { registerAuthPlugin } from './plugins/auth.js';
 import { registerTenantPlugin } from './plugins/tenant.js';
 import { healthRoutes } from './routes/health.js';
+import { metricsRoutes, registerMetricsHook } from './routes/metrics.js';
 import { authRoutes } from './modules/auth/auth.routes.js';
 import { tenantRoutes } from './modules/tenant/tenant.routes.js';
 import { auditRoutes } from './modules/audit/audit.routes.js';
@@ -24,6 +27,8 @@ import { dashboardRoutes } from './modules/dashboard/dashboard.routes.js';
 import { accountingRoutes } from './modules/accounting/accounting.routes.js';
 import { paymentIntegrationRoutes } from './modules/payment/payment-integration.routes.js';
 import { ppfRoutes } from './modules/invoice/ppf/ppf.routes.js';
+import { hrRoutes } from './modules/hr/hr.routes.js';
+import { clientRoutes } from './modules/client/client.routes.js';
 import { createRequestContext, runWithContext } from './middleware/request-context.js';
 
 export async function buildApp() {
@@ -41,11 +46,16 @@ export async function buildApp() {
     genReqId: () => crypto.randomUUID(),
   });
 
-  // CORS
+  // CORS — strict origin in production
   await app.register(cors, {
     origin: config.CORS_ORIGIN.split(','),
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Correlation-Id'],
     credentials: true,
   });
+
+  // Security headers (HSTS, CSP, X-Frame-Options, etc.)
+  await registerSecurityPlugin(app);
 
   // Request context (correlation_id, tenant_id, user_id)
   app.addHook('onRequest', (request, _reply, done) => {
@@ -55,6 +65,9 @@ export async function buildApp() {
     runWithContext(context, () => done());
   });
 
+  // Metrics counter hook
+  registerMetricsHook(app);
+
   // Error handler
   registerErrorHandler(app);
 
@@ -62,11 +75,13 @@ export async function buildApp() {
   await registerRateLimiter(app);
 
   // Plugins
+  await app.register(registerDatabasePlugin);
   await app.register(registerAuthPlugin);
   await app.register(registerTenantPlugin);
 
   // Routes
   await app.register(healthRoutes);
+  await app.register(metricsRoutes);
   await app.register(authRoutes);
   await app.register(tenantRoutes);
   await app.register(auditRoutes);
@@ -85,6 +100,8 @@ export async function buildApp() {
   await app.register(accountingRoutes);
   await app.register(paymentIntegrationRoutes);
   await app.register(ppfRoutes);
+  await app.register(hrRoutes);
+  await app.register(clientRoutes);
 
   return app;
 }

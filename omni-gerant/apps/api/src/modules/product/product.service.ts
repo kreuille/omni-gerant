@@ -1,6 +1,6 @@
-import type { Result, PaginatedResult } from '@omni-gerant/shared';
-import { ok, err, notFound, validationError, conflict } from '@omni-gerant/shared';
-import type { AppError } from '@omni-gerant/shared';
+import type { Result, PaginatedResult } from '@zenadmin/shared';
+import { ok, err, notFound, validationError, conflict } from '@zenadmin/shared';
+import type { AppError } from '@zenadmin/shared';
 import type { CreateProductInput, UpdateProductInput, ProductListQuery, CsvProductRow } from './product.schemas.js';
 
 // BUSINESS RULE [R02]: Prix en centimes

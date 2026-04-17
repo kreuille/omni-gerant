@@ -141,10 +141,6 @@ const INSEE_CODE_MAP: Record<string, LegalForm> = {
   '6558': 'sci',
   '6560': 'sci',
 
-  // SCOP
-  '5458': 'scop',
-  '5558': 'scop',
-  '5585': 'scop',
 };
 
 const LEGAL_FORM_INFO: Record<LegalForm, LegalFormInfo> = {

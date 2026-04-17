@@ -13,7 +13,7 @@ export default function CompletePage() {
           <div className="text-5xl mb-4">V</div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">C'est parti !</h2>
           <p className="text-gray-600 mb-6">
-            Votre espace Omni-Gerant est configure. Vous etes pret a gerer
+            Votre espace zenAdmin est configure. Vous etes pret a gerer
             votre entreprise en toute simplicite.
           </p>
 

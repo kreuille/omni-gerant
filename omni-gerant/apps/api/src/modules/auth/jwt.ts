@@ -1,8 +1,8 @@
 import jwt from 'jsonwebtoken';
 import { randomBytes } from 'node:crypto';
-import type { Result } from '@omni-gerant/shared';
-import { ok, err, appError } from '@omni-gerant/shared';
-import type { AppError } from '@omni-gerant/shared';
+import type { Result } from '@zenadmin/shared';
+import { ok, err, appError } from '@zenadmin/shared';
+import type { AppError } from '@zenadmin/shared';
 
 export interface JwtPayload {
   user_id: string;
@@ -25,7 +25,7 @@ function getSecret(): string {
 export function generateAccessToken(payload: JwtPayload): string {
   return jwt.sign(payload, getSecret(), {
     expiresIn: '15m',
-    issuer: 'omni-gerant',
+    issuer: 'zenadmin',
   });
 }
 
@@ -36,7 +36,7 @@ export function generateRefreshToken(): string {
 export function verifyAccessToken(token: string): Result<JwtPayload, AppError> {
   try {
     const payload = jwt.verify(token, getSecret(), {
-      issuer: 'omni-gerant',
+      issuer: 'zenadmin',
     }) as JwtPayload;
     return ok(payload);
   } catch (error) {
