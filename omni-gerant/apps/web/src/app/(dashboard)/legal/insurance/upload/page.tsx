@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { InsuranceUpload } from '@/components/legal/insurance-upload';
+import { api } from '@/lib/api-client';
 
 // BUSINESS RULE [CDC-2.4]: Page ajout assurance
 
@@ -16,7 +18,12 @@ const INSURANCE_TYPES = [
   { value: 'prevoyance', label: 'Prevoyance' },
 ];
 
+interface InsuranceResponse {
+  id: string;
+}
+
 export default function UploadInsurancePage() {
+  const router = useRouter();
   const [type, setType] = useState('rc_pro');
   const [insurer, setInsurer] = useState('');
   const [contractNumber, setContractNumber] = useState('');
@@ -24,17 +31,40 @@ export default function UploadInsurancePage() {
   const [endDate, setEndDate] = useState('');
   const [premium, setPremium] = useState('');
   const [showUpload, setShowUpload] = useState(false);
+  const [createdId, setCreatedId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Call API POST /api/legal/insurance
-    alert(`Assurance ${type} cree : ${insurer} - ${contractNumber}`);
+    setSaving(true);
+    const premiumCents = Math.round(parseFloat(premium) * 100);
+    const result = await api.post<InsuranceResponse>('/api/legal/insurance', {
+      type,
+      insurer,
+      contract_number: contractNumber,
+      start_date: startDate,
+      end_date: endDate,
+      premium_cents: premiumCents,
+    });
+    if (result.ok) {
+      setCreatedId(result.value.id);
+      router.push('/legal/insurance');
+    } else {
+      alert(result.error.message ?? 'Erreur lors de la creation');
+    }
+    setSaving(false);
   };
 
-  const handleUpload = (_id: string, file: File) => {
-    // TODO: Call API POST /api/legal/insurance/:id/document
-    alert(`Attestation ${file.name} enregistree`);
-    setShowUpload(false);
+  const handleUpload = async (_id: string, file: File) => {
+    const docId = createdId ?? 'new';
+    const result = await api.post(`/api/legal/insurance/${docId}/document`, {
+      document_url: `/uploads/${file.name}`,
+    });
+    if (result.ok) {
+      setShowUpload(false);
+    } else {
+      alert('Erreur lors de l\'upload');
+    }
   };
 
   return (
@@ -43,7 +73,7 @@ export default function UploadInsurancePage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Ajouter une assurance</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Enregistrez un nouveau contrat d'assurance dans votre coffre-fort.
+            Enregistrez un nouveau contrat d&apos;assurance dans votre coffre-fort.
           </p>
         </div>
         <a href="/legal/insurance">
@@ -57,7 +87,7 @@ export default function UploadInsurancePage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Type d'assurance *
+                  Type d&apos;assurance *
                 </label>
                 <select
                   value={type}
@@ -116,7 +146,9 @@ export default function UploadInsurancePage() {
               <Button type="button" variant="outline" onClick={() => setShowUpload(true)}>
                 Joindre attestation PDF
               </Button>
-              <Button type="submit">Enregistrer</Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? 'Enregistrement...' : 'Enregistrer'}
+              </Button>
             </div>
           </form>
         </CardContent>
@@ -124,7 +156,7 @@ export default function UploadInsurancePage() {
 
       {showUpload && (
         <InsuranceUpload
-          insuranceId="new"
+          insuranceId={createdId ?? 'new'}
           onUpload={handleUpload}
           onCancel={() => setShowUpload(false)}
         />

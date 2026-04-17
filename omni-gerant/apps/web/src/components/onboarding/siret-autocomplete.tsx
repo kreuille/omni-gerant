@@ -3,11 +3,20 @@
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { api } from '@/lib/api-client';
 
 // BUSINESS RULE [CDC-4]: Recuperation automatique identite entreprise via SIRET
 
 interface CompanyInfo {
   name: string;
+  address: string;
+  naf_code: string;
+  legal_form: string;
+  tva_number: string;
+}
+
+interface SiretLookupResponse {
+  company_name: string;
   address: string;
   naf_code: string;
   legal_form: string;
@@ -24,7 +33,8 @@ export function SiretAutocomplete({ onCompanyFound }: SiretAutocompleteProps) {
   const [error, setError] = useState('');
 
   const handleLookup = async () => {
-    if (siret.replace(/\s/g, '').length !== 14) {
+    const cleaned = siret.replace(/\s/g, '');
+    if (cleaned.length !== 14) {
       setError('Le SIRET doit contenir 14 chiffres');
       return;
     }
@@ -32,24 +42,30 @@ export function SiretAutocomplete({ onCompanyFound }: SiretAutocompleteProps) {
     setLoading(true);
     setError('');
 
-    try {
-      // TODO: Call API GET /api/tenant/siret/:siret
-      // Simulate response for now
-      await new Promise((r) => setTimeout(r, 500));
+    const result = await api.post<SiretLookupResponse>('/api/tenant/profile/lookup-siret', {
+      siret: cleaned,
+    });
 
-      const siren = siret.replace(/\s/g, '').substring(0, 9);
+    if (result.ok) {
       onCompanyFound({
-        name: 'Mon Entreprise SARL',
-        address: '12 rue du Commerce, 75001 Paris',
-        naf_code: '43.21A',
-        legal_form: 'SARL',
-        tva_number: `FR${siren.substring(0, 2)}${siren}`,
+        name: result.value.company_name,
+        address: result.value.address,
+        naf_code: result.value.naf_code,
+        legal_form: result.value.legal_form,
+        tva_number: result.value.tva_number,
       });
-    } catch {
-      setError('Impossible de recuperer les informations. Verifiez le SIRET.');
-    } finally {
-      setLoading(false);
+    } else {
+      const code = result.error.code;
+      if (code === 'NOT_FOUND') {
+        setError('SIRET non trouve. Verifiez le numero et reessayez.');
+      } else if (code === 'SERVICE_UNAVAILABLE') {
+        setError('Service de recherche temporairement indisponible. Reessayez plus tard.');
+      } else {
+        setError(result.error.message ?? 'Impossible de recuperer les informations.');
+      }
     }
+
+    setLoading(false);
   };
 
   return (

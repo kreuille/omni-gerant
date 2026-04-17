@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,33 +13,89 @@ function formatCents(cents: number): string {
   return (cents / 100).toFixed(2).replace('.', ',');
 }
 
-export default function SharedQuotePage({ params: _params }: { params: { token: string } }) {
+interface SharedQuote {
+  number: string;
+  title: string | null;
+  status: string;
+  total_ht_cents: number;
+  total_tva_cents: number;
+  total_ttc_cents: number;
+  validity_date: string;
+  notes: string | null;
+  lines: Array<{
+    position: number;
+    type: string;
+    label: string;
+    quantity: number;
+    unit: string;
+    unit_price_cents: number;
+    tva_rate: number;
+    total_ht_cents: number;
+  }>;
+}
+
+interface ShareResponse {
+  quote: SharedQuote;
+  can_sign: boolean;
+}
+
+export default function SharedQuotePage({ params }: { params: { token: string } }) {
   const [signerName, setSignerName] = useState('');
   const [signerFirstName, setSignerFirstName] = useState('');
   const [signing, setSigning] = useState(false);
-  const [signed, _setSigned] = useState(false);
+  const [signed, setSigned] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [quote, setQuote] = useState<SharedQuote | null>(null);
+  const [canSign, setCanSign] = useState(false);
 
-  // Placeholder - will fetch from API
-  const loading = true;
-  const quote = null as null | {
-    number: string;
-    title: string | null;
-    status: string;
-    total_ht_cents: number;
-    total_tva_cents: number;
-    total_ttc_cents: number;
-    validity_date: string;
-    notes: string | null;
-    lines: Array<{
-      position: number;
-      type: string;
-      label: string;
-      quantity: number;
-      unit: string;
-      unit_price_cents: number;
-      tva_rate: number;
-      total_ht_cents: number;
-    }>;
+  const loadQuote = useCallback(async () => {
+    const baseUrl = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001';
+    try {
+      const res = await fetch(`${baseUrl}/api/share/quote/${params.token}`);
+      if (res.ok) {
+        const data: ShareResponse = await res.json();
+        setQuote(data.quote);
+        setCanSign(data.can_sign);
+      } else if (res.status === 404) {
+        setError('Ce lien de partage est invalide ou a expire.');
+      } else if (res.status === 401) {
+        setError('Ce lien de partage a expire.');
+      } else {
+        setError('Erreur lors du chargement du devis.');
+      }
+    } catch {
+      setError('Erreur reseau — verifiez votre connexion.');
+    }
+    setLoading(false);
+  }, [params.token]);
+
+  useEffect(() => {
+    loadQuote();
+  }, [loadQuote]);
+
+  const handleSign = async () => {
+    setSigning(true);
+    const baseUrl = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001';
+    try {
+      const res = await fetch(`${baseUrl}/api/share/quote/${params.token}/sign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          signer_name: signerName,
+          signer_first_name: signerFirstName,
+        }),
+      });
+      if (res.ok) {
+        setSigned(true);
+      } else {
+        const errorBody = await res.json().catch(() => null);
+        alert(errorBody?.error?.message ?? 'Erreur lors de la signature');
+      }
+    } catch {
+      alert('Erreur reseau');
+    }
+    setSigning(false);
   };
 
   if (loading) {
@@ -53,6 +109,20 @@ export default function SharedQuotePage({ params: _params }: { params: { token: 
               <Skeleton className="h-6 w-40" />
               <Skeleton className="h-40 w-full" />
               <Skeleton className="h-24 w-64 ml-auto" />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 px-4">
+        <div className="max-w-3xl mx-auto">
+          <Card>
+            <CardContent className="p-8 text-center">
+              <p className="text-red-600 font-semibold text-lg">{error}</p>
             </CardContent>
           </Card>
         </div>
@@ -117,7 +187,7 @@ export default function SharedQuotePage({ params: _params }: { params: { token: 
           </CardContent>
         </Card>
 
-        {!signed && (
+        {!signed && canSign && (
           <Card>
             <CardContent className="p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Signer ce devis</h2>
@@ -133,12 +203,11 @@ export default function SharedQuotePage({ params: _params }: { params: { token: 
               </div>
               <div className="flex gap-4">
                 <Button
-                  onClick={() => setSigning(true)}
+                  onClick={handleSign}
                   disabled={!signerName || !signerFirstName || signing}
                 >
                   {signing ? 'Signature en cours...' : 'Signer et accepter'}
                 </Button>
-                <Button variant="outline">Refuser</Button>
               </div>
             </CardContent>
           </Card>

@@ -1,11 +1,33 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { PpfStatusBadge } from '@/components/invoice/ppf-status-badge';
+import { api } from '@/lib/api-client';
 
 // BUSINESS RULE [CDC-3.2]: Page configuration PPF/PDP
 
 type PpfEnvironment = 'sandbox' | 'production';
+
+interface PpfSettings {
+  environment: PpfEnvironment;
+  api_key: string;
+  technical_id: string;
+}
+
+interface PpfTransmission {
+  id: string;
+  invoice_id: string;
+  ppf_id: string;
+  status: string;
+  last_status_check: string;
+}
+
+interface PpfDirectoryEntry {
+  siret: string;
+  name: string;
+  platform: string;
+  address: string;
+}
 
 export default function PpfSettingsPage() {
   const [environment, setEnvironment] = useState<PpfEnvironment>('sandbox');
@@ -13,23 +35,77 @@ export default function PpfSettingsPage() {
   const [technicalId, setTechnicalId] = useState('');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [transmissions, setTransmissions] = useState<PpfTransmission[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [directorySiret, setDirectorySiret] = useState('');
+  const [directoryResult, setDirectoryResult] = useState<PpfDirectoryEntry | null>(null);
+  const [directoryError, setDirectoryError] = useState('');
+  const [lookingUp, setLookingUp] = useState(false);
+
+  const loadSettings = useCallback(async () => {
+    const result = await api.get<PpfSettings>('/api/settings/ppf');
+    if (result.ok) {
+      setEnvironment(result.value.environment ?? 'sandbox');
+      setApiKey(result.value.api_key ?? '');
+      setTechnicalId(result.value.technical_id ?? '');
+    }
+  }, []);
+
+  const loadTransmissions = useCallback(async () => {
+    const result = await api.post<PpfTransmission[]>('/api/ppf/refresh', {});
+    if (result.ok) {
+      setTransmissions(result.value);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadSettings();
+    loadTransmissions();
+  }, [loadSettings, loadTransmissions]);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    // Placeholder — would POST to /api/settings/ppf
-    await new Promise((r) => setTimeout(r, 500));
+    const result = await api.put('/api/settings/ppf', {
+      environment,
+      api_key: apiKey,
+      technical_id: technicalId,
+    });
     setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    if (result.ok) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } else {
+      alert(result.error.message ?? 'Erreur');
+    }
   }
 
-  // Demo recent transmissions
-  const recentTransmissions = [
-    { id: 'PPF-2026-001', invoice: 'FAC-2026-042', status: 'acceptee' as const, date: '2026-04-12' },
-    { id: 'PPF-2026-002', invoice: 'FAC-2026-043', status: 'en_cours_traitement' as const, date: '2026-04-13' },
-    { id: 'PPF-2026-003', invoice: 'FAC-2026-044', status: 'deposee' as const, date: '2026-04-14' },
-  ];
+  async function handleRefresh() {
+    setRefreshing(true);
+    const result = await api.post<PpfTransmission[]>('/api/ppf/refresh', {});
+    if (result.ok) {
+      setTransmissions(result.value);
+    }
+    setRefreshing(false);
+  }
+
+  async function handleDirectoryLookup() {
+    const cleaned = directorySiret.replace(/\s/g, '');
+    if (cleaned.length !== 14) {
+      setDirectoryError('Le SIRET doit contenir 14 chiffres');
+      return;
+    }
+    setLookingUp(true);
+    setDirectoryError('');
+    setDirectoryResult(null);
+    const result = await api.get<PpfDirectoryEntry>(`/api/ppf/directory/${cleaned}`);
+    if (result.ok) {
+      setDirectoryResult(result.value);
+    } else {
+      setDirectoryError(result.error.message ?? 'SIRET non trouve');
+    }
+    setLookingUp(false);
+  }
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 p-6">
@@ -40,7 +116,6 @@ export default function PpfSettingsPage() {
         </p>
       </div>
 
-      {/* Info Banner */}
       <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
         <div className="flex items-start gap-3">
           <svg className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -57,7 +132,6 @@ export default function PpfSettingsPage() {
         </div>
       </div>
 
-      {/* Configuration Form */}
       <form onSubmit={handleSave} className="rounded-xl border bg-white p-6 space-y-6">
         <h2 className="text-lg font-semibold">Configuration API</h2>
 
@@ -129,23 +203,34 @@ export default function PpfSettingsPage() {
         </div>
       </form>
 
-      {/* Recent Transmissions */}
       <section className="rounded-xl border bg-white p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Transmissions recentes</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Transmissions recentes</h2>
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="text-sm text-indigo-600 hover:text-indigo-800 disabled:opacity-50"
+          >
+            {refreshing ? 'Actualisation...' : 'Actualiser'}
+          </button>
+        </div>
         <div className="divide-y">
-          {recentTransmissions.map((t) => (
-            <div key={t.id} className="flex items-center justify-between py-3">
-              <div>
-                <p className="font-medium text-sm">{t.invoice}</p>
-                <p className="text-xs text-gray-500">{t.id} — {t.date}</p>
+          {transmissions.length === 0 ? (
+            <p className="text-sm text-gray-400 py-3">Aucune transmission</p>
+          ) : (
+            transmissions.map((t) => (
+              <div key={t.id} className="flex items-center justify-between py-3">
+                <div>
+                  <p className="font-medium text-sm">{t.invoice_id}</p>
+                  <p className="text-xs text-gray-500">{t.ppf_id} — {t.last_status_check ? new Date(t.last_status_check).toLocaleDateString('fr-FR') : ''}</p>
+                </div>
+                <PpfStatusBadge status={t.status as 'deposee' | 'en_cours_traitement' | 'acceptee' | 'refusee' | 'encaissee'} />
               </div>
-              <PpfStatusBadge status={t.status} />
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </section>
 
-      {/* Directory Lookup */}
       <section className="rounded-xl border bg-white p-6 space-y-4">
         <h2 className="text-lg font-semibold">Annuaire PPF</h2>
         <p className="text-sm text-gray-500">
@@ -154,14 +239,29 @@ export default function PpfSettingsPage() {
         <div className="flex gap-2">
           <input
             type="text"
+            value={directorySiret}
+            onChange={(e) => setDirectorySiret(e.target.value)}
             placeholder="SIRET (14 chiffres)"
             maxLength={14}
             className="flex-1 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
-          <button className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium hover:bg-gray-200 transition-colors">
-            Rechercher
+          <button
+            onClick={handleDirectoryLookup}
+            disabled={lookingUp}
+            className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium hover:bg-gray-200 transition-colors disabled:opacity-50"
+          >
+            {lookingUp ? 'Recherche...' : 'Rechercher'}
           </button>
         </div>
+        {directoryError && <p className="text-sm text-red-500">{directoryError}</p>}
+        {directoryResult && (
+          <div className="rounded-lg bg-green-50 border border-green-200 p-3 text-sm">
+            <p className="font-medium text-green-800">{directoryResult.name}</p>
+            <p className="text-green-700">SIRET: {directoryResult.siret}</p>
+            <p className="text-green-700">Plateforme: {directoryResult.platform}</p>
+            <p className="text-green-700">Adresse: {directoryResult.address}</p>
+          </div>
+        )}
       </section>
     </div>
   );

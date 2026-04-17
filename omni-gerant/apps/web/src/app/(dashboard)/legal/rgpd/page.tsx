@@ -1,34 +1,95 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RgpdExport } from '@/components/legal/rgpd-export';
+import { api } from '@/lib/api-client';
 
 // BUSINESS RULE [CDC-2.4]: Page registre RGPD
 
+interface RgpdRegistry {
+  id: string;
+  company_name: string;
+  siret: string;
+  dpo_name: string;
+  dpo_email: string;
+  treatments: unknown[];
+  created_at: string;
+}
+
 export default function RgpdPage() {
-  const [registryExists, setRegistryExists] = useState(false);
+  const [registry, setRegistry] = useState<RgpdRegistry | null>(null);
+  const [loading, setLoading] = useState(true);
   const [companyName, setCompanyName] = useState('');
   const [siret, setSiret] = useState('');
   const [dpoName, setDpoName] = useState('');
   const [dpoEmail, setDpoEmail] = useState('');
-  const [treatmentCount, setTreatmentCount] = useState(0);
+  const [creating, setCreating] = useState(false);
 
-  const handleCreateRegistry = () => {
-    // TODO: Call API POST /api/legal/rgpd
-    setRegistryExists(true);
-    setCompanyName(companyName || 'Mon Entreprise');
-    setTreatmentCount(5); // pre-filled
-    alert('Registre RGPD cree avec 5 traitements pre-remplis');
+  const loadRegistry = useCallback(async () => {
+    const result = await api.get<RgpdRegistry>('/api/legal/rgpd');
+    if (result.ok) {
+      setRegistry(result.value);
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    loadRegistry();
+  }, [loadRegistry]);
+
+  const handleCreateRegistry = async () => {
+    setCreating(true);
+    const result = await api.post<RgpdRegistry>('/api/legal/rgpd', {
+      company_name: companyName || 'Mon Entreprise',
+      siret,
+      dpo_name: dpoName,
+      dpo_email: dpoEmail,
+    });
+    if (result.ok) {
+      setRegistry(result.value);
+    } else {
+      alert(result.error.message ?? 'Erreur lors de la creation du registre');
+    }
+    setCreating(false);
   };
 
-  const handleExport = () => {
-    // TODO: Call API GET /api/legal/rgpd/export
-    alert('Export CNIL telecharge');
+  const handleExport = async () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+    const baseUrl = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001';
+    const res = await fetch(`${baseUrl}/api/legal/rgpd/export`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (res.ok) {
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'registre-rgpd.tsv';
+      a.click();
+      URL.revokeObjectURL(url);
+    } else {
+      alert('Erreur lors de l\'export');
+    }
   };
 
-  if (!registryExists) {
+  if (loading) {
+    return (
+      <div>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Registre RGPD</h1>
+        </div>
+        <Card>
+          <CardContent className="p-8 text-center text-gray-400">
+            Chargement...
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!registry) {
     return (
       <div>
         <div className="mb-6">
@@ -52,7 +113,7 @@ export default function RgpdPage() {
               <div className="space-y-3 mb-6 text-left">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nom de l'entreprise *
+                    Nom de l&apos;entreprise *
                   </label>
                   <input
                     type="text"
@@ -98,8 +159,8 @@ export default function RgpdPage() {
                 </div>
               </div>
 
-              <Button onClick={handleCreateRegistry}>
-                Creer le registre (avec pre-remplissage)
+              <Button onClick={handleCreateRegistry} disabled={creating}>
+                {creating ? 'Creation...' : 'Creer le registre (avec pre-remplissage)'}
               </Button>
             </div>
           </CardContent>
@@ -108,13 +169,15 @@ export default function RgpdPage() {
     );
   }
 
+  const treatmentCount = registry.treatments.length;
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Registre RGPD</h1>
           <p className="text-sm text-gray-500 mt-1">
-            {companyName} — {treatmentCount} traitement{treatmentCount > 1 ? 's' : ''} enregistre{treatmentCount > 1 ? 's' : ''}
+            {registry.company_name} — {treatmentCount} traitement{treatmentCount > 1 ? 's' : ''} enregistre{treatmentCount > 1 ? 's' : ''}
           </p>
         </div>
         <div className="flex gap-2">
@@ -124,7 +187,6 @@ export default function RgpdPage() {
         </div>
       </div>
 
-      {/* Statistiques */}
       <div className="grid grid-cols-4 gap-4 mb-6">
         <Card>
           <CardContent className="p-4 text-center">
@@ -134,7 +196,7 @@ export default function RgpdPage() {
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-green-600">{dpoName ? '1' : '0'}</p>
+            <p className="text-2xl font-bold text-green-600">{registry.dpo_name ? '1' : '0'}</p>
             <p className="text-sm text-gray-500">DPO designe</p>
           </CardContent>
         </Card>
@@ -152,34 +214,32 @@ export default function RgpdPage() {
         </Card>
       </div>
 
-      {/* Informations generales */}
       <Card className="mb-6">
         <CardContent className="p-4">
           <h2 className="text-lg font-semibold text-gray-900 mb-3">Informations generales</h2>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="text-gray-500">Responsable de traitement : </span>
-              <span className="font-medium">{companyName}</span>
+              <span className="font-medium">{registry.company_name}</span>
             </div>
             <div>
               <span className="text-gray-500">SIRET : </span>
-              <span className="font-medium">{siret || 'Non renseigne'}</span>
+              <span className="font-medium">{registry.siret || 'Non renseigne'}</span>
             </div>
             <div>
               <span className="text-gray-500">DPO / Referent : </span>
-              <span className="font-medium">{dpoName || 'Non designe'}</span>
+              <span className="font-medium">{registry.dpo_name || 'Non designe'}</span>
             </div>
             <div>
               <span className="text-gray-500">Email DPO : </span>
-              <span className="font-medium">{dpoEmail || 'Non renseigne'}</span>
+              <span className="font-medium">{registry.dpo_email || 'Non renseigne'}</span>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Export */}
       <RgpdExport
-        companyName={companyName}
+        companyName={registry.company_name}
         treatmentCount={treatmentCount}
         onExport={handleExport}
       />

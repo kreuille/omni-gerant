@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TreatmentForm } from '@/components/legal/treatment-form';
 import { TreatmentList } from '@/components/legal/treatment-list';
+import { api } from '@/lib/api-client';
 
 // BUSINESS RULE [CDC-2.4]: Gestion des traitements RGPD
 
@@ -22,80 +23,29 @@ interface Treatment {
   transfer_details: string | null;
 }
 
-// Default treatments for demo
-const DEFAULT_TREATMENTS: Treatment[] = [
-  {
-    id: '1',
-    name: 'Gestion de la relation client',
-    purpose: 'Gestion du fichier clients, suivi des commandes, SAV',
-    legal_basis: 'contrat',
-    data_categories: ['Identite', 'Coordonnees', 'Donnees de facturation', 'Historique commandes'],
-    data_subjects: 'Clients et prospects',
-    recipients: ['Personnel habilite', 'Prestataire hebergement'],
-    retention_period: '3 ans apres fin de relation commerciale',
-    security_measures: ['Mot de passe', 'Chiffrement TLS', 'Sauvegardes'],
-    transfer_outside_eu: false,
-    transfer_details: null,
-  },
-  {
-    id: '2',
-    name: 'Facturation et comptabilite',
-    purpose: 'Emission factures, gestion comptable, declarations fiscales',
-    legal_basis: 'obligation_legale',
-    data_categories: ['Identite', 'Coordonnees', 'Donnees bancaires', 'Montants'],
-    data_subjects: 'Clients et fournisseurs',
-    recipients: ['Personnel comptable', 'Expert-comptable', 'Administration fiscale'],
-    retention_period: '10 ans (obligation legale)',
-    security_measures: ['Acces restreint', 'Archivage securise', 'Piste d\'audit'],
-    transfer_outside_eu: false,
-    transfer_details: null,
-  },
-  {
-    id: '3',
-    name: 'Gestion des fournisseurs',
-    purpose: 'Suivi commandes fournisseurs, contrats, paiements',
-    legal_basis: 'contrat',
-    data_categories: ['Identite contact', 'Coordonnees pro', 'Donnees entreprise', 'RIB'],
-    data_subjects: 'Fournisseurs et sous-traitants',
-    recipients: ['Personnel habilite', 'Banque'],
-    retention_period: '5 ans apres fin du contrat',
-    security_measures: ['Acces par profil', 'Chiffrement bancaire', 'Journalisation'],
-    transfer_outside_eu: false,
-    transfer_details: null,
-  },
-  {
-    id: '4',
-    name: 'Gestion du personnel',
-    purpose: 'Administration salaries, paie, conges, formation',
-    legal_basis: 'obligation_legale',
-    data_categories: ['Identite', 'N° securite sociale', 'Coordonnees', 'Donnees bancaires', 'Paie'],
-    data_subjects: 'Salaries et stagiaires',
-    recipients: ['Service RH', 'Expert-comptable', 'Organismes sociaux'],
-    retention_period: '5 ans apres depart (50 ans bulletins de paie)',
-    security_measures: ['Acces limite RH', 'Chiffrement', 'Coffre-fort numerique', 'Journalisation'],
-    transfer_outside_eu: false,
-    transfer_details: null,
-  },
-  {
-    id: '5',
-    name: 'Prospection commerciale',
-    purpose: 'Communications commerciales, newsletters, offres',
-    legal_basis: 'interet_legitime',
-    data_categories: ['Identite', 'Coordonnees', 'Historique interactions'],
-    data_subjects: 'Prospects et anciens clients',
-    recipients: ['Personnel commercial', 'Prestataire emailing'],
-    retention_period: '3 ans apres dernier contact',
-    security_measures: ['Lien desinscription', 'Base separee', 'Consentement trace'],
-    transfer_outside_eu: false,
-    transfer_details: null,
-  },
-];
+interface RgpdRegistry {
+  id: string;
+  treatments: Treatment[];
+}
 
 export default function TreatmentsPage() {
-  const [treatments, setTreatments] = useState<Treatment[]>(DEFAULT_TREATMENTS);
+  const [treatments, setTreatments] = useState<Treatment[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
 
-  const handleAddTreatment = (data: {
+  const loadTreatments = useCallback(async () => {
+    const result = await api.get<RgpdRegistry>('/api/legal/rgpd');
+    if (result.ok) {
+      setTreatments(result.value.treatments);
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    loadTreatments();
+  }, [loadTreatments]);
+
+  const handleAddTreatment = async (data: {
     name: string;
     purpose: string;
     legal_basis: string;
@@ -107,18 +57,37 @@ export default function TreatmentsPage() {
     transfer_outside_eu: boolean;
     transfer_details: string;
   }) => {
-    const treatment: Treatment = {
-      id: crypto.randomUUID(),
+    const result = await api.post<Treatment>('/api/legal/rgpd/treatments', {
       ...data,
       transfer_details: data.transfer_details || null,
-    };
-    setTreatments((prev) => [...prev, treatment]);
-    setShowForm(false);
+    });
+    if (result.ok) {
+      setTreatments((prev) => [...prev, result.value]);
+      setShowForm(false);
+    } else {
+      alert(result.error.message ?? 'Erreur');
+    }
   };
 
-  const handleDeleteTreatment = (id: string) => {
-    setTreatments((prev) => prev.filter((t) => t.id !== id));
+  const handleDeleteTreatment = async (id: string) => {
+    const result = await api.delete(`/api/legal/rgpd/treatments/${id}`);
+    if (result.ok) {
+      setTreatments((prev) => prev.filter((t) => t.id !== id));
+    }
   };
+
+  if (loading) {
+    return (
+      <div>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Traitements RGPD</h1>
+        </div>
+        <Card>
+          <CardContent className="p-8 text-center text-gray-400">Chargement...</CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div>

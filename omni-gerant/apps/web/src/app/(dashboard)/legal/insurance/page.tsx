@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { InsuranceCard } from '@/components/legal/insurance-card';
 import { ExpiryAlert } from '@/components/legal/expiry-alert';
+import { api } from '@/lib/api-client';
 
 // BUSINESS RULE [CDC-2.4]: Page liste assurances
 
@@ -20,28 +21,20 @@ interface Insurance {
 }
 
 export default function InsurancePage() {
-  const [insurances, setInsurances] = useState<Insurance[]>([
-    {
-      id: '1',
-      type: 'rc_pro',
-      insurer: 'AXA Assurances',
-      contract_number: 'RC-2026-001',
-      start_date: '2026-01-01',
-      end_date: '2027-01-01',
-      premium_cents: 120000,
-      document_url: '/uploads/rc-pro.pdf',
-    },
-    {
-      id: '2',
-      type: 'decennale',
-      insurer: 'MAAF Pro',
-      contract_number: 'DEC-2026-042',
-      start_date: '2026-04-01',
-      end_date: '2026-05-15',
-      premium_cents: 350000,
-      document_url: null,
-    },
-  ]);
+  const [insurances, setInsurances] = useState<Insurance[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadInsurances = useCallback(async () => {
+    const result = await api.get<Insurance[]>('/api/legal/insurance');
+    if (result.ok) {
+      setInsurances(result.value);
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    loadInsurances();
+  }, [loadInsurances]);
 
   const alerts = insurances
     .map((ins) => {
@@ -61,11 +54,27 @@ export default function InsurancePage() {
     })
     .filter((a): a is NonNullable<typeof a> => a !== null);
 
-  const handleDelete = (id: string) => {
-    setInsurances((prev) => prev.filter((i) => i.id !== id));
+  const handleDelete = async (id: string) => {
+    const result = await api.delete(`/api/legal/insurance/${id}`);
+    if (result.ok) {
+      setInsurances((prev) => prev.filter((i) => i.id !== id));
+    }
   };
 
   const totalPremium = insurances.reduce((sum, i) => sum + i.premium_cents, 0);
+
+  if (loading) {
+    return (
+      <div>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Coffre-Fort Assurances</h1>
+        </div>
+        <Card>
+          <CardContent className="p-8 text-center text-gray-400">Chargement...</CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -73,7 +82,7 @@ export default function InsurancePage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Coffre-Fort Assurances</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Gerez vos contrats d'assurance et attestations.
+            Gerez vos contrats d&apos;assurance et attestations.
           </p>
         </div>
         <a href="/legal/insurance/upload">
@@ -81,10 +90,8 @@ export default function InsurancePage() {
         </a>
       </div>
 
-      {/* Alertes echeance */}
       <ExpiryAlert alerts={alerts} />
 
-      {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <Card>
           <CardContent className="p-4 text-center">
@@ -110,7 +117,6 @@ export default function InsurancePage() {
         </Card>
       </div>
 
-      {/* Liste */}
       <div className="space-y-4">
         {insurances.length === 0 ? (
           <Card>
