@@ -1,13 +1,42 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { api } from '@/lib/api-client';
 
-// BUSINESS RULE [CDC-2.2]: Dashboard achats
+// BUSINESS RULE [CDC-2.2]: Dashboard achats connecte a l'API
+
+interface Purchase {
+  id: string;
+  supplier_id: string | null;
+  number: string | null;
+  status: string;
+  total_ttc_cents: number;
+  paid_cents: number;
+  due_date: string | null;
+  issue_date: string | null;
+}
+
+interface PurchaseListResponse {
+  items: Purchase[];
+  next_cursor: string | null;
+  has_more: boolean;
+}
+
+interface Supplier {
+  id: string;
+  name: string;
+}
+
+interface SupplierListResponse {
+  items: Supplier[];
+  next_cursor: string | null;
+  has_more: boolean;
+}
 
 const STATUS_LABELS: Record<string, { label: string; variant: 'default' | 'success' | 'warning' | 'error' | 'info' }> = {
   pending: { label: 'En attente', variant: 'default' },
@@ -27,20 +56,63 @@ function formatDate(dateStr: string): string {
 export default function PurchasesPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [dueThisWeek, setDueThisWeek] = useState<Purchase[]>([]);
+  const [supplierMap, setSupplierMap] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Placeholder - sera connecte a l'API
-  const purchases: Array<{
-    id: string;
-    number: string | null;
-    supplier_name: string;
-    status: string;
-    total_ttc_cents: number;
-    paid_cents: number;
-    due_date: string | null;
-    issue_date: string | null;
-  }> = [];
+  const fetchData = useCallback(async (searchQuery?: string, status?: string) => {
+    setLoading(true);
+    setError(null);
 
-  const dueThisWeek: typeof purchases = [];
+    const params = new URLSearchParams({ limit: '100', sort_by: 'created_at', sort_dir: 'desc' });
+    if (searchQuery) params.set('search', searchQuery);
+    if (status) params.set('status', status);
+
+    const [purchasesResult, dueResult, suppliersResult] = await Promise.all([
+      api.get<PurchaseListResponse>(`/api/purchases?${params.toString()}`),
+      api.get<Purchase[]>('/api/purchases/due-this-week'),
+      api.get<SupplierListResponse>('/api/suppliers?limit=100&sort_by=name&sort_dir=asc'),
+    ]);
+
+    if (purchasesResult.ok) {
+      setPurchases(purchasesResult.value.items);
+    } else {
+      setError(purchasesResult.error.message);
+    }
+
+    if (dueResult.ok) {
+      setDueThisWeek(dueResult.value);
+    }
+
+    if (suppliersResult.ok) {
+      const map: Record<string, string> = {};
+      for (const s of suppliersResult.value.items) {
+        map[s.id] = s.name;
+      }
+      setSupplierMap(map);
+    }
+
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Debounced search + status filter
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchData(search || undefined, statusFilter || undefined);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search, statusFilter, fetchData]);
+
+  const getSupplierName = (supplierId: string | null): string => {
+    if (!supplierId) return '-';
+    return supplierMap[supplierId] ?? '-';
+  };
 
   return (
     <div>
@@ -56,14 +128,16 @@ export default function PurchasesPage() {
         <Card>
           <CardContent className="p-4">
             <p className="text-sm text-gray-500">A payer cette semaine</p>
-            <p className="text-2xl font-bold text-gray-900">{dueThisWeek.length}</p>
+            <p className="text-2xl font-bold text-gray-900">
+              {loading ? '...' : dueThisWeek.length}
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <p className="text-sm text-gray-500">En attente de validation</p>
             <p className="text-2xl font-bold text-gray-900">
-              {purchases.filter((p) => p.status === 'pending').length}
+              {loading ? '...' : purchases.filter((p) => p.status === 'pending').length}
             </p>
           </CardContent>
         </Card>
@@ -71,11 +145,13 @@ export default function PurchasesPage() {
           <CardContent className="p-4">
             <p className="text-sm text-gray-500">Total en cours</p>
             <p className="text-2xl font-bold text-gray-900">
-              {formatCents(
-                purchases
-                  .filter((p) => p.status !== 'paid')
-                  .reduce((sum, p) => sum + (p.total_ttc_cents - p.paid_cents), 0),
-              )}
+              {loading
+                ? '...'
+                : formatCents(
+                    purchases
+                      .filter((p) => p.status !== 'paid')
+                      .reduce((sum, p) => sum + (p.total_ttc_cents - p.paid_cents), 0),
+                  )}
             </p>
           </CardContent>
         </Card>
@@ -102,7 +178,21 @@ export default function PurchasesPage() {
         </select>
       </div>
 
-      {purchases.length === 0 ? (
+      {loading ? (
+        <Card>
+          <CardContent className="py-12 text-center text-gray-500">
+            <p>Chargement des achats...</p>
+          </CardContent>
+        </Card>
+      ) : error ? (
+        <Card>
+          <CardContent className="py-12 text-center text-red-500">
+            <p className="text-lg mb-2">Erreur de chargement</p>
+            <p className="text-sm">{error}</p>
+            <Button variant="outline" className="mt-4" onClick={() => fetchData()}>Reessayer</Button>
+          </CardContent>
+        </Card>
+      ) : purchases.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-gray-500">
             <p className="text-lg mb-2">Aucune facture d&apos;achat pour le moment</p>
@@ -134,7 +224,7 @@ export default function PurchasesPage() {
                           {purchase.number ?? '-'}
                         </Link>
                       </td>
-                      <td className="px-4 py-3 text-gray-900">{purchase.supplier_name}</td>
+                      <td className="px-4 py-3 text-gray-900">{getSupplierName(purchase.supplier_id)}</td>
                       <td className="px-4 py-3">
                         <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
                       </td>

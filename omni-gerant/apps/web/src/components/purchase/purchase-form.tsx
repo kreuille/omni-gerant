@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SupplierSelect } from './supplier-select';
+import { api } from '@/lib/api-client';
 
-// BUSINESS RULE [CDC-2.2]: Formulaire saisie facture d'achat
+// BUSINESS RULE [CDC-2.2]: Formulaire saisie facture d'achat connecte a l'API
 
 interface PurchaseLine {
   id: string;
@@ -15,6 +17,10 @@ interface PurchaseLine {
   unit_price_cents: number;
   tva_rate: number;
   total_ht_cents: number;
+}
+
+interface PurchaseResponse {
+  id: string;
 }
 
 const TVA_RATES = [
@@ -48,12 +54,15 @@ function parseCentsInput(value: string): number {
 }
 
 export function PurchaseForm() {
+  const router = useRouter();
   const [supplierId, setSupplierId] = useState<string | null>(null);
   const [number, setNumber] = useState('');
   const [issueDate, setIssueDate] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [notes, setNotes] = useState('');
   const [lines, setLines] = useState<PurchaseLine[]>([createEmptyLine(1)]);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const updateLine = useCallback((id: string, field: keyof PurchaseLine, value: unknown) => {
     setLines((prev) =>
@@ -86,8 +95,51 @@ export function PurchaseForm() {
   );
   const totalTtcCents = totalHtCents + totalTvaCents;
 
+  const handleSubmit = async () => {
+    // Validate at least one line has a label
+    const validLines = lines.filter((l) => l.label.trim() !== '');
+    if (validLines.length === 0) {
+      setError('Ajoutez au moins une ligne avec une designation.');
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+
+    const body: Record<string, unknown> = {
+      source: 'manual',
+      lines: validLines.map((l) => ({
+        position: l.position,
+        label: l.label.trim(),
+        quantity: l.quantity,
+        unit_price_cents: l.unit_price_cents,
+        tva_rate: l.tva_rate,
+      })),
+    };
+
+    if (supplierId) body['supplier_id'] = supplierId;
+    if (number.trim()) body['number'] = number.trim();
+    if (issueDate) body['issue_date'] = new Date(issueDate).toISOString();
+    if (dueDate) body['due_date'] = new Date(dueDate).toISOString();
+    if (notes.trim()) body['notes'] = notes.trim();
+
+    const result = await api.post<PurchaseResponse>('/api/purchases', body);
+    if (result.ok) {
+      router.push(`/purchases/${result.value.id}`);
+    } else {
+      setError(result.error.message);
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+          {error}
+        </div>
+      )}
+
       {/* Header fields */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
@@ -227,8 +279,10 @@ export function PurchaseForm() {
 
       {/* Actions */}
       <div className="flex justify-end gap-2">
-        <Button variant="outline">Annuler</Button>
-        <Button>Enregistrer</Button>
+        <Button variant="outline" onClick={() => router.push('/purchases')}>Annuler</Button>
+        <Button onClick={handleSubmit} disabled={saving}>
+          {saving ? 'Enregistrement...' : 'Enregistrer'}
+        </Button>
       </div>
     </div>
   );
