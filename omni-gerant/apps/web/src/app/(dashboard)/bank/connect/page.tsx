@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { api } from '@/lib/api-client';
 
 // BUSINESS RULE [CDC-2.3]: Flow de connexion bancaire Open Banking
 
@@ -22,13 +23,38 @@ type Step = 'select' | 'connecting' | 'success' | 'error';
 export default function ConnectBankPage() {
   const [step, setStep] = useState<Step>('select');
   const [_selectedBank, setSelectedBank] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleConnect = async (bankId: string) => {
     setSelectedBank(bankId);
     setStep('connecting');
-    // TODO: Call POST /api/bank/connect to get Bridge redirect URL
-    // In production, redirect to Bridge widget
-    setTimeout(() => setStep('success'), 2000);
+    setErrorMessage(null);
+
+    const callbackUrl = `${window.location.origin}/bank/connect/callback`;
+    const result = await api.post<{ redirect_url: string }>('/api/bank/connect', {
+      callback_url: callbackUrl,
+    });
+
+    if (!result.ok) {
+      // If Bridge is not configured (no client ID), show a graceful message
+      setErrorMessage(result.error.message || 'Impossible de se connecter a la banque.');
+      setStep('error');
+      return;
+    }
+
+    // If the API returns a redirect URL, navigate to it
+    if (result.value.redirect_url) {
+      window.location.href = result.value.redirect_url;
+    } else {
+      // Fallback: call callback to import accounts directly
+      const callbackResult = await api.post('/api/bank/callback', {});
+      if (callbackResult.ok) {
+        setStep('success');
+      } else {
+        setErrorMessage('Erreur lors de l\'import des comptes.');
+        setStep('error');
+      }
+    }
   };
 
   if (step === 'connecting') {
@@ -41,6 +67,30 @@ export default function ConnectBankPage() {
             <p className="text-sm text-gray-500">
               Vous allez etre redirige vers votre banque pour autoriser l&apos;acces.
             </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (step === 'error') {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Card className="max-w-md w-full">
+          <CardContent className="p-8 text-center">
+            <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+              <span className="text-red-600 text-2xl">!</span>
+            </div>
+            <h2 className="text-lg font-semibold mb-2">Erreur de connexion</h2>
+            <p className="text-sm text-gray-500 mb-6">
+              {errorMessage ?? 'La connexion bancaire n\'a pas pu aboutir. Veuillez reessayer.'}
+            </p>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={() => setStep('select')}>Reessayer</Button>
+              <a href="/bank">
+                <Button variant="outline">Retour</Button>
+              </a>
+            </div>
           </CardContent>
         </Card>
       </div>
