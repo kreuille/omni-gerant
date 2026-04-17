@@ -43,7 +43,7 @@ export function middleware(request: NextRequest) {
   if (!isDev) {
     const { pathname } = request.nextUrl;
     const isAuthPage = pathname === '/login' || pathname === '/register';
-    const isPublicPage = pathname === '/' || pathname.startsWith('/onboarding') || pathname.startsWith('/public') || pathname.startsWith('/share');
+    const isPublicPage = pathname.startsWith('/onboarding') || pathname.startsWith('/step-') || pathname.startsWith('/public') || pathname.startsWith('/share') || pathname === '/maintenance';
     const isApiRoute = pathname.startsWith('/api/');
 
     if (!isAuthPage && !isPublicPage && !isApiRoute) {

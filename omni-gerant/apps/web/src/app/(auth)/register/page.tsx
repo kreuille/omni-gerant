@@ -23,6 +23,22 @@ export default function RegisterPage() {
     setError('');
     setLoading(true);
 
+    if (!companyName.trim()) {
+      setError('Veuillez saisir le nom de votre entreprise');
+      setLoading(false);
+      return;
+    }
+    if (!email.trim() || !email.includes('@')) {
+      setError('Veuillez saisir un email valide');
+      setLoading(false);
+      return;
+    }
+    if (password.length < 8) {
+      setError('Le mot de passe doit contenir au moins 8 caracteres');
+      setLoading(false);
+      return;
+    }
+
     try {
       const result = await api.post<{
         tokens: { access_token: string; refresh_token: string };
@@ -38,6 +54,9 @@ export default function RegisterPage() {
       if (result.ok) {
         localStorage.setItem('access_token', result.value.tokens.access_token);
         localStorage.setItem('refresh_token', result.value.tokens.refresh_token);
+        // Set auth cookie for middleware
+        document.cookie = `auth_token=${result.value.tokens.access_token}; path=/; max-age=${60*60*24*7}; SameSite=Lax`;
+        localStorage.setItem('user', JSON.stringify(result.value.user));
         router.push('/');
       } else {
         setError(result.error.message ?? 'Erreur lors de l\'inscription');
