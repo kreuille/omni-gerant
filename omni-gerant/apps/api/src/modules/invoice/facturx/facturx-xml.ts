@@ -13,7 +13,7 @@ export interface FacturxParty {
 }
 
 export interface FacturxTaxGroup {
-  tva_rate: number; // basis points
+  tva_rate: number; // percentage (20 = 20%)
   base_ht_cents: number;
   tva_cents: number;
 }
@@ -56,8 +56,8 @@ function centsToDecimal(cents: number): string {
   return (cents / 100).toFixed(2);
 }
 
-function basisPointsToPercent(bp: number): string {
-  return (bp / 100).toFixed(2);
+function formatPercent(rate: number): string {
+  return rate.toFixed(2);
 }
 
 // Map internal unit codes to UN/ECE Rec 20 codes
@@ -106,7 +106,7 @@ export function generateFacturxXml(data: FacturxInvoiceData): string {
         <ram:ApplicableTradeTax>
           <ram:TypeCode>VAT</ram:TypeCode>
           <ram:CategoryCode>S</ram:CategoryCode>
-          <ram:RateApplicablePercent>${basisPointsToPercent(line.tva_rate)}</ram:RateApplicablePercent>
+          <ram:RateApplicablePercent>${formatPercent(line.tva_rate)}</ram:RateApplicablePercent>
         </ram:ApplicableTradeTax>
         <ram:SpecifiedTradeSettlementLineMonetarySummation>
           <ram:LineTotalAmount>${centsToDecimal(line.total_ht_cents)}</ram:LineTotalAmount>
@@ -120,7 +120,7 @@ export function generateFacturxXml(data: FacturxInvoiceData): string {
         <ram:TypeCode>VAT</ram:TypeCode>
         <ram:BasisAmount>${centsToDecimal(tg.base_ht_cents)}</ram:BasisAmount>
         <ram:CategoryCode>S</ram:CategoryCode>
-        <ram:RateApplicablePercent>${basisPointsToPercent(tg.tva_rate)}</ram:RateApplicablePercent>
+        <ram:RateApplicablePercent>${formatPercent(tg.tva_rate)}</ram:RateApplicablePercent>
       </ram:ApplicableTradeTax>`).join('');
 
   return `<?xml version="1.0" encoding="UTF-8"?>

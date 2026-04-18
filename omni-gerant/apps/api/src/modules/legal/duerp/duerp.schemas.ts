@@ -30,7 +30,7 @@ export const createDuerpSchema = z.object({
   naf_label: z.string().optional(),
   address: z.string().optional(),
   employee_count: z.number().int().min(0).default(0),
-  evaluator_name: z.string().min(1),
+  evaluator_name: z.string().min(1).optional().default('Responsable'),
   evaluation_date: z.string().optional(),
   convention_collective: z.string().optional(),
   code_idcc: z.string().optional(),

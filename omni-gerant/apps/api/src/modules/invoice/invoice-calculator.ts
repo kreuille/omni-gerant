@@ -44,7 +44,8 @@ export function calculateInvoiceTotals(lines: InvoiceLineInput[]): InvoiceTotals
   let totalTva = 0;
 
   for (const [rate, baseHt] of tvaMap) {
-    const tvaCents = Math.round((baseHt * rate) / 10000);
+    if (rate > 100) throw new Error('TVA rate seems in basis points, expected percentage (e.g. 20 for 20%)');
+    const tvaCents = Math.round((baseHt * rate) / 100);
     breakdown.push({
       tva_rate: rate,
       base_ht_cents: baseHt,
@@ -74,7 +75,7 @@ export function calculateDepositTotals(
 
   const breakdown: InvoiceTvaGroup[] = fullTotals.tva_breakdown.map((group) => {
     const baseHt = Math.round(group.base_ht_cents * ratio);
-    const tvaCents = Math.round((baseHt * group.tva_rate) / 10000);
+    const tvaCents = Math.round((baseHt * group.tva_rate) / 100);
     return {
       tva_rate: group.tva_rate,
       base_ht_cents: baseHt,

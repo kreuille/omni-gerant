@@ -3,6 +3,8 @@ import {
   METIER_RISK_DATABASE, UNIVERSAL_RISKS,
   findMetierByNaf, findMetierBySlug, getRisksForMetier, getRisksForNaf,
   calculateRiskScore, getRiskLevel, getRiskLevelLabel,
+  toDetailedRisk, PREVENTION_PRINCIPLES,
+  type DetailedRisk, type DetailedPreventionMeasure,
 } from '../risk-database-v2.js';
 import { createActionPlanService } from '../action-plan.js';
 import { isPapripactRequired, createPapripactService } from '../papripact.js';
@@ -283,7 +285,7 @@ describe('Detection metier depuis NAF', () => {
     ['10.71C', 'boulangerie'],
     ['45.20A', 'garage-auto'],
     ['88.10A', 'aide-domicile'],
-    ['62.01Z', 'bureau'],
+    ['62.01Z', 'informatique'],
     ['47.73Z', 'pharmacie'],
   ] as const;
 
@@ -494,4 +496,80 @@ describe('Penalites et conformite', () => {
     expect(DUERP_PENALTIES.recidive.amount).toBe(300000);
     expect(DUERP_PENALTIES.accident_sans_duerp.amount).toBe(375000);
   });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// E0. DetailedRisk interface and conversion
+// ═══════════════════════════════════════════════════════════════════
+
+describe('E0 — DetailedRisk interface', () => {
+  it('should have 9 prevention principles defined', () => {
+    expect(Object.keys(PREVENTION_PRINCIPLES).length).toBe(9);
+    expect(PREVENTION_PRINCIPLES[1]).toContain('Eviter');
+    expect(PREVENTION_PRINCIPLES[6]).toContain('dangereux');
+    expect(PREVENTION_PRINCIPLES[8]).toContain('collective');
+  });
+
+  it('should convert MetierRisk to DetailedRisk via toDetailedRisk()', () => {
+    const profile = METIER_RISK_DATABASE[0]!;
+    const risk = profile.risks[0]!;
+    const detailed = toDetailedRisk(risk, profile.workUnits);
+
+    expect(detailed.riskScore).toBe(risk.defaultGravity * risk.defaultFrequency);
+    expect(['low', 'medium', 'high', 'critical']).toContain(detailed.riskLevel);
+    expect(detailed.associatedWorkUnitIds.length).toBeGreaterThanOrEqual(1);
+    expect(detailed.preventionMeasures.length).toBeGreaterThanOrEqual(1);
+    expect(detailed.healthConsequences).toBeDefined();
+  });
+
+  it('should expand wildcard workUnitId to all work units', () => {
+    const profile = METIER_RISK_DATABASE[0]!;
+    const universalRisk = UNIVERSAL_RISKS[0]!;
+    const detailed = toDetailedRisk(universalRisk, profile.workUnits);
+
+    expect(detailed.associatedWorkUnitIds.length).toBe(profile.workUnits.length);
+  });
+
+  it.each(METIER_RISK_DATABASE.map((m) => [m.metierSlug, m] as const))(
+    '%s: each risk should have valid riskScore = gravity * frequency',
+    (_slug, profile) => {
+      for (const risk of profile.risks) {
+        const expectedScore = risk.defaultGravity * risk.defaultFrequency;
+        const detailed = toDetailedRisk(risk, profile.workUnits);
+        expect(detailed.riskScore, `${risk.name} score`).toBe(expectedScore);
+      }
+    },
+  );
+
+  it.each(METIER_RISK_DATABASE.map((m) => [m.metierSlug, m] as const))(
+    '%s: each risk workUnitId should reference a valid UT or wildcard',
+    (_slug, profile) => {
+      const validIds = new Set(profile.workUnits.map((wu) => wu.id));
+      for (const risk of profile.risks) {
+        expect(
+          risk.workUnitId === '*' || validIds.has(risk.workUnitId),
+          `${risk.name} has invalid workUnitId: ${risk.workUnitId}`,
+        ).toBe(true);
+      }
+    },
+  );
+
+  it.each(METIER_RISK_DATABASE.map((m) => [m.metierSlug, m] as const))(
+    '%s: each risk should have at least 2 exposure situations',
+    (_slug, profile) => {
+      for (const risk of profile.risks) {
+        expect(risk.situations.length, `${risk.name} needs >= 2 situations`).toBeGreaterThanOrEqual(2);
+      }
+    },
+  );
+
+  it.each(METIER_RISK_DATABASE.map((m) => [m.metierSlug, m] as const))(
+    '%s: each risk should have existing measures AND proposed actions',
+    (_slug, profile) => {
+      for (const risk of profile.risks) {
+        expect(risk.existingMeasures.length, `${risk.name} needs existing measures`).toBeGreaterThanOrEqual(1);
+        expect(risk.proposedActions.length, `${risk.name} needs proposed actions`).toBeGreaterThanOrEqual(2);
+      }
+    },
+  );
 });

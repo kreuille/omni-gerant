@@ -188,7 +188,9 @@ export async function tenantRoutes(app: FastifyInstance) {
     }
     const result = await siretLookup.lookup(parsed.data.siret);
     if (!result.ok) {
-      const status = result.error.code === 'NOT_FOUND' ? 404 : 503;
+      const status = result.error.code === 'NOT_FOUND' ? 404
+        : result.error.code === 'SIRET_LOOKUP_UNAVAILABLE' ? 503
+        : 502;
       return reply.status(status).send({ error: result.error });
     }
     return result.value;

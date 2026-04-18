@@ -182,7 +182,7 @@ export async function quoteRoutes(app: FastifyInstance) {
   // POST /api/quotes/:id/send - send quote to client
   app.post(
     '/api/quotes/:id/send',
-    { preHandler: [...preHandlers, requirePermission('quote', 'update')] },
+    { preHandler: [...preHandlers, requirePermission('quote', 'update')], schema: { body: { type: 'object', additionalProperties: true } } },
     async (request, reply) => {
       const { id } = request.params as { id: string };
 
@@ -262,7 +262,7 @@ export async function quoteRoutes(app: FastifyInstance) {
   // POST /api/quotes/:id/duplicate
   app.post(
     '/api/quotes/:id/duplicate',
-    { preHandler: [...preHandlers, requirePermission('quote', 'create')] },
+    { preHandler: [...preHandlers, requirePermission('quote', 'create')], schema: { body: { type: 'object', additionalProperties: true } } },
     async (request, reply) => {
       const { id } = request.params as { id: string };
 

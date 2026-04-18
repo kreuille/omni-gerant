@@ -20,8 +20,8 @@ function createMockQuote(overrides?: Partial<QuoteForSituation>): QuoteForSituat
     total_tva_cents: 200000,
     total_ttc_cents: 1200000,
     lines: [
-      { position: 1, type: 'line', label: 'Lot 1 - Gros oeuvre', quantity: 1, unit: 'forfait', unit_price_cents: 600000, tva_rate: 2000, total_ht_cents: 600000 },
-      { position: 2, type: 'line', label: 'Lot 2 - Second oeuvre', quantity: 1, unit: 'forfait', unit_price_cents: 400000, tva_rate: 1000, total_ht_cents: 400000 },
+      { position: 1, type: 'line', label: 'Lot 1 - Gros oeuvre', quantity: 1, unit: 'forfait', unit_price_cents: 600000, tva_rate: 20, total_ht_cents: 600000 },
+      { position: 2, type: 'line', label: 'Lot 2 - Second oeuvre', quantity: 1, unit: 'forfait', unit_price_cents: 400000, tva_rate: 10, total_ht_cents: 400000 },
     ],
     ...overrides,
   };
@@ -77,8 +77,8 @@ function createMockQuoteLookup(quote: QuoteForSituation | null): QuoteLookup {
 
 describe('calculateSituationAmounts', () => {
   const quoteLines: QuoteForSituation['lines'] = [
-    { position: 1, type: 'line', label: 'Lot 1', quantity: 1, unit: 'forfait', unit_price_cents: 600000, tva_rate: 2000, total_ht_cents: 600000 },
-    { position: 2, type: 'line', label: 'Lot 2', quantity: 1, unit: 'forfait', unit_price_cents: 400000, tva_rate: 1000, total_ht_cents: 400000 },
+    { position: 1, type: 'line', label: 'Lot 1', quantity: 1, unit: 'forfait', unit_price_cents: 600000, tva_rate: 20, total_ht_cents: 600000 },
+    { position: 2, type: 'line', label: 'Lot 2', quantity: 1, unit: 'forfait', unit_price_cents: 400000, tva_rate: 10, total_ht_cents: 400000 },
   ];
 
   // BUSINESS RULE: Situation 1 : 30%

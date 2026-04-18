@@ -94,7 +94,7 @@ export function createEmailProcessor(deps: EmailProcessorDeps) {
             label: `Facture ${fields.invoice_number ?? attachment.filename}`,
             quantity: 1,
             unit_price_cents: fields.total_ht_cents ?? 0,
-            tva_rate: 2000,
+            tva_rate: 20,
           }];
 
       const purchaseResult = await deps.createPurchase(tenantId, {

@@ -7,9 +7,9 @@ const purchaseLineSchema = z.object({
   label: z.string().min(1).max(500),
   quantity: z.number().positive(),
   unit_price_cents: z.number().int().min(0),
-  tva_rate: z.number().int().refine(
-    (rate) => [2000, 1000, 550, 210, 0].includes(rate),
-    { message: 'TVA rate must be one of: 2000 (20%), 1000 (10%), 550 (5.5%), 210 (2.1%), 0 (0%)' },
+  tva_rate: z.number().refine(
+    (rate) => [20, 10, 5.5, 2.1, 0].includes(rate),
+    { message: 'TVA rate must be one of: 20 (20%), 10 (10%), 5.5 (5.5%), 2.1 (2.1%), 0 (0%)' },
   ),
 });
 

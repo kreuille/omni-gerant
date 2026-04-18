@@ -21,7 +21,7 @@ function createTestInput(): FacturxGeneratorInput {
       total_tva_cents: 2000,
       total_ttc_cents: 12000,
       lines: [
-        { position: 1, label: 'Service A', quantity: 2, unit: 'h', unit_price_cents: 5000, tva_rate: 2000, total_ht_cents: 10000 },
+        { position: 1, label: 'Service A', quantity: 2, unit: 'h', unit_price_cents: 5000, tva_rate: 20, total_ht_cents: 10000 },
       ],
     },
     seller: {
@@ -43,7 +43,7 @@ function createTestInput(): FacturxGeneratorInput {
       client_name_display: 'Client SAS',
     },
     tva_breakdown: [
-      { tva_rate: 2000, base_ht_cents: 10000, tva_cents: 2000 },
+      { tva_rate: 20, base_ht_cents: 10000, tva_cents: 2000 },
     ],
   };
 }
@@ -97,12 +97,12 @@ describe('Factur-X Generator (orchestrator)', () => {
   it('handles multi-rate TVA', async () => {
     const input = createTestInput();
     input.invoice.lines = [
-      { position: 1, label: 'S1', quantity: 1, unit: 'unit', unit_price_cents: 10000, tva_rate: 2000, total_ht_cents: 10000 },
-      { position: 2, label: 'S2', quantity: 1, unit: 'unit', unit_price_cents: 5000, tva_rate: 550, total_ht_cents: 5000 },
+      { position: 1, label: 'S1', quantity: 1, unit: 'unit', unit_price_cents: 10000, tva_rate: 20, total_ht_cents: 10000 },
+      { position: 2, label: 'S2', quantity: 1, unit: 'unit', unit_price_cents: 5000, tva_rate: 5.5, total_ht_cents: 5000 },
     ];
     input.tva_breakdown = [
-      { tva_rate: 2000, base_ht_cents: 10000, tva_cents: 2000 },
-      { tva_rate: 550, base_ht_cents: 5000, tva_cents: 275 },
+      { tva_rate: 20, base_ht_cents: 10000, tva_cents: 2000 },
+      { tva_rate: 5.5, base_ht_cents: 5000, tva_cents: 275 },
     ];
     input.invoice.total_ht_cents = 15000;
     input.invoice.total_tva_cents = 2275;

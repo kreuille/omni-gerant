@@ -44,8 +44,12 @@ function formatCents(cents: number): string {
   return (cents / 100).toFixed(2).replace('.', ',');
 }
 
-function formatRate(basisPoints: number): string {
-  return (basisPoints / 100).toFixed(basisPoints % 100 === 0 ? 0 : 1) + '%';
+function formatRate(ratePercent: number): string {
+  return `${ratePercent}%`;
+}
+
+function formatBasisPoints(bp: number): string {
+  return `${bp / 100}%`;
 }
 
 // Generate HTML for PDF rendering
@@ -105,7 +109,7 @@ export function generateInvoiceHtml(config: PdfGeneratorConfig, data: InvoicePdf
     ${data.client_siret ? `<p style="margin:4px 0;">SIRET: ${data.client_siret}</p>` : ''}
   </div>
 
-  ${data.deposit_percent ? `<p style="margin-bottom:10px;"><strong>Acompte de ${formatRate(data.deposit_percent)}</strong></p>` : ''}
+  ${data.deposit_percent ? `<p style="margin-bottom:10px;"><strong>Acompte de ${formatBasisPoints(data.deposit_percent)}</strong></p>` : ''}
 
   <table style="width:100%;border-collapse:collapse;margin-bottom:30px;">
     <thead>

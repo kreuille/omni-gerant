@@ -37,7 +37,7 @@ const mockPurchase: Purchase = {
       label: 'Ciment Portland',
       quantity: 100,
       unit_price_cents: 1000,
-      tva_rate: 2000,
+      tva_rate: 20,
       total_ht_cents: 100000,
     },
   ],
@@ -59,7 +59,7 @@ function createMockRepo(overrides?: Partial<PurchaseRepository>): PurchaseReposi
 describe('calculatePurchaseLineTotals', () => {
   it('calculates single line with 20% TVA', () => {
     const result = calculatePurchaseLineTotals([
-      { position: 1, label: 'Ciment', quantity: 10, unit_price_cents: 1500, tva_rate: 2000 },
+      { position: 1, label: 'Ciment', quantity: 10, unit_price_cents: 1500, tva_rate: 20 },
     ]);
 
     expect(result.total_ht_cents).toBe(15000);
@@ -69,9 +69,9 @@ describe('calculatePurchaseLineTotals', () => {
 
   it('calculates multiple lines with different TVA rates', () => {
     const result = calculatePurchaseLineTotals([
-      { position: 1, label: 'Ciment', quantity: 10, unit_price_cents: 1000, tva_rate: 2000 },
-      { position: 2, label: 'Sable', quantity: 5, unit_price_cents: 500, tva_rate: 1000 },
-      { position: 3, label: 'Gravier', quantity: 20, unit_price_cents: 300, tva_rate: 550 },
+      { position: 1, label: 'Ciment', quantity: 10, unit_price_cents: 1000, tva_rate: 20 },
+      { position: 2, label: 'Sable', quantity: 5, unit_price_cents: 500, tva_rate: 10 },
+      { position: 3, label: 'Gravier', quantity: 20, unit_price_cents: 300, tva_rate: 5.5 },
     ]);
 
     // Line 1: 10 * 1000 = 10000 HT, TVA = 2000
@@ -95,12 +95,12 @@ describe('calculatePurchaseLineTotals', () => {
 
   it('handles fractional quantities with rounding', () => {
     const result = calculatePurchaseLineTotals([
-      { position: 1, label: 'Bois', quantity: 2.5, unit_price_cents: 1333, tva_rate: 2000 },
+      { position: 1, label: 'Bois', quantity: 2.5, unit_price_cents: 1333, tva_rate: 20 },
     ]);
 
     // 2.5 * 1333 = 3332.5 -> rounds to 3333
     expect(result.total_ht_cents).toBe(3333);
-    expect(result.total_tva_cents).toBe(667); // 3333 * 2000 / 10000 = 666.6 -> 667
+    expect(result.total_tva_cents).toBe(667); // 3333 * 20 / 100 = 666.6 -> 667
     expect(result.total_ttc_cents).toBe(4000);
   });
 });
@@ -115,7 +115,7 @@ describe('PurchaseService', () => {
         supplier_id: '660e8400-e29b-41d4-a716-446655440001',
         number: 'FOURNISSEUR-001',
         lines: [
-          { position: 1, label: 'Ciment', quantity: 100, unit_price_cents: 1000, tva_rate: 2000 },
+          { position: 1, label: 'Ciment', quantity: 100, unit_price_cents: 1000, tva_rate: 20 },
         ],
       });
 

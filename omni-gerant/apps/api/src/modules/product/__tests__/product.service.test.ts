@@ -13,7 +13,7 @@ const mockProduct: Product = {
   description: 'Pose de carrelage au m2',
   unit: 'm2',
   unit_price_cents: 4500, // 45.00 EUR
-  tva_rate: 1000, // 10%
+  tva_rate: 10, // 10%
   category: 'Carrelage',
   is_active: true,
   created_at: new Date(),
@@ -44,7 +44,7 @@ describe('ProductService', () => {
         name: 'Pose de carrelage',
         unit: 'm2',
         unit_price_cents: 4500,
-        tva_rate: 1000,
+        tva_rate: 10,
       });
 
       expect(result.ok).toBe(true);
@@ -143,7 +143,7 @@ describe('ProductService', () => {
       }
       // Verify only 1 product was sent to createMany
       expect(repo.createMany).toHaveBeenCalledWith([
-        expect.objectContaining({ name: 'Valid', unit_price_cents: 1000, tva_rate: 2000 }),
+        expect.objectContaining({ name: 'Valid', unit_price_cents: 1000, tva_rate: 20 }),
       ]);
     });
 

@@ -94,6 +94,27 @@ export async function bankRoutes(app: FastifyInstance) {
     },
   );
 
+  // POST /api/bank/accounts — Create manual bank account
+  app.post(
+    '/api/bank/accounts',
+    { preHandler: [...preHandlers, requirePermission('bank', 'create')] },
+    async (request, reply) => {
+      const body = request.body as { bank_name: string; account_name?: string; iban?: string; bic?: string; currency?: string };
+      if (!body.bank_name) {
+        return reply.status(400).send({ error: { code: 'VALIDATION_ERROR', message: 'bank_name is required' } });
+      }
+      const account = await accountRepo.create({
+        tenant_id: request.auth.tenant_id,
+        bank_name: body.bank_name,
+        account_name: body.account_name,
+        iban: body.iban,
+        bic: body.bic,
+        currency: body.currency,
+      });
+      return reply.status(201).send(account);
+    },
+  );
+
   // POST /api/bank/accounts/:id/sync — Manual sync trigger
   app.post(
     '/api/bank/accounts/:id/sync',
