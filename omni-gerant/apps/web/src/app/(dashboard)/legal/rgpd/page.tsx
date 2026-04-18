@@ -8,13 +8,20 @@ import { api } from '@/lib/api-client';
 
 // BUSINESS RULE [CDC-2.4]: Page registre RGPD
 
+interface RgpdTreatment {
+  id: string;
+  name: string;
+  legal_basis: string;
+  transfer_outside_eu: boolean;
+}
+
 interface RgpdRegistry {
   id: string;
   company_name: string;
   siret: string;
   dpo_name: string;
   dpo_email: string;
-  treatments: unknown[];
+  treatments: RgpdTreatment[];
   created_at: string;
 }
 
@@ -170,6 +177,8 @@ export default function RgpdPage() {
   }
 
   const treatmentCount = registry.treatments.length;
+  const transfersOutsideEu = registry.treatments.filter((t) => t.transfer_outside_eu).length;
+  const uniqueLegalBases = new Set(registry.treatments.map((t) => t.legal_basis)).size;
 
   return (
     <div>
@@ -187,7 +196,7 @@ export default function RgpdPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold text-blue-600">{treatmentCount}</p>
@@ -202,13 +211,13 @@ export default function RgpdPage() {
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-purple-600">0</p>
+            <p className="text-2xl font-bold text-purple-600">{transfersOutsideEu}</p>
             <p className="text-sm text-gray-500">Transferts hors UE</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-gray-600">4</p>
+            <p className="text-2xl font-bold text-gray-600">{uniqueLegalBases}</p>
             <p className="text-sm text-gray-500">Bases legales</p>
           </CardContent>
         </Card>
