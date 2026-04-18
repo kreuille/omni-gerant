@@ -3,6 +3,7 @@ import { ok, err, appError } from '@omni-gerant/shared';
 import type { AppError } from '@omni-gerant/shared';
 import { createPappersClient, type PappersClient } from './pappers-client.js';
 import { createSireneClient, estimateEffectifFromTranche, type SireneClient } from './sirene-client.js';
+import { parseCompanyResult, type RechercheEntreprisesResponse, type RechercheEntreprisesRawResult } from './company-search.js';
 import type { CacheStore } from './cache.js';
 import { CACHE_TTL } from './cache.js';
 
@@ -157,7 +158,6 @@ export function createSiretLookup(deps: SiretLookupDeps = {}) {
   // Layer 3: recherche-entreprises.api.gouv.fr (free, no API key, always available)
   async function lookupRechercheEntreprises(siret: string): Promise<Result<EnrichedSiretInfo, AppError>> {
     try {
-      // This API searches by SIREN (first 9 digits of SIRET)
       const siren = siret.substring(0, 9);
       const response = await httpFetch(
         `https://recherche-entreprises.api.gouv.fr/search?q=${siren}`,
@@ -167,59 +167,16 @@ export function createSiretLookup(deps: SiretLookupDeps = {}) {
         return err(appError('SERVICE_UNAVAILABLE', `recherche-entreprises returned ${response.status}`));
       }
 
-      const data = await response.json() as {
-        results: Array<{
-          siren: string;
-          nom_complet: string;
-          nom_raison_sociale: string;
-          nature_juridique: string;
-          nombre_etablissements_ouverts: number;
-          siege: {
-            siret: string;
-            activite_principale: string;
-            adresse: string;
-            code_postal: string;
-            commune: string;
-            libelle_commune: string;
-            date_creation: string;
-            etat_administratif: string;
-            tranche_effectif_salarie: string;
-          };
-          activite_principale: string;
-          categorie_entreprise: string;
-          dirigeants: Array<{
-            nom: string;
-            prenoms: string;
-            qualite: string;
-          }>;
-          matching_etablissements: Array<{
-            siret: string;
-            adresse: string;
-            etat_administratif: string;
-            est_siege: boolean;
-            activite_principale: string;
-          }>;
-          complements?: {
-            convention_collective_renseignee?: boolean;
-            liste_idcc?: string[];
-          };
-          tranche_effectif_salarie: string | null;
-        }>;
-        total_results: number;
-      };
+      const data = await response.json() as RechercheEntreprisesResponse;
 
-      // Find the matching company by SIREN
-      const company = data.results.find((r) => r.siren === siren);
+      const company = data.results.find((r: RechercheEntreprisesRawResult) => r.siren === siren);
       if (!company) {
         return err(appError('NOT_FOUND', `SIRET ${siret} not found`));
       }
 
-      const siege = company.siege;
-      const nafCode = siege.activite_principale ?? company.activite_principale ?? '';
+      const parsed = parseCompanyResult(company);
       const idccList = company.complements?.liste_idcc ?? [];
-      const effectif = estimateEffectifFromTranche(company.tranche_effectif_salarie ?? siege.tranche_effectif_salarie ?? null);
 
-      // Map IDCC code to convention name
       const IDCC_NAMES: Record<string, string> = {
         '1596': 'Convention collective nationale des ouvriers du batiment',
         '1597': 'Convention collective nationale des ETAM du batiment',
@@ -235,22 +192,17 @@ export function createSiretLookup(deps: SiretLookupDeps = {}) {
       };
 
       return ok({
-        siret: siege.siret ?? siret,
-        siren: company.siren,
-        company_name: company.nom_complet || company.nom_raison_sociale,
-        legal_form: company.nature_juridique ?? '',
-        naf_code: nafCode,
-        naf_label: '',
-        address: {
-          line1: siege.adresse ?? '',
-          zip_code: siege.code_postal ?? '',
-          city: siege.libelle_commune ?? '',
-          country: 'FR',
-        },
+        siret: parsed.siret,
+        siren: parsed.siren,
+        company_name: parsed.company_name,
+        legal_form: parsed.legal_form,
+        naf_code: parsed.naf_code,
+        naf_label: parsed.naf_label,
+        address: parsed.address,
         tva_number: null,
-        creation_date: siege.date_creation ?? null,
-        is_active: siege.etat_administratif === 'A',
-        effectif_reel: effectif,
+        creation_date: parsed.creation_date,
+        is_active: parsed.is_active,
+        effectif_reel: parsed.employee_count,
         convention_collective: idccList.length > 0 ? (IDCC_NAMES[idccList[0]!] ?? `Convention IDCC ${idccList[0]}`) : null,
         code_idcc: idccList.length > 0 ? idccList[0]! : null,
         etablissements: (company.matching_etablissements ?? []).map((e) => ({
