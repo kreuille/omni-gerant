@@ -1,8 +1,8 @@
 // BUSINESS RULE [CDC-2.1]: Parser Factur-X entrant - Extraction et interpretation XML CII
 // Supporte les 5 profils : MINIMUM, BASIC WL, BASIC, EN16931 (COMFORT), EXTENDED
 
-import type { Result } from '@omni-gerant/shared';
-import { ok, err } from '@omni-gerant/shared';
+import type { Result } from '@zenadmin/shared';
+import { ok, err } from '@zenadmin/shared';
 
 // --- Output interface ---
 

@@ -2,9 +2,9 @@
 // BUSINESS RULE [CDC-2.1]: Hash chaine SHA-256 — chaque facture reference la precedente
 // BUSINESS RULE [CDC-2.1]: Facture validee immuable — seul un avoir peut corriger
 
-import type { Result } from '@omni-gerant/shared';
-import { ok, err, appError, notFound } from '@omni-gerant/shared';
-import type { AppError } from '@omni-gerant/shared';
+import type { Result } from '@zenadmin/shared';
+import { ok, err, appError, notFound } from '@zenadmin/shared';
+import type { AppError } from '@zenadmin/shared';
 import type { Invoice, InvoiceLine } from './invoice.service.js';
 import crypto from 'node:crypto';
 

@@ -1,9 +1,9 @@
 // BUSINESS RULE [CDC-2.1]: Audit NF525 enrichi — tracabilite des actions sur factures
 // BUSINESS RULE [CDC-6]: Journal d'audit immutable avec hash before/after
 
-import type { Result, PaginatedResult } from '@omni-gerant/shared';
-import { ok, err, notFound } from '@omni-gerant/shared';
-import type { AppError } from '@omni-gerant/shared';
+import type { Result, PaginatedResult } from '@zenadmin/shared';
+import { ok, err, notFound } from '@zenadmin/shared';
+import type { AppError } from '@zenadmin/shared';
 import crypto from 'node:crypto';
 
 // --- Types ---

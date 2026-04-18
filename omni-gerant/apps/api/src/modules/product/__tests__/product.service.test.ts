@@ -166,28 +166,28 @@ describe('ProductService', () => {
     it('calculates TVA at 20% correctly', () => {
       // Product at 100.00 EUR HT → TVA 20.00 EUR
       const ht = money(10000);
-      const tva = tvaAmount(ht, 20);
+      const tva = tvaAmount(ht, 2000);
       expect(tva.amount_cents).toBe(2000);
     });
 
     it('calculates TVA at 10% correctly', () => {
       // Product at 45.00 EUR HT → TVA 4.50 EUR
       const ht = money(4500);
-      const tva = tvaAmount(ht, 10);
+      const tva = tvaAmount(ht, 1000);
       expect(tva.amount_cents).toBe(450);
     });
 
     it('calculates TVA at 5.5% correctly', () => {
       // Product at 200.00 EUR HT → TVA 11.00 EUR
       const ht = money(20000);
-      const tva = tvaAmount(ht, 5.5);
+      const tva = tvaAmount(ht, 550);
       expect(tva.amount_cents).toBe(1100);
     });
 
     it('calculates TVA at 2.1% correctly', () => {
       // Product at 50.00 EUR HT → TVA 1.05 EUR
       const ht = money(5000);
-      const tva = tvaAmount(ht, 2.1);
+      const tva = tvaAmount(ht, 210);
       expect(tva.amount_cents).toBe(105);
     });
 

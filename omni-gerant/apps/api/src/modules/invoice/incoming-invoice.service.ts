@@ -2,9 +2,9 @@
 // BUSINESS RULE [R02]: Montants en centimes
 // BUSINESS RULE [R03]: Multi-tenant avec tenant_id
 
-import type { Result, PaginatedResult } from '@omni-gerant/shared';
-import { ok, err, notFound, validationError, appError, conflict } from '@omni-gerant/shared';
-import type { AppError } from '@omni-gerant/shared';
+import type { Result, PaginatedResult } from '@zenadmin/shared';
+import { ok, err, notFound, validationError, appError, conflict } from '@zenadmin/shared';
+import type { AppError } from '@zenadmin/shared';
 import { parseFacturXXml, extractXmlFromPdf, type ParsedFacturXInvoice } from './facturx-parser.js';
 import type { Supplier } from '../supplier/supplier.service.js';
 import type { Purchase } from '../purchase/purchase.service.js';

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createSiretLookup } from '../siret-lookup.js';
-import { ok, err, appError } from '@omni-gerant/shared';
+import { ok, err, appError } from '@zenadmin/shared';
 
 // BUSINESS RULE [SIRET-001]: 3-layer cascade with timeout
 
