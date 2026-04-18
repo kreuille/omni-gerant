@@ -2,6 +2,7 @@ import { ok, err } from '@zenadmin/shared';
 import type { Result, AppError } from '@zenadmin/shared';
 import type { CreateDuerpInput, UpdateDuerpInput, RiskEntry, WorkUnitEntry } from './duerp.schemas.js';
 import { getRisksByNafCode, calculateRiskLevel } from './risk-database.js';
+import { generateWorkUnits } from './work-units.generator.js';
 
 // BUSINESS RULE [CDC-2.4]: Service DUERP avec unites de travail et auto-fill
 
@@ -128,10 +129,21 @@ export function createDuerpService(repo: DuerpRepository) {
         }
       }
 
-      // Work units
-      const workUnits: DuerpWorkUnit[] = (input.work_units ?? []).map((wu) =>
-        workUnitEntryToUnit(wu, duerpId),
-      );
+      // Work units — auto-generate from NAF code if none provided (like risks)
+      // BUSINESS RULE [CDC-2.4]: Zero saisie — unites de travail auto-generees par secteur
+      let workUnits: DuerpWorkUnit[];
+      if (input.work_units && input.work_units.length > 0) {
+        workUnits = input.work_units.map((wu) => workUnitEntryToUnit(wu, duerpId));
+      } else {
+        const generated = generateWorkUnits(input.naf_code ?? '', []);
+        workUnits = generated.map((wu) => ({
+          id: crypto.randomUUID(),
+          duerp_id: duerpId,
+          name: wu.name,
+          type: wu.type,
+          description: wu.description,
+        }));
+      }
 
       const doc = await repo.create(tenantId, {
         tenant_id: tenantId,

@@ -8,6 +8,30 @@ import type { DuerpRepository, DuerpDocument, DuerpWorkUnit, DuerpRisk } from '.
 
 const DEFAULT_WORK_UNIT_NAME = '__default__';
 
+// BUSINESS RULE [CDC-2.4]: Encoding type+description in the Prisma `description` column
+// The Prisma schema doesn't have a `type` column, so we JSON-encode it as:
+//   { "type": "chantier", "description": "..." }
+// Legacy rows with plain text are treated as type='autre'.
+function encodeWorkUnitData(type: string, description: string): string {
+  return JSON.stringify({ type, description });
+}
+
+function decodeWorkUnitData(raw: string | null): { type: string; description: string } {
+  if (!raw) return { type: 'autre', description: '' };
+  try {
+    const parsed = JSON.parse(raw) as { type?: string; description?: string };
+    if (parsed && typeof parsed === 'object' && 'type' in parsed) {
+      return {
+        type: parsed.type ?? 'autre',
+        description: parsed.description ?? '',
+      };
+    }
+  } catch {
+    // Legacy plain text description
+  }
+  return { type: 'autre', description: raw };
+}
+
 interface PrismaDuerpRow {
   id: string;
   tenant_id: string;
@@ -64,12 +88,13 @@ function mapToDuerpDocument(row: PrismaDuerpRow): DuerpDocument {
   for (const wu of row.work_units ?? []) {
     // Skip the default synthetic work unit from the output
     if (wu.name !== DEFAULT_WORK_UNIT_NAME) {
+      const decoded = decodeWorkUnitData(wu.description);
       workUnits.push({
         id: wu.id,
         duerp_id: row.id,
         name: wu.name,
-        type: (wu.description ?? '').split('|')[0] ?? 'autre',
-        description: (wu.description ?? '').split('|').slice(1).join('|'),
+        type: decoded.type,
+        description: decoded.description,
       });
     }
 
@@ -160,7 +185,7 @@ export function createPrismaDuerpRepository(): DuerpRepository {
           work_units: {
             create: defaultWorkUnits.map((wu, wuIndex) => ({
               name: wu.name,
-              description: `${wu.type}|${wu.description ?? ''}`,
+              description: encodeWorkUnitData(wu.type, wu.description ?? ''),
               employee_count: 1,
               // Attach all risks to the first work unit (the service delivers a flat list)
               risks: wuIndex === 0 ? {
@@ -243,7 +268,7 @@ export function createPrismaDuerpRepository(): DuerpRepository {
               data: {
                 duerp_id: id,
                 name: wu.name,
-                description: `${wu.type}|${wu.description ?? ''}`,
+                description: encodeWorkUnitData(wu.type, wu.description ?? ''),
                 employee_count: 1,
                 risks: i === 0 && data.risks ? {
                   create: data.risks.map((r) => ({
