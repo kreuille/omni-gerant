@@ -170,10 +170,30 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
             onSend={() => setShowSendModal(true)}
             onDuplicate={() => router.push(`/quotes/new?duplicate=${params.id}`)}
             onConvert={async () => {
+              if (!confirm('Convertir ce devis signe en facture ?')) return;
               setActionLoading(true);
               const result = await api.post<{ id: string }>(`/api/quotes/${params.id}/convert`, {});
-              if (result.ok) router.push(`/invoices/${result.value.id}`);
               setActionLoading(false);
+              if (result.ok) {
+                router.push(`/invoices/${result.value.id}`);
+              } else {
+                setError(result.error.message || 'Erreur lors de la conversion');
+              }
+            }}
+            onDownloadPdf={() => {
+              const apiUrl = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001';
+              const token = localStorage.getItem('access_token');
+              // Open in new tab with bearer token in URL is not ideal — use fetch + blob
+              fetch(`${apiUrl}/api/quotes/${params.id}/pdf`, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+              })
+                .then((r) => r.text())
+                .then((html) => {
+                  const blob = new Blob([html], { type: 'text/html' });
+                  const url = URL.createObjectURL(blob);
+                  window.open(url, '_blank');
+                  setTimeout(() => URL.revokeObjectURL(url), 60000);
+                });
             }}
             onDelete={handleDelete}
           />

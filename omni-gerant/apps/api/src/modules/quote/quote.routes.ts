@@ -6,6 +6,11 @@ import { createPrismaQuoteRepository } from './quote.repository.js';
 import { getNextStatus } from './quote-workflow.js';
 import { createShareService, type ShareTokenRepository, type ShareToken } from './quote-share.js';
 import { createTrackingService, type TrackingRepository, type TrackingEvent } from './quote-tracking.js';
+import { createInvoiceService } from '../invoice/invoice.service.js';
+import { createPrismaInvoiceRepository } from '../invoice/invoice.repository.js';
+import { createInMemoryNumberRepo as createInvoiceNumberRepo } from './document-number.js';
+import { createDocumentNumberGenerator as createInvoiceNumberGen } from './document-number.js';
+import { generateQuoteHtml } from './quote-pdf.js';
 import { createEmailService, createConsoleEmailProvider } from '../../lib/email.js';
 import { quoteSentHtml, quoteSentText } from '../../lib/email-templates/quote-sent.js';
 import { authenticate, requirePermission } from '../../plugins/auth.js';
@@ -56,6 +61,14 @@ export async function quoteRoutes(app: FastifyInstance) {
   const shareService = createShareService(shareTokenRepo);
   const trackingService = createTrackingService(trackingRepo);
   const emailService = createEmailService(createConsoleEmailProvider());
+
+  // BUSINESS RULE [CDC-2.1]: Conversion devis -> facture
+  const invoiceRepo = createPrismaInvoiceRepository();
+  const invoiceNumberRepo = createInvoiceNumberRepo();
+  const invoiceNumberGen = createInvoiceNumberGen(invoiceNumberRepo);
+  const invoiceService = createInvoiceService(invoiceRepo, {
+    generate: (tenantId: string) => invoiceNumberGen.generate(tenantId, 'FAC'),
+  });
 
   const preHandlers = [authenticate, injectTenant];
 
@@ -226,27 +239,30 @@ export async function quoteRoutes(app: FastifyInstance) {
       const validityDate = quote.validity_date.toLocaleDateString('fr-FR');
 
       if (clientEmail) {
+        const companyAddress = tenantProfile?.address
+          ? `${tenantProfile.address.line1}, ${tenantProfile.address.zip_code} ${tenantProfile.address.city}`
+          : null;
+
+        const templateData = {
+          client_name: clientName,
+          company_name: companyName,
+          quote_number: quote.number,
+          quote_title: quote.title,
+          total_ttc: totalTtc,
+          validity_date: validityDate,
+          share_url: shareUrl,
+          company_siret: tenantProfile?.siret ?? null,
+          company_address: companyAddress,
+          company_phone: tenantProfile?.phone ?? null,
+          company_email: tenantProfile?.email ?? null,
+          company_tva: tenantProfile?.tva_number ?? null,
+        };
+
         await emailService.send({
           to: clientEmail,
           subject: `Devis ${quote.number} de ${companyName} - En attente de validation`,
-          html: quoteSentHtml({
-            client_name: clientName,
-            company_name: companyName,
-            quote_number: quote.number,
-            quote_title: quote.title,
-            total_ttc: totalTtc,
-            validity_date: validityDate,
-            share_url: shareUrl,
-          }),
-          text: quoteSentText({
-            client_name: clientName,
-            company_name: companyName,
-            quote_number: quote.number,
-            quote_title: quote.title,
-            total_ttc: totalTtc,
-            validity_date: validityDate,
-            share_url: shareUrl,
-          }),
+          html: quoteSentHtml(templateData),
+          text: quoteSentText(templateData),
         });
       }
 
@@ -310,6 +326,88 @@ export async function quoteRoutes(app: FastifyInstance) {
       });
 
       return reply.status(201).send(duplicateResult.value);
+    },
+  );
+
+  // POST /api/quotes/:id/convert - convert signed quote to invoice
+  // BUSINESS RULE [CDC-2.1]: Conversion devis signe -> facture standard
+  app.post(
+    '/api/quotes/:id/convert',
+    { preHandler: [...preHandlers, requirePermission('invoice', 'create')] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+
+      const quoteResult = await quoteService.getById(id, request.auth.tenant_id);
+      if (!quoteResult.ok) {
+        return reply.status(404).send({ error: quoteResult.error });
+      }
+      const quote = quoteResult.value;
+
+      // Only signed or accepted quotes can be converted
+      if (quote.status !== 'signed' && quote.status !== 'accepted') {
+        return reply.status(403).send({
+          error: {
+            code: 'INVALID_STATUS',
+            message: `Seul un devis signe peut etre converti (statut actuel : ${quote.status})`,
+          },
+        });
+      }
+
+      // Create invoice from quote data
+      const invoiceResult = await invoiceService.create(request.auth.tenant_id, {
+        type: 'standard',
+        client_id: quote.client_id,
+        quote_id: quote.id,
+        payment_terms: 30,
+        notes: quote.notes ?? undefined,
+        lines: quote.lines
+          .filter((l) => l.type === 'line')
+          .map((l) => ({
+            position: l.position,
+            label: l.label,
+            description: l.description ?? undefined,
+            quantity: l.quantity,
+            unit: l.unit,
+            unit_price_cents: l.unit_price_cents,
+            tva_rate: l.tva_rate,
+          })),
+      });
+
+      if (!invoiceResult.ok) {
+        return reply.status(400).send({ error: invoiceResult.error });
+      }
+
+      // Update quote status to invoiced
+      await repo.update(quote.id, quote.tenant_id, { status: 'invoiced' });
+
+      // Track event
+      await trackingService.track({
+        quote_id: quote.id,
+        tenant_id: quote.tenant_id,
+        event_type: 'invoiced',
+        actor: request.auth.user_id,
+        metadata: { invoice_id: invoiceResult.value.id, invoice_number: invoiceResult.value.number },
+      });
+
+      return reply.status(201).send(invoiceResult.value);
+    },
+  );
+
+  // GET /api/quotes/:id/pdf - Generate PDF HTML for quote
+  // BUSINESS RULE [CDC-2.1]: PDF avec emetteur, client, mentions legales
+  app.get(
+    '/api/quotes/:id/pdf',
+    { preHandler: [...preHandlers, requirePermission('quote', 'read')] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const result = await quoteService.getById(id, request.auth.tenant_id);
+      if (!result.ok) {
+        return reply.status(404).send({ error: result.error });
+      }
+
+      const tenant = await tenantRepo.findById(request.auth.tenant_id);
+      const html = generateQuoteHtml(result.value, tenant);
+      return reply.type('text/html').send(html);
     },
   );
 

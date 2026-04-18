@@ -11,6 +11,7 @@ interface QuoteActionsProps {
   onPreview?: () => void;
   onDelete?: () => void;
   onConvert?: () => void;
+  onDownloadPdf?: () => void;
 }
 
 const STATUS_ACTIONS: Record<string, string[]> = {
@@ -23,11 +24,16 @@ const STATUS_ACTIONS: Record<string, string[]> = {
   invoiced: ['preview'],
 };
 
-export function QuoteActions({ status, onSend, onDuplicate, onPreview, onDelete, onConvert }: QuoteActionsProps) {
+export function QuoteActions({ status, onSend, onDuplicate, onPreview, onDelete, onConvert, onDownloadPdf }: QuoteActionsProps) {
   const actions = STATUS_ACTIONS[status] ?? [];
 
   return (
     <div className="flex gap-2 flex-wrap">
+      {onDownloadPdf && (
+        <Button variant="outline" size="sm" onClick={onDownloadPdf}>
+          PDF
+        </Button>
+      )}
       {actions.includes('preview') && (
         <Button variant="outline" size="sm" onClick={onPreview}>
           Apercu

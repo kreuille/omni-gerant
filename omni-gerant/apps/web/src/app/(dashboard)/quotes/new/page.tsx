@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,16 +11,64 @@ import { QuoteClientSelect } from '@/components/quote/quote-client-select';
 import { QuotePreviewModal } from '@/components/quote/quote-preview-modal';
 import { api } from '@/lib/api-client';
 
+interface TenantProfile {
+  company_name: string;
+  siret: string | null;
+  tva_number: string | null;
+  address: { line1: string; zip_code: string; city: string } | null;
+  phone: string | null;
+  email: string | null;
+}
+
+interface ClientInfo {
+  id: string;
+  type: string;
+  company_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  siret: string | null;
+  address_line1: string | null;
+  zip_code: string | null;
+  city: string | null;
+}
+
 export default function NewQuotePage() {
   const router = useRouter();
   const editorRef = useRef<QuoteEditorHandle>(null);
   const [title, setTitle] = useState('');
   const [clientId, setClientId] = useState('');
+  const [selectedClient, setSelectedClient] = useState<ClientInfo | null>(null);
+  const [tenant, setTenant] = useState<TenantProfile | null>(null);
+  const [profileIncomplete, setProfileIncomplete] = useState(false);
   const [validityDays, setValidityDays] = useState(30);
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Fetch tenant profile on mount + warn if incomplete
+  useEffect(() => {
+    api.get<TenantProfile>('/api/tenant/profile').then((result) => {
+      if (result.ok) {
+        setTenant(result.value);
+        // Profile is considered incomplete if no address or no siret
+        if (!result.value.address || !result.value.siret) {
+          setProfileIncomplete(true);
+        }
+      }
+    });
+  }, []);
+
+  // Fetch client info when client changes
+  useEffect(() => {
+    if (!clientId) {
+      setSelectedClient(null);
+      return;
+    }
+    api.get<ClientInfo>(`/api/clients/${clientId}`).then((result) => {
+      if (result.ok) setSelectedClient(result.value);
+    });
+  }, [clientId]);
 
   const handleSave = async () => {
     const lines = editorRef.current?.getLines() ?? [];
@@ -107,6 +155,17 @@ export default function NewQuotePage() {
         </div>
       )}
 
+      {profileIncomplete && (
+        <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-md text-sm text-orange-800 flex items-center justify-between gap-3">
+          <span>
+            Votre profil entreprise est incomplet (SIRET, adresse...). Le devis sera genere avec des champs manquants.
+          </span>
+          <Link href="/settings/profile" className="text-orange-900 underline font-medium whitespace-nowrap">
+            Completer
+          </Link>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <Card>
@@ -166,6 +225,25 @@ export default function NewQuotePage() {
           validityDays={validityDays}
           notes={notes}
           onClose={() => setShowPreview(false)}
+          company={tenant ? {
+            name: tenant.company_name,
+            siret: tenant.siret,
+            address: tenant.address?.line1 ?? null,
+            zip_code: tenant.address?.zip_code ?? null,
+            city: tenant.address?.city ?? null,
+            tva_number: tenant.tva_number,
+            phone: tenant.phone,
+            email: tenant.email,
+          } : null}
+          client={selectedClient ? {
+            name: selectedClient.type === 'company'
+              ? selectedClient.company_name
+              : [selectedClient.first_name, selectedClient.last_name].filter(Boolean).join(' '),
+            address: selectedClient.address_line1,
+            zip_code: selectedClient.zip_code,
+            city: selectedClient.city,
+            siret: selectedClient.siret,
+          } : null}
         />
       )}
     </div>
