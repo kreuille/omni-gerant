@@ -23,6 +23,7 @@ export interface DuerpDocument {
   work_units: DuerpWorkUnit[];
   risks: DuerpRisk[];
   version: number;
+  status?: string;
   notes: string | null;
   created_at: Date;
   updated_at: Date;

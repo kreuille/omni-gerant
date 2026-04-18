@@ -45,6 +45,14 @@ export interface Quote {
   updated_at: Date;
   deleted_at: Date | null;
   lines: QuoteLine[];
+  client_name: string | null;
+  client_email: string | null;
+  client_phone: string | null;
+  client_address: string | null;
+  client_zip_code: string | null;
+  client_city: string | null;
+  client_country: string | null;
+  client_siret: string | null;
 }
 
 export interface QuoteRepository {
@@ -98,6 +106,9 @@ export interface QuoteRepository {
     total_ht_cents?: number;
     total_tva_cents?: number;
     total_ttc_cents?: number;
+    status?: string;
+    signed_at?: Date | null;
+    signature_data?: unknown;
     lines?: Array<{
       product_id?: string;
       position: number;

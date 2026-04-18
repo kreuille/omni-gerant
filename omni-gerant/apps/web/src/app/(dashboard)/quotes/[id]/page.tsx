@@ -40,6 +40,18 @@ interface QuoteLine {
   total_ht_cents: number;
 }
 
+interface CompanyInfo {
+  name: string | null;
+  siret: string | null;
+  address: string | null;
+  zip_code: string | null;
+  city: string | null;
+  phone: string | null;
+  email: string | null;
+  tva_number: string | null;
+  legal_form: string | null;
+}
+
 interface Quote {
   id: string;
   number: string;
@@ -47,6 +59,12 @@ interface Quote {
   status: string;
   client_id: string | null;
   client_name: string | null;
+  client_email: string | null;
+  client_phone: string | null;
+  client_address: string | null;
+  client_zip_code: string | null;
+  client_city: string | null;
+  client_siret: string | null;
   issue_date: string;
   validity_date: string;
   total_ht_cents: number;
@@ -54,6 +72,7 @@ interface Quote {
   total_ttc_cents: number;
   notes: string | null;
   lines: QuoteLine[];
+  company?: CompanyInfo | null;
 }
 
 export default function QuoteDetailPage({ params }: { params: { id: string } }) {
@@ -63,6 +82,8 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [showSendModal, setShowSendModal] = useState(false);
+  const [sendFeedback, setSendFeedback] = useState<string | null>(null);
 
   useEffect(() => {
     api.get<Quote>(`/api/quotes/${params.id}`)
@@ -146,12 +167,7 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
           <QuoteActions
             status={quote.status}
             onPreview={() => { /* TODO: open preview modal */ }}
-            onSend={async () => {
-              setActionLoading(true);
-              const result = await api.post(`/api/quotes/${params.id}/send`, {});
-              if (result.ok) setQuote({ ...quote, status: 'sent' });
-              setActionLoading(false);
-            }}
+            onSend={() => setShowSendModal(true)}
             onDuplicate={() => router.push(`/quotes/new?duplicate=${params.id}`)}
             onConvert={async () => {
               setActionLoading(true);
@@ -162,6 +178,56 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
             onDelete={handleDelete}
           />
         </div>
+      </div>
+
+      {/* Emetteur + Destinataire */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs font-semibold text-gray-400 uppercase mb-2">Emetteur</p>
+            {quote.company ? (
+              <div className="text-sm space-y-0.5">
+                <p className="font-semibold text-gray-900">{quote.company.name ?? '—'}</p>
+                {quote.company.legal_form && <p className="text-gray-600">{quote.company.legal_form}</p>}
+                {quote.company.address && <p className="text-gray-700">{quote.company.address}</p>}
+                {(quote.company.zip_code || quote.company.city) && (
+                  <p className="text-gray-700">{quote.company.zip_code} {quote.company.city}</p>
+                )}
+                {quote.company.siret && <p className="text-xs text-gray-500 mt-1">SIRET : {quote.company.siret}</p>}
+                {quote.company.tva_number && <p className="text-xs text-gray-500">TVA : {quote.company.tva_number}</p>}
+                {quote.company.email && <p className="text-xs text-gray-500">{quote.company.email}</p>}
+                {quote.company.phone && <p className="text-xs text-gray-500">{quote.company.phone}</p>}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">
+                Profil entreprise incomplet —{' '}
+                <Link href="/settings/profile" className="text-primary-600 hover:underline">
+                  completer ici
+                </Link>
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs font-semibold text-gray-400 uppercase mb-2">Client</p>
+            {quote.client_name ? (
+              <div className="text-sm space-y-0.5">
+                <p className="font-semibold text-gray-900">{quote.client_name}</p>
+                {quote.client_address && <p className="text-gray-700">{quote.client_address}</p>}
+                {(quote.client_zip_code || quote.client_city) && (
+                  <p className="text-gray-700">{quote.client_zip_code} {quote.client_city}</p>
+                )}
+                {quote.client_siret && <p className="text-xs text-gray-500 mt-1">SIRET : {quote.client_siret}</p>}
+                {quote.client_email && <p className="text-xs text-gray-500">{quote.client_email}</p>}
+                {quote.client_phone && <p className="text-xs text-gray-500">{quote.client_phone}</p>}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">Aucun client selectionne</p>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -256,6 +322,78 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
           )}
         </div>
       </div>
+
+      {/* Send modal */}
+      {showSendModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => !actionLoading && setShowSendModal(false)}>
+          <div
+            className="bg-white rounded-lg shadow-xl w-full max-w-[calc(100vw-2rem)] sm:max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <h2 className="text-lg font-semibold mb-2">Envoyer le devis au client</h2>
+              <p className="text-sm text-gray-600 mb-4">
+                Le client recevra un email avec un lien pour consulter et signer le devis en ligne.
+              </p>
+
+              {quote.client_email ? (
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
+                  <p className="text-xs text-blue-900 font-medium">Destinataire</p>
+                  <p className="text-sm text-blue-800 mt-0.5">{quote.client_name}</p>
+                  <p className="text-sm text-blue-700">{quote.client_email}</p>
+                </div>
+              ) : (
+                <div className="bg-orange-50 border border-orange-200 rounded-md p-3 mb-4">
+                  <p className="text-sm text-orange-900 font-medium">Aucun email renseigne pour ce client</p>
+                  <p className="text-xs text-orange-700 mt-1">
+                    Ajoutez un email dans la fiche client avant d&apos;envoyer. Un lien public sera quand meme genere.
+                  </p>
+                </div>
+              )}
+
+              {sendFeedback && (
+                <p className="text-sm text-green-700 mb-3">{sendFeedback}</p>
+              )}
+
+              <div className="flex gap-2 justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => { setShowSendModal(false); setSendFeedback(null); }}
+                  disabled={actionLoading}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  type="button"
+                  onClick={async () => {
+                    setActionLoading(true);
+                    setSendFeedback(null);
+                    const result = await api.post<{ status: string; share_url: string; email_sent: boolean }>(
+                      `/api/quotes/${params.id}/send`, {}
+                    );
+                    if (result.ok) {
+                      setQuote({ ...quote, status: 'sent' });
+                      setSendFeedback(
+                        result.value.email_sent
+                          ? 'Devis envoye ! Lien partage : ' + result.value.share_url
+                          : 'Lien genere (aucun email envoye faute d\'adresse) : ' + result.value.share_url,
+                      );
+                      setTimeout(() => { setShowSendModal(false); setSendFeedback(null); }, 3000);
+                    } else {
+                      setSendFeedback('Erreur lors de l\'envoi');
+                    }
+                    setActionLoading(false);
+                  }}
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? 'Envoi...' : 'Envoyer'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

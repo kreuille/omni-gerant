@@ -10,6 +10,7 @@ import { createEmailService, createConsoleEmailProvider } from '../../lib/email.
 import { quoteSentHtml, quoteSentText } from '../../lib/email-templates/quote-sent.js';
 import { authenticate, requirePermission } from '../../plugins/auth.js';
 import { injectTenant } from '../../plugins/tenant.js';
+import { createTenantRepository } from '../tenant/tenant.repository.js';
 import { ok } from '@zenadmin/shared';
 import { z } from 'zod';
 
@@ -17,6 +18,7 @@ import { z } from 'zod';
 
 export async function quoteRoutes(app: FastifyInstance) {
   const repo = createPrismaQuoteRepository();
+  const tenantRepo = createTenantRepository();
 
   // Placeholder share token repo (will be migrated in a future prompt)
   const shareTokenRepo: ShareTokenRepository = {
@@ -115,7 +117,24 @@ export async function quoteRoutes(app: FastifyInstance) {
       if (!result.ok) {
         return reply.status(404).send({ error: result.error });
       }
-      return result.value;
+
+      const tenant = await tenantRepo.findById(request.auth.tenant_id);
+      const quote = result.value;
+
+      return {
+        ...quote,
+        company: tenant ? {
+          name: tenant.company_name,
+          siret: tenant.siret,
+          address: tenant.address?.line1 ?? null,
+          zip_code: tenant.address?.zip_code ?? null,
+          city: tenant.address?.city ?? null,
+          phone: tenant.phone ?? null,
+          email: tenant.email ?? null,
+          tva_number: tenant.tva_number ?? null,
+          legal_form: tenant.legal_form ?? null,
+        } : null,
+      };
     },
   );
 
@@ -195,35 +214,48 @@ export async function quoteRoutes(app: FastifyInstance) {
         actor: request.auth.user_id,
       });
 
-      // Send email (fire-and-forget)
+      // Get tenant profile for company name
+      const tenantProfile = await tenantRepo.findById(quote.tenant_id);
+      const companyName = tenantProfile?.company_name ?? 'Votre entreprise';
+      const clientName = quote.client_name ?? 'Client';
+      const clientEmail = quote.client_email;
+
+      // Send email
       const shareUrl = `${process.env['APP_URL'] ?? 'http://localhost:3000'}/share/quote/${tokenResult.value.token}`;
       const totalTtc = (quote.total_ttc_cents / 100).toFixed(2).replace('.', ',') + ' EUR';
       const validityDate = quote.validity_date.toLocaleDateString('fr-FR');
 
-      await emailService.send({
-        to: 'client@example.com', // Will come from client record
-        subject: `Devis ${quote.number} - En attente de validation`,
-        html: quoteSentHtml({
-          client_name: 'Client',
-          company_name: 'Votre entreprise',
-          quote_number: quote.number,
-          quote_title: quote.title,
-          total_ttc: totalTtc,
-          validity_date: validityDate,
-          share_url: shareUrl,
-        }),
-        text: quoteSentText({
-          client_name: 'Client',
-          company_name: 'Votre entreprise',
-          quote_number: quote.number,
-          quote_title: quote.title,
-          total_ttc: totalTtc,
-          validity_date: validityDate,
-          share_url: shareUrl,
-        }),
-      });
+      if (clientEmail) {
+        await emailService.send({
+          to: clientEmail,
+          subject: `Devis ${quote.number} de ${companyName} - En attente de validation`,
+          html: quoteSentHtml({
+            client_name: clientName,
+            company_name: companyName,
+            quote_number: quote.number,
+            quote_title: quote.title,
+            total_ttc: totalTtc,
+            validity_date: validityDate,
+            share_url: shareUrl,
+          }),
+          text: quoteSentText({
+            client_name: clientName,
+            company_name: companyName,
+            quote_number: quote.number,
+            quote_title: quote.title,
+            total_ttc: totalTtc,
+            validity_date: validityDate,
+            share_url: shareUrl,
+          }),
+        });
+      }
 
-      return { status: 'sent', share_url: shareUrl };
+      return {
+        status: 'sent',
+        share_url: shareUrl,
+        email_sent: !!clientEmail,
+        client_email: clientEmail,
+      };
     },
   );
 
@@ -320,6 +352,9 @@ export async function quoteRoutes(app: FastifyInstance) {
       user_agent: request.headers['user-agent'],
     });
 
+    // Get company info for the public share page
+    const tenant = await tenantRepo.findById(shareToken.tenant_id);
+
     return {
       quote: {
         number: quoteResult.number,
@@ -333,7 +368,22 @@ export async function quoteRoutes(app: FastifyInstance) {
         total_ttc_cents: quoteResult.total_ttc_cents,
         notes: quoteResult.notes,
         lines: quoteResult.lines,
+        client_name: quoteResult.client_name,
+        client_address: quoteResult.client_address,
+        client_zip_code: quoteResult.client_zip_code,
+        client_city: quoteResult.client_city,
+        client_siret: quoteResult.client_siret,
       },
+      company: tenant ? {
+        name: tenant.company_name,
+        siret: tenant.siret,
+        address: tenant.address?.line1 ?? null,
+        zip_code: tenant.address?.zip_code ?? null,
+        city: tenant.address?.city ?? null,
+        phone: tenant.phone ?? null,
+        email: tenant.email ?? null,
+        tva_number: tenant.tva_number ?? null,
+      } : null,
       can_sign: !shareToken.signed_at,
     };
   });
@@ -388,5 +438,49 @@ export async function quoteRoutes(app: FastifyInstance) {
     });
 
     return { status: 'signed' };
+  });
+
+  // POST /api/share/quote/:token/refuse - client refuses quote
+  const refuseSchema = z.object({
+    reason: z.string().max(2000).optional(),
+  });
+
+  app.post('/api/share/quote/:token/refuse', async (request, reply) => {
+    const { token } = request.params as { token: string };
+    const parsed = refuseSchema.safeParse(request.body ?? {});
+    if (!parsed.success) {
+      return reply.status(400).send({
+        error: { code: 'VALIDATION_ERROR', message: 'Invalid refuse data' },
+      });
+    }
+
+    // Look up the share token to find the quote
+    const viewResult = await shareService.markViewed(token);
+    if (!viewResult.ok) {
+      const status = viewResult.error.code === 'NOT_FOUND' ? 404 : 401;
+      return reply.status(status).send({ error: viewResult.error });
+    }
+    const shareToken = viewResult.value;
+
+    // Transition quote to refused
+    const updated = await repo.update(shareToken.quote_id, shareToken.tenant_id, {
+      status: 'refused',
+    });
+    if (!updated) {
+      return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Quote not found' } });
+    }
+
+    // Track refusal
+    await trackingService.track({
+      quote_id: shareToken.quote_id,
+      tenant_id: shareToken.tenant_id,
+      event_type: 'refused',
+      actor: 'client',
+      ip_address: request.ip,
+      user_agent: request.headers['user-agent'],
+      metadata: parsed.data.reason ? { reason: parsed.data.reason } : undefined,
+    });
+
+    return { status: 'refused' };
   });
 }

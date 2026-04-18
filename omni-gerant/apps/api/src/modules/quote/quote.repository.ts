@@ -6,7 +6,10 @@ import type { QuoteRepository, Quote, QuoteLine } from './quote.service.js';
 // BUSINESS RULE [R04]: Soft delete via middleware
 
 export function createPrismaQuoteRepository(): QuoteRepository {
-  const includeLines = { lines: { orderBy: { position: 'asc' as const } } };
+  const includeAll = {
+    lines: { orderBy: { position: 'asc' as const } },
+    client: true,
+  };
 
   return {
     async create(data) {
@@ -43,7 +46,7 @@ export function createPrismaQuoteRepository(): QuoteRepository {
             })),
           },
         },
-        include: includeLines,
+        include: includeAll,
       });
       return mapQuote(row);
     },
@@ -51,7 +54,7 @@ export function createPrismaQuoteRepository(): QuoteRepository {
     async findById(id, tenantId) {
       const row = await prisma.quote.findFirst({
         where: { id, tenant_id: tenantId },
-        include: includeLines,
+        include: includeAll,
       });
       return row ? mapQuote(row) : null;
     },
@@ -69,7 +72,7 @@ export function createPrismaQuoteRepository(): QuoteRepository {
 
       const rows = await prisma.quote.findMany({
         where,
-        include: includeLines,
+        include: includeAll,
         take: params.limit + 1,
         skip: params.cursor ? 1 : 0,
         cursor: params.cursor ? { id: params.cursor } : undefined,
@@ -140,7 +143,7 @@ export function createPrismaQuoteRepository(): QuoteRepository {
       const row = await prisma.quote.update({
         where: { id },
         data: updateData,
-        include: includeLines,
+        include: includeAll,
       });
       return mapQuote(row);
     },
@@ -154,6 +157,28 @@ export function createPrismaQuoteRepository(): QuoteRepository {
       return true;
     },
   };
+}
+
+interface ClientRow {
+  id: string;
+  type: string;
+  company_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+  phone: string | null;
+  siret: string | null;
+  address_line1: string | null;
+  address_line2: string | null;
+  zip_code: string | null;
+  city: string | null;
+  country: string;
+}
+
+function getClientDisplayName(client: ClientRow | null): string | null {
+  if (!client) return null;
+  if (client.type === 'company' && client.company_name) return client.company_name;
+  return [client.first_name, client.last_name].filter(Boolean).join(' ') || null;
 }
 
 function mapQuote(row: {
@@ -177,6 +202,7 @@ function mapQuote(row: {
   created_at: Date;
   updated_at: Date;
   deleted_at: Date | null;
+  client?: ClientRow | null;
   lines: Array<{
     id: string;
     quote_id: string;
@@ -185,7 +211,7 @@ function mapQuote(row: {
     type: string;
     label: string;
     description: string | null;
-    quantity: unknown; // Decimal from Prisma
+    quantity: unknown;
     unit: string;
     unit_price_cents: number;
     tva_rate: number;
@@ -194,6 +220,7 @@ function mapQuote(row: {
     total_ht_cents: number;
   }>;
 }): Quote {
+  const client = row.client ?? null;
   return {
     id: row.id,
     tenant_id: row.tenant_id,
@@ -216,6 +243,14 @@ function mapQuote(row: {
     updated_at: row.updated_at,
     deleted_at: row.deleted_at,
     lines: row.lines.map(mapLine),
+    client_name: getClientDisplayName(client),
+    client_email: client?.email ?? null,
+    client_phone: client?.phone ?? null,
+    client_address: client ? [client.address_line1, client.address_line2].filter(Boolean).join(', ') : null,
+    client_zip_code: client?.zip_code ?? null,
+    client_city: client?.city ?? null,
+    client_country: client?.country ?? null,
+    client_siret: client?.siret ?? null,
   };
 }
 

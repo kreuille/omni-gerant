@@ -4,12 +4,33 @@ import type { QuoteLineData } from './quote-line-row';
 
 // BUSINESS RULE [CDC-2.1]: Apercu devis avant enregistrement
 
+interface CompanyPreview {
+  name?: string | null;
+  siret?: string | null;
+  address?: string | null;
+  zip_code?: string | null;
+  city?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  tva_number?: string | null;
+}
+
+interface ClientPreview {
+  name?: string | null;
+  address?: string | null;
+  zip_code?: string | null;
+  city?: string | null;
+  siret?: string | null;
+}
+
 interface QuotePreviewModalProps {
   title: string;
   lines: QuoteLineData[];
   validityDays: number;
   notes: string;
   onClose: () => void;
+  company?: CompanyPreview | null;
+  client?: ClientPreview | null;
 }
 
 function formatCents(cents: number): string {
@@ -20,7 +41,7 @@ function formatRate(basisPoints: number): string {
   return (basisPoints / 100).toFixed(basisPoints % 100 === 0 ? 0 : 1) + '%';
 }
 
-export function QuotePreviewModal({ title, lines, validityDays, notes, onClose }: QuotePreviewModalProps) {
+export function QuotePreviewModal({ title, lines, validityDays, notes, onClose, company, client }: QuotePreviewModalProps) {
   const productLines = lines.filter((l) => l.type === 'line');
   const totalHt = productLines.reduce((sum, l) => sum + l.total_ht_cents, 0);
 
@@ -54,6 +75,35 @@ export function QuotePreviewModal({ title, lines, validityDays, notes, onClose }
 
         {/* Preview content */}
         <div className="p-8 space-y-6">
+          {/* Emetteur + Client */}
+          {(company || client) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 border-b">
+              {company && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-400 uppercase mb-1">De</p>
+                  <p className="font-semibold text-gray-900">{company.name ?? '—'}</p>
+                  {company.address && <p className="text-sm text-gray-700">{company.address}</p>}
+                  {(company.zip_code || company.city) && (
+                    <p className="text-sm text-gray-700">{company.zip_code} {company.city}</p>
+                  )}
+                  {company.siret && <p className="text-xs text-gray-500 mt-1">SIRET : {company.siret}</p>}
+                  {company.tva_number && <p className="text-xs text-gray-500">TVA : {company.tva_number}</p>}
+                </div>
+              )}
+              {client && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-400 uppercase mb-1">Pour</p>
+                  <p className="font-semibold text-gray-900">{client.name ?? '—'}</p>
+                  {client.address && <p className="text-sm text-gray-700">{client.address}</p>}
+                  {(client.zip_code || client.city) && (
+                    <p className="text-sm text-gray-700">{client.zip_code} {client.city}</p>
+                  )}
+                  {client.siret && <p className="text-xs text-gray-500 mt-1">SIRET : {client.siret}</p>}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Company + meta */}
           <div className="flex justify-between items-start">
             <div>

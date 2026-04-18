@@ -22,9 +22,27 @@ export async function duerpRoutes(app: FastifyInstance) {
   // Auto-fill orchestrator — wired to tenant repository
   const autoFill = createDuerpAutoFill({
     lookupSiret: (siret) => siretLookup.lookup(siret),
-    getTenantProfile: async (tenantId) => tenantRepo.findById(tenantId),
-    getRecentPurchases: async () => [] as PurchaseInfo[], // TODO: wire to purchases module
-    getInsurances: async () => [] as InsuranceInfo[], // TODO: wire to insurance module
+    getTenantProfile: async (tenantId) => {
+      const full = await tenantRepo.findById(tenantId);
+      if (!full) return null;
+      // Adapter: the DUERP autofill expects a simpler TenantProfile shape
+      return {
+        id: full.id,
+        name: full.company_name,
+        siret: full.siret,
+        siren: full.siren,
+        naf_code: full.naf_code,
+        address: full.address
+          ? `${full.address.line1}, ${full.address.zip_code} ${full.address.city}`
+          : null,
+        employee_count: full.effectif ?? 1,
+        dirigeant_name: full.dirigeants?.[0]
+          ? `${full.dirigeants[0].prenom} ${full.dirigeants[0].nom}`.trim()
+          : null,
+      };
+    },
+    getRecentPurchases: async () => [] as PurchaseInfo[],
+    getInsurances: async () => [] as InsuranceInfo[],
     getLatestDuerp: async (tenantId) => repo.findLatest(tenantId),
   });
 
@@ -36,25 +54,7 @@ export async function duerpRoutes(app: FastifyInstance) {
     '/api/legal/duerp/autofill',
     { preHandler: [...preHandlers, requirePermission('legal', 'create')] },
     async (request, reply) => {
-      const body = request.body as { siret?: string; naf_code?: string; company_name?: string; employee_count?: number } | undefined;
-      // Normalize SIRET: strip spaces (accepts both "890 246 390 00029" and "89024639000029")
-      const normalizedSiret = body?.siret?.replace(/\s/g, '') || undefined;
-
-      // Store/update tenant profile for auto-fill
       const tenantId = request.auth.tenant_id;
-      const existingProfile = tenantProfiles.get(tenantId);
-      const profile: TenantProfile = {
-        id: tenantId,
-        name: body?.company_name ?? existingProfile?.name ?? 'Mon Entreprise',
-        siret: normalizedSiret ?? existingProfile?.siret ?? null,
-        siren: existingProfile?.siren ?? null,
-        naf_code: body?.naf_code ?? existingProfile?.naf_code ?? null,
-        address: existingProfile?.address ?? null,
-        employee_count: body?.employee_count ?? existingProfile?.employee_count ?? 1,
-        dirigeant_name: existingProfile?.dirigeant_name ?? null,
-      };
-      tenantProfiles.set(tenantId, profile);
-
       const result = await autoFill.generateAutoFill(tenantId);
       if (!result.ok) return reply.status(400).send({ error: result.error });
       return result.value;
@@ -73,19 +73,7 @@ export async function duerpRoutes(app: FastifyInstance) {
         });
       }
 
-      // Update tenant profile for future auto-fills
       const tenantId = request.auth.tenant_id;
-      tenantProfiles.set(tenantId, {
-        id: tenantId,
-        name: parsed.data.company_name,
-        siret: parsed.data.siret ?? null,
-        siren: null,
-        naf_code: parsed.data.naf_code ?? null,
-        address: parsed.data.address ?? null,
-        employee_count: parsed.data.employee_count,
-        dirigeant_name: parsed.data.evaluator_name,
-      });
-
       const result = await duerpService.generate(tenantId, parsed.data);
       if (!result.ok) return reply.status(400).send({ error: result.error });
       return reply.status(201).send(result.value);
