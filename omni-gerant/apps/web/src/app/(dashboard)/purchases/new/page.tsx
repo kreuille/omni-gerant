@@ -11,7 +11,7 @@ export default function NewPurchasePage() {
         <Link href="/purchases" className="text-sm text-gray-500 hover:text-gray-700 mb-1 block">
           ← Retour aux achats
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">Nouvelle facture d&apos;achat</h1>
+        <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">Nouvelle facture d&apos;achat</h1>
       </div>
 
       <Card>

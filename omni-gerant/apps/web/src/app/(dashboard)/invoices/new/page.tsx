@@ -17,7 +17,7 @@ export default function NewInvoicePage() {
           <Link href="/invoices" className="text-sm text-gray-500 hover:text-gray-700">
             &larr; Retour aux factures
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900 mt-1">Nouvelle facture</h1>
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mt-1">Nouvelle facture</h1>
         </div>
         <div className="flex gap-2">
           <Button variant="outline">Apercu PDF</Button>

@@ -56,7 +56,7 @@ export default function PurchaseDetailPage() {
             ← Retour aux achats
           </Link>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
               {purchase.number ?? 'Facture sans numero'}
             </h1>
             <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>

@@ -53,7 +53,7 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Tableau de bord</h1>
+      <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-6">Tableau de bord</h1>
 
       {/* KPI principaux — toujours visibles */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">

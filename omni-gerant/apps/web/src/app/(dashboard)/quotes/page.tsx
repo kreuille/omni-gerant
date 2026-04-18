@@ -53,7 +53,7 @@ export default function QuotesPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Devis</h1>
+        <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">Devis</h1>
         <Link href="/quotes/new">
           <Button>Nouveau devis</Button>
         </Link>
@@ -82,7 +82,32 @@ export default function QuotesPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card>
+        {/* Mobile card view */}
+        <div className="space-y-3 md:hidden">
+          {quotes.map((quote) => {
+            const statusInfo = STATUS_LABELS[quote.status] ?? STATUS_LABELS['draft']!;
+            return (
+              <Card key={quote.id}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <Link href={`/quotes/${quote.id}`} className="text-primary-600 hover:underline font-medium text-sm">
+                      {quote.number}
+                    </Link>
+                    <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
+                  </div>
+                  {quote.title && <p className="text-sm text-gray-900 mb-1">{quote.title}</p>}
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">{new Date(quote.issue_date).toLocaleDateString('fr-FR')}</span>
+                    <span className="font-medium">{formatCents(quote.total_ttc_cents)}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Desktop table view */}
+        <Card className="hidden md:block">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>

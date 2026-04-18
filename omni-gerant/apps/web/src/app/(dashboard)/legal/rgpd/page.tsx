@@ -32,7 +32,7 @@ export default function RgpdPage() {
     return (
       <div>
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Registre RGPD</h1>
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">Registre RGPD</h1>
           <p className="text-sm text-gray-500 mt-1">
             Registre des traitements de donnees personnelles conforme au RGPD.
           </p>
@@ -112,7 +112,7 @@ export default function RgpdPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Registre RGPD</h1>
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">Registre RGPD</h1>
           <p className="text-sm text-gray-500 mt-1">
             {companyName} — {treatmentCount} traitement{treatmentCount > 1 ? 's' : ''} enregistre{treatmentCount > 1 ? 's' : ''}
           </p>

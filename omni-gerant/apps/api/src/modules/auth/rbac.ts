@@ -22,7 +22,8 @@ export type Resource =
   | 'settings'
   | 'billing'
   | 'export'
-  | 'legal';
+  | 'legal'
+  | 'dashboard';
 
 export type Action = 'create' | 'read' | 'update' | 'delete' | 'export';
 
@@ -48,6 +49,7 @@ const PERMISSION_MATRIX: Record<UserRole, Set<string>> = {
     'billing:read', 'billing:update',
     'export:read', 'export:export',
     'legal:create', 'legal:read', 'legal:update', 'legal:delete',
+    'dashboard:read',
   ]),
   admin: new Set([
     // Admin can do everything except billing and tenant delete
@@ -63,6 +65,7 @@ const PERMISSION_MATRIX: Record<UserRole, Set<string>> = {
     'settings:read', 'settings:update',
     'export:read', 'export:export',
     'legal:create', 'legal:read', 'legal:update', 'legal:delete',
+    'dashboard:read',
   ]),
   member: new Set([
     // Member: CRUD on business entities, no users/settings/billing
@@ -74,6 +77,7 @@ const PERMISSION_MATRIX: Record<UserRole, Set<string>> = {
     'purchase:create', 'purchase:read', 'purchase:update', 'purchase:delete',
     'bank:read',
     'legal:read',
+    'dashboard:read',
   ]),
   accountant: new Set([
     // Accountant: read-only + export FEC
@@ -87,6 +91,7 @@ const PERMISSION_MATRIX: Record<UserRole, Set<string>> = {
     'audit:read',
     'export:read', 'export:export',
     'legal:read',
+    'dashboard:read',
   ]),
 };
 
@@ -100,7 +105,7 @@ export function checkPermission(role: UserRole, resource: Resource, action: Acti
   if (hasPermission(role, resource, action)) {
     return ok(true);
   }
-  return err(forbidden(`Role '${role}' cannot ${action} ${resource}`));
+  return err(forbidden(`Le role '${role}' n'a pas la permission '${action}' sur '${resource}'`));
 }
 
 export function getRolePermissions(role: UserRole): Permission[] {

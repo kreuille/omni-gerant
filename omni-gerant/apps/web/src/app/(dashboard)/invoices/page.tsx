@@ -39,7 +39,7 @@ export default function InvoicesPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Factures</h1>
+        <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">Factures</h1>
         <Link href="/invoices/new">
           <Button>Nouvelle facture</Button>
         </Link>
@@ -62,7 +62,35 @@ export default function InvoicesPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card>
+        {/* Mobile card view */}
+        <div className="space-y-3 md:hidden">
+          {invoices.map((inv) => {
+            const statusInfo = STATUS_LABELS[inv.status] ?? STATUS_LABELS['draft']!;
+            return (
+              <Card key={inv.id}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <Link href={`/invoices/${inv.id}`} className="text-primary-600 hover:underline font-medium text-sm">
+                      {inv.number}
+                    </Link>
+                    <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
+                  </div>
+                  <p className="text-sm text-gray-900 mb-1">{inv.client_name}</p>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">Ech. {inv.due_date}</span>
+                    <span className="font-medium">{formatCents(inv.total_ttc_cents)}</span>
+                  </div>
+                  {inv.remaining_cents > 0 && inv.remaining_cents !== inv.total_ttc_cents && (
+                    <p className="text-xs text-orange-600 mt-1">Reste : {formatCents(inv.remaining_cents)}</p>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Desktop table view */}
+        <Card className="hidden md:block">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>

@@ -23,7 +23,7 @@ export default function SuppliersPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Fournisseurs</h1>
+        <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">Fournisseurs</h1>
         <Button>Nouveau fournisseur</Button>
       </div>
 

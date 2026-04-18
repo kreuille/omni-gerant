@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api } from '@/lib/api-client';
+import { QuoteActions } from '@/components/quote/quote-actions';
 
 const STATUS_LABELS: Record<string, { label: string; variant: 'default' | 'success' | 'warning' | 'error' }> = {
   draft: { label: 'Brouillon', variant: 'default' },
@@ -44,6 +45,8 @@ interface Quote {
   number: string;
   title: string | null;
   status: string;
+  client_id: string | null;
+  client_name: string | null;
   issue_date: string;
   validity_date: string;
   total_ht_cents: number;
@@ -59,6 +62,7 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     api.get<Quote>(`/api/quotes/${params.id}`)
@@ -125,28 +129,47 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div>
           <Link href="/quotes" className="text-sm text-gray-500 hover:text-gray-700">
             &larr; Retour aux devis
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900 mt-1">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">
             {quote.number} {quote.title ? `— ${quote.title}` : ''}
           </h1>
+          {quote.client_name && (
+            <p className="text-sm text-gray-600 mt-0.5">Client : {quote.client_name}</p>
+          )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
-          <Button variant="outline" onClick={handleDelete} disabled={deleting}>
-            {deleting ? 'Suppression...' : 'Supprimer'}
-          </Button>
+          <QuoteActions
+            status={quote.status}
+            onPreview={() => { /* TODO: open preview modal */ }}
+            onSend={async () => {
+              setActionLoading(true);
+              const result = await api.post(`/api/quotes/${params.id}/send`, {});
+              if (result.ok) setQuote({ ...quote, status: 'sent' });
+              setActionLoading(false);
+            }}
+            onDuplicate={() => router.push(`/quotes/new?duplicate=${params.id}`)}
+            onConvert={async () => {
+              setActionLoading(true);
+              const result = await api.post<{ id: string }>(`/api/quotes/${params.id}/convert`, {});
+              if (result.ok) router.push(`/invoices/${result.value.id}`);
+              setActionLoading(false);
+            }}
+            onDelete={handleDelete}
+          />
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <h2 className="text-sm font-semibold text-gray-700 mb-4">Lignes du devis</h2>
+              <div className="overflow-x-auto">
               <table className="w-full text-sm border-collapse">
                 <thead>
                   <tr className="border-b-2 border-gray-300">
@@ -187,6 +210,7 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                   })}
                 </tbody>
               </table>
+              </div>
             </CardContent>
           </Card>
         </div>

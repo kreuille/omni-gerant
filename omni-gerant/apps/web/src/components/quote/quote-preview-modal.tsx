@@ -41,7 +41,7 @@ export function QuotePreviewModal({ title, lines, validityDays, notes, onClose }
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
       <div
-        className="bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-lg shadow-xl w-full mx-4 max-w-[calc(100vw-2rem)] sm:max-w-lg md:max-w-3xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
