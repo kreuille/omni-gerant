@@ -38,21 +38,21 @@ export function middleware(request: NextRequest) {
 
   response.headers.set('Content-Security-Policy', csp);
 
-  // Auth redirect — protect dashboard routes (disabled in development)
-  const isDev = process.env.NODE_ENV === 'development';
-  if (!isDev) {
-    const { pathname } = request.nextUrl;
-    const isAuthPage = pathname === '/login' || pathname === '/register';
-    const isPublicPage = pathname.startsWith('/onboarding') || pathname.startsWith('/step-') || pathname.startsWith('/public') || pathname.startsWith('/share') || pathname === '/maintenance';
-    const isApiRoute = pathname.startsWith('/api/');
+  // Auth redirect — protect dashboard routes
+  const { pathname } = request.nextUrl;
+  const isAuthPage = pathname === '/login' || pathname === '/register';
+  const isPublicPage = pathname.startsWith('/onboarding') || pathname.startsWith('/step-') || pathname.startsWith('/public') || pathname.startsWith('/share') || pathname === '/maintenance';
+  const isApiRoute = pathname.startsWith('/api/');
+  const isStaticAsset = pathname.startsWith('/_next');
 
-    if (!isAuthPage && !isPublicPage && !isApiRoute) {
-      const token = request.cookies.get('auth_token')?.value;
-      if (!token) {
-        const loginUrl = new URL('/login', request.url);
-        loginUrl.searchParams.set('redirect', pathname);
-        return NextResponse.redirect(loginUrl);
-      }
+  if (!isAuthPage && !isPublicPage && !isApiRoute && !isStaticAsset) {
+    const token = request.cookies.get('auth_token')?.value
+      ?? request.headers.get('authorization')?.replace('Bearer ', '');
+    const localToken = request.nextUrl.searchParams.get('token');
+    if (!token && !localToken) {
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
     }
   }
 

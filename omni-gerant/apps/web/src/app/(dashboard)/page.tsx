@@ -103,7 +103,7 @@ export default function DashboardPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Tableau de bord</h1>
+        <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">Tableau de bord</h1>
         {loading && (
           <span className="text-sm text-gray-500 animate-pulse">Chargement...</span>
         )}

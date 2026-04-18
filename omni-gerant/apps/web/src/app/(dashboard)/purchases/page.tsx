@@ -117,7 +117,7 @@ export default function PurchasesPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Achats</h1>
+        <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">Achats</h1>
         <Link href="/purchases/new">
           <Button>Nouvelle facture d&apos;achat</Button>
         </Link>
@@ -200,7 +200,36 @@ export default function PurchasesPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card>
+        {/* Mobile card view */}
+        <div className="space-y-3 md:hidden">
+          {purchases.map((purchase) => {
+            const statusInfo = STATUS_LABELS[purchase.status] ?? STATUS_LABELS['pending']!;
+            const remaining = purchase.total_ttc_cents - purchase.paid_cents;
+            return (
+              <Card key={purchase.id}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <Link href={`/purchases/${purchase.id}`} className="text-primary-600 hover:underline font-medium text-sm">
+                      {purchase.number ?? '-'}
+                    </Link>
+                    <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
+                  </div>
+                  <p className="text-sm text-gray-900 mb-1">{purchase.supplier_name}</p>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">{purchase.due_date ? formatDate(purchase.due_date) : '-'}</span>
+                    <span className="font-medium">{formatCents(purchase.total_ttc_cents)}</span>
+                  </div>
+                  {remaining > 0 && remaining !== purchase.total_ttc_cents && (
+                    <p className="text-xs text-orange-600 mt-1">Reste : {formatCents(remaining)}</p>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Desktop table view */}
+        <Card className="hidden md:block">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>

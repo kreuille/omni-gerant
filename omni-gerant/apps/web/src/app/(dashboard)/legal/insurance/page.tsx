@@ -80,7 +80,7 @@ export default function InsurancePage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Coffre-Fort Assurances</h1>
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">Coffre-Fort Assurances</h1>
           <p className="text-sm text-gray-500 mt-1">
             Gerez vos contrats d&apos;assurance et attestations.
           </p>

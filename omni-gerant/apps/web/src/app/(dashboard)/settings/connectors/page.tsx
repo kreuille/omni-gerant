@@ -35,7 +35,7 @@ export default function ConnectorsSettingsPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Connecteurs fournisseurs</h1>
+        <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">Connecteurs fournisseurs</h1>
         <p className="text-sm text-gray-500 mt-1">
           Configurez les connecteurs pour recuperer automatiquement vos factures.
         </p>

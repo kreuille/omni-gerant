@@ -28,7 +28,7 @@ export function ConnectorSetup({ type: _type, displayName, onClose }: ConnectorS
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+      <div className="bg-white rounded-lg p-6 w-full mx-4 max-w-[calc(100vw-2rem)] sm:max-w-md shadow-xl">
         <h2 className="text-lg font-semibold mb-4">Configurer {displayName}</h2>
 
         <div className="space-y-4">

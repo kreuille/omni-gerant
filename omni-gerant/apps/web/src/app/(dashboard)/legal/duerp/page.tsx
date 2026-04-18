@@ -109,7 +109,7 @@ export default function DuerpPage() {
       <div>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">DUERP</h1>
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">DUERP</h1>
             <p className="text-sm text-gray-500 mt-1">
               Document Unique d&apos;Evaluation des Risques Professionnels
             </p>
@@ -149,7 +149,7 @@ export default function DuerpPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">DUERP</h1>
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">DUERP</h1>
           <p className="text-sm text-gray-500 mt-1">
             {duerp.title} — {duerp.company_name}
           </p>

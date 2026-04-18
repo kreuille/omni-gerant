@@ -48,7 +48,7 @@ export function ManualMatch({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4 shadow-xl max-h-[80vh] flex flex-col">
+      <div className="bg-white rounded-lg p-6 w-full mx-4 max-w-[calc(100vw-2rem)] sm:max-w-lg shadow-xl max-h-[80vh] flex flex-col">
         <h2 className="text-lg font-semibold mb-2">Rapprochement manuel</h2>
         <p className="text-sm text-gray-500 mb-4">
           Transaction: <span className="font-medium">{transactionLabel}</span>

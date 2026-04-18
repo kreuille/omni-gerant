@@ -10,6 +10,7 @@ interface QuoteActionsProps {
   onDuplicate?: () => void;
   onPreview?: () => void;
   onDelete?: () => void;
+  onConvert?: () => void;
 }
 
 const STATUS_ACTIONS: Record<string, string[]> = {
@@ -22,7 +23,7 @@ const STATUS_ACTIONS: Record<string, string[]> = {
   invoiced: ['preview'],
 };
 
-export function QuoteActions({ status, onSend, onDuplicate, onPreview, onDelete }: QuoteActionsProps) {
+export function QuoteActions({ status, onSend, onDuplicate, onPreview, onDelete, onConvert }: QuoteActionsProps) {
   const actions = STATUS_ACTIONS[status] ?? [];
 
   return (
@@ -40,6 +41,11 @@ export function QuoteActions({ status, onSend, onDuplicate, onPreview, onDelete 
       {actions.includes('duplicate') && (
         <Button variant="secondary" size="sm" onClick={onDuplicate}>
           Dupliquer
+        </Button>
+      )}
+      {actions.includes('invoice') && (
+        <Button variant="primary" size="sm" onClick={onConvert}>
+          Convertir en facture
         </Button>
       )}
       {actions.includes('delete') && (
