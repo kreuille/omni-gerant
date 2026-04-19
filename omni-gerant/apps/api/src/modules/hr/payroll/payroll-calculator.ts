@@ -63,7 +63,20 @@ export interface PayrollInput {
   // V6 : AT-MP specifique + PAS
   atmpRateBp?: number;     // defaut 150 = 1.5%
   pasRateBp?: number;      // taux salarie (personnalise ou neutre)
+
+  // V7 : heures supplementaires detaillees + avantages nature + PPV
+  overtime25Hours?: number; // heures sup a +25% (36h->43h)
+  overtime50Hours?: number; // heures sup a +50% (>43h)
+  benefitsInKindCents?: number; // avantage en nature nourriture/logement (soumis a cotisations)
+  ppvCents?: number; // prime de partage de la valeur (exoneree sous conditions)
+  cpBalance?: number; // solde CP au moment du bulletin
+  rttBalance?: number; // solde RTT
 }
+
+// V7 : Avantage en nature repas restauration (URSSAF 2026)
+export const AVANTAGE_NATURE_REPAS_CENTS_2026 = 545; // 5.45 EUR / repas
+// Plafond PPV (prime partage valeur) exoneree sous 3 SMIC
+export const PPV_CEILING_GROSS_CENTS = 900000; // 9000 EUR par an et par salarie
 
 // PMSS 2026 — plafond mensuel Securite Sociale
 export const PMSS_2026_CENTS = 386400;
@@ -105,6 +118,16 @@ export interface PayrollBreakdown {
   // V6
   atmpEmployerCents: number;
   pasCents: number; // prelevement a la source (deduit du net apres impot)
+
+  // V7
+  overtime25Cents: number;
+  overtime50Cents: number;
+  overtime25Hours: number;
+  overtime50Hours: number;
+  benefitsInKindCents: number;
+  ppvCents: number;
+  cpBalance: number;
+  rttBalance: number;
 }
 
 /**
@@ -113,11 +136,24 @@ export interface PayrollBreakdown {
  */
 export function computePayroll(input: PayrollInput): PayrollBreakdown {
   const grossBaseCents = Math.max(0, Math.floor(input.grossBaseCents));
-  const overtimeCents = Math.max(0, Math.floor(input.overtimeCents ?? 0));
   const bonusCents = Math.max(0, Math.floor(input.bonusCents ?? 0));
   const indemnityCents = Math.max(0, Math.floor(input.indemnityCents ?? 0));
 
-  const grossTotalCents = grossBaseCents + overtimeCents + bonusCents;
+  // V7 : Heures sup calculees automatiquement si fournies en heures
+  const hourlyRateCents = input.hoursWorked > 0 ? grossBaseCents / input.hoursWorked : 0;
+  const overtime25Hours = Math.max(0, input.overtime25Hours ?? 0);
+  const overtime50Hours = Math.max(0, input.overtime50Hours ?? 0);
+  const overtime25Cents = Math.round(overtime25Hours * hourlyRateCents * 1.25);
+  const overtime50Cents = Math.round(overtime50Hours * hourlyRateCents * 1.50);
+  const overtimeCents = Math.max(0, Math.floor(input.overtimeCents ?? 0)) + overtime25Cents + overtime50Cents;
+
+  // V7 : Avantage en nature (soumis a cotisations)
+  const benefitsInKindCents = Math.max(0, input.benefitsInKindCents ?? 0);
+
+  // V7 : PPV — exoneree sous plafonds, non soumise a cotisations hors CSG
+  const ppvCents = Math.max(0, input.ppvCents ?? 0);
+
+  const grossTotalCents = grossBaseCents + overtimeCents + bonusCents + benefitsInKindCents;
   // Indemnites : exoneres de cotisations dans le cas simplifie (repas/transport dans limites URSSAF)
 
   // ── Cotisations salariales ─────────────────────────────────────
@@ -162,8 +198,9 @@ export function computePayroll(input: PayrollInput): PayrollBreakdown {
   const pasRate = (input.pasRateBp ?? 0) / 10000;
   const pasCents = Math.round(netTaxableCents * pasRate);
 
-  // Net a payer = brut − total cotisations salariales + indemnites non soumises − part salariale TR − PAS
-  const netToPayCents = grossTotalCents - totalEmployeeDeductionsCents + indemnityCents - trEmployeeCents - pasCents;
+  // Net a payer = brut − cotisations − benefits nature (deja inclus brut) + indemnites + PPV − part salariale TR − PAS
+  // Note : avantage nature est ajoute au brut pour cotisations puis re-deduit pour ne pas etre verse cash
+  const netToPayCents = grossTotalCents - totalEmployeeDeductionsCents + indemnityCents + ppvCents - benefitsInKindCents - trEmployeeCents - pasCents;
 
   // ── Cotisations patronales ──────────────────────────────────────
   const urssafEmployerCents = Math.round(grossTotalCents * RATE_SS_EMPLOYER);
@@ -234,6 +271,14 @@ export function computePayroll(input: PayrollInput): PayrollBreakdown {
     trEmployerCents,
     atmpEmployerCents,
     pasCents,
+    overtime25Cents,
+    overtime50Cents,
+    overtime25Hours,
+    overtime50Hours,
+    benefitsInKindCents,
+    ppvCents,
+    cpBalance: input.cpBalance ?? 0,
+    rttBalance: input.rttBalance ?? 0,
   };
 }
 
