@@ -9,6 +9,7 @@ const items = [
   { href: '/hr/registre', label: 'Registre unique' },
   { href: '/hr/effectif-moyen', label: 'Effectif moyen' },
   { href: '/hr/paie', label: 'Paie' },
+  { href: '/hr/conges', label: 'Congés' },
   { href: '/hr/dsn', label: 'DSN' },
   { href: '/hr/parametres', label: 'Paramètres paie' },
   { href: '/hr/affichages', label: 'Affichages' },

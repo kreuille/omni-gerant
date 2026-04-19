@@ -1031,6 +1031,11 @@ model HrPayslip {
   ppv_cents                 Int @default(0)
   cp_balance_end            Float @default(0)
   rtt_balance_end           Float @default(0)
+  // V9 : arret maladie + transport
+  sick_days_unpaid          Float @default(0)
+  sick_deduction_cents      Int @default(0)
+  ijss_cents                Int @default(0)
+  transport_allowance_cents Int @default(0)
   // Meta
   gross_rate_cents_per_hour Int
   hours_worked              Float

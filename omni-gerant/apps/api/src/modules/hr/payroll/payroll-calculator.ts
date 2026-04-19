@@ -71,6 +71,11 @@ export interface PayrollInput {
   ppvCents?: number; // prime de partage de la valeur (exoneree sous conditions)
   cpBalance?: number; // solde CP au moment du bulletin
   rttBalance?: number; // solde RTT
+
+  // V9 : arret maladie + transport
+  sickDaysUnpaidBrut?: number; // jours maladie non couverts (deduits du brut)
+  ijssCents?: number; // indemnite journaliere CPAM (subrogee, non soumise)
+  transportAllowanceCents?: number; // indemnite transport 50% abonnement (non soumise dans limites)
 }
 
 // V7 : Avantage en nature repas restauration (URSSAF 2026)
@@ -128,6 +133,11 @@ export interface PayrollBreakdown {
   ppvCents: number;
   cpBalance: number;
   rttBalance: number;
+
+  // V9
+  sickDeductionCents: number; // deduction brut pour absence
+  ijssCents: number;           // IJSS subrogees versees
+  transportAllowanceCents: number;
 }
 
 /**
@@ -153,7 +163,14 @@ export function computePayroll(input: PayrollInput): PayrollBreakdown {
   // V7 : PPV — exoneree sous plafonds, non soumise a cotisations hors CSG
   const ppvCents = Math.max(0, input.ppvCents ?? 0);
 
-  const grossTotalCents = grossBaseCents + overtimeCents + bonusCents + benefitsInKindCents;
+  // V9 : deduction arret maladie (base jour = brut/30 ou /21.67 selon jours ouvrables)
+  const sickDaysUnpaid = Math.max(0, input.sickDaysUnpaidBrut ?? 0);
+  const dailyBrut = grossBaseCents / 21.67;
+  const sickDeductionCents = Math.round(sickDaysUnpaid * dailyBrut);
+  const ijssCents = Math.max(0, input.ijssCents ?? 0);
+  const transportAllowanceCents = Math.max(0, input.transportAllowanceCents ?? 0);
+
+  const grossTotalCents = grossBaseCents + overtimeCents + bonusCents + benefitsInKindCents - sickDeductionCents;
   // Indemnites : exoneres de cotisations dans le cas simplifie (repas/transport dans limites URSSAF)
 
   // ── Cotisations salariales ─────────────────────────────────────
@@ -198,9 +215,8 @@ export function computePayroll(input: PayrollInput): PayrollBreakdown {
   const pasRate = (input.pasRateBp ?? 0) / 10000;
   const pasCents = Math.round(netTaxableCents * pasRate);
 
-  // Net a payer = brut − cotisations − benefits nature (deja inclus brut) + indemnites + PPV − part salariale TR − PAS
-  // Note : avantage nature est ajoute au brut pour cotisations puis re-deduit pour ne pas etre verse cash
-  const netToPayCents = grossTotalCents - totalEmployeeDeductionsCents + indemnityCents + ppvCents - benefitsInKindCents - trEmployeeCents - pasCents;
+  // Net a payer = brut − cotisations − avantage nature + IJSS + transport + indemnites + PPV − TR salariale − PAS
+  const netToPayCents = grossTotalCents - totalEmployeeDeductionsCents + indemnityCents + ppvCents + ijssCents + transportAllowanceCents - benefitsInKindCents - trEmployeeCents - pasCents;
 
   // ── Cotisations patronales ──────────────────────────────────────
   const urssafEmployerCents = Math.round(grossTotalCents * RATE_SS_EMPLOYER);
@@ -279,6 +295,9 @@ export function computePayroll(input: PayrollInput): PayrollBreakdown {
     ppvCents,
     cpBalance: input.cpBalance ?? 0,
     rttBalance: input.rttBalance ?? 0,
+    sickDeductionCents,
+    ijssCents,
+    transportAllowanceCents,
   };
 }
 

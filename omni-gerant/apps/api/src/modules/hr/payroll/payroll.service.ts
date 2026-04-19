@@ -17,6 +17,10 @@ export interface GeneratePayslipInput {
   overtime50Hours?: number;
   benefitsInKindCents?: number;
   ppvCents?: number;
+  // V9
+  sickDaysUnpaidBrut?: number;
+  ijssCents?: number;
+  transportAllowanceCents?: number;
 }
 
 export interface PayslipRecord {
@@ -158,6 +162,10 @@ export async function generatePayslip(
     overtime50Hours: input.overtime50Hours,
     benefitsInKindCents: input.benefitsInKindCents,
     ppvCents: input.ppvCents,
+    // V9
+    sickDaysUnpaidBrut: input.sickDaysUnpaidBrut,
+    ijssCents: input.ijssCents,
+    transportAllowanceCents: input.transportAllowanceCents,
   });
 
   // V7 : solde CP/RTT a la fin du mois courant
@@ -232,6 +240,10 @@ export async function generatePayslip(
     ppv_cents: breakdown.ppvCents,
     cp_balance_end: cpBalance,
     rtt_balance_end: rttBalance,
+    sick_days_unpaid: input.sickDaysUnpaidBrut ?? 0,
+    sick_deduction_cents: breakdown.sickDeductionCents,
+    ijss_cents: breakdown.ijssCents,
+    transport_allowance_cents: breakdown.transportAllowanceCents,
   };
 
   const payslip = existing
