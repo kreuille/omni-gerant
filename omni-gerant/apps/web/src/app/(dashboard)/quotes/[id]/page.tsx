@@ -84,6 +84,14 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
   const [actionLoading, setActionLoading] = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
   const [sendFeedback, setSendFeedback] = useState<string | null>(null);
+  const [recipientEmail, setRecipientEmail] = useState('');
+
+  // Initialize recipient email from client when modal opens
+  useEffect(() => {
+    if (showSendModal) {
+      setRecipientEmail(quote?.client_email ?? '');
+    }
+  }, [showSendModal, quote?.client_email]);
 
   useEffect(() => {
     api.get<Quote>(`/api/quotes/${params.id}`)
@@ -356,20 +364,29 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                 Le client recevra un email avec un lien pour consulter et signer le devis en ligne.
               </p>
 
-              {quote.client_email ? (
-                <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
-                  <p className="text-xs text-blue-900 font-medium">Destinataire</p>
-                  <p className="text-sm text-blue-800 mt-0.5">{quote.client_name}</p>
-                  <p className="text-sm text-blue-700">{quote.client_email}</p>
-                </div>
-              ) : (
-                <div className="bg-orange-50 border border-orange-200 rounded-md p-3 mb-4">
-                  <p className="text-sm text-orange-900 font-medium">Aucun email renseigne pour ce client</p>
+              <div className="mb-4">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Destinataire : {quote.client_name ?? 'Client'}
+                </label>
+                <label className="block text-xs text-gray-500 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={recipientEmail}
+                  onChange={(e) => setRecipientEmail(e.target.value)}
+                  placeholder="client@example.com"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {!quote.client_email && (
                   <p className="text-xs text-orange-700 mt-1">
-                    Ajoutez un email dans la fiche client avant d&apos;envoyer. Un lien public sera quand meme genere.
+                    Aucun email pre-enregistre. L&apos;email saisi sera sauvegarde sur la fiche client.
                   </p>
-                </div>
-              )}
+                )}
+                {quote.client_email && recipientEmail !== quote.client_email && recipientEmail && (
+                  <p className="text-xs text-blue-700 mt-1">
+                    Le nouvel email remplacera l&apos;actuel sur la fiche client.
+                  </p>
+                )}
+              </div>
 
               {sendFeedback && (
                 <p className="text-sm text-green-700 mb-3">{sendFeedback}</p>
@@ -390,7 +407,8 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                     setActionLoading(true);
                     setSendFeedback(null);
                     const result = await api.post<{ status: string; share_url: string; email_sent: boolean }>(
-                      `/api/quotes/${params.id}/send`, {}
+                      `/api/quotes/${params.id}/send`,
+                      { recipient_email: recipientEmail.trim() || undefined },
                     );
                     if (result.ok) {
                       setQuote({ ...quote, status: 'sent' });

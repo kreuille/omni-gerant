@@ -26,6 +26,8 @@ interface ClientInfo {
   company_name: string | null;
   first_name: string | null;
   last_name: string | null;
+  email: string | null;
+  phone: string | null;
   siret: string | null;
   address_line1: string | null;
   zip_code: string | null;
@@ -165,6 +167,64 @@ export default function NewQuotePage() {
           </Link>
         </div>
       )}
+
+      {/* Emetteur + Destinataire */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold text-gray-400 uppercase">Emetteur</p>
+              <Link href="/settings/profile" className="text-xs text-primary-600 hover:underline">
+                Modifier
+              </Link>
+            </div>
+            {tenant ? (
+              <div className="text-sm space-y-0.5">
+                <p className="font-semibold text-gray-900">{tenant.company_name || '—'}</p>
+                {tenant.address?.line1 && <p className="text-gray-700">{tenant.address.line1}</p>}
+                {tenant.address && (tenant.address.zip_code || tenant.address.city) && (
+                  <p className="text-gray-700">{tenant.address.zip_code} {tenant.address.city}</p>
+                )}
+                {tenant.siret && <p className="text-xs text-gray-500 mt-1">SIRET : {tenant.siret}</p>}
+                {tenant.tva_number && <p className="text-xs text-gray-500">TVA : {tenant.tva_number}</p>}
+                {tenant.email && <p className="text-xs text-gray-500">{tenant.email}</p>}
+                {tenant.phone && <p className="text-xs text-gray-500">{tenant.phone}</p>}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">Chargement du profil entreprise...</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs font-semibold text-gray-400 uppercase mb-2">Destinataire</p>
+            {selectedClient ? (
+              <div className="text-sm space-y-0.5">
+                <p className="font-semibold text-gray-900">
+                  {selectedClient.type === 'company'
+                    ? selectedClient.company_name
+                    : [selectedClient.first_name, selectedClient.last_name].filter(Boolean).join(' ')}
+                </p>
+                {selectedClient.address_line1 && <p className="text-gray-700">{selectedClient.address_line1}</p>}
+                {(selectedClient.zip_code || selectedClient.city) && (
+                  <p className="text-gray-700">{selectedClient.zip_code} {selectedClient.city}</p>
+                )}
+                {selectedClient.siret && <p className="text-xs text-gray-500 mt-1">SIRET : {selectedClient.siret}</p>}
+                {selectedClient.email && <p className="text-xs text-gray-500">{selectedClient.email}</p>}
+                {selectedClient.phone && <p className="text-xs text-gray-500">{selectedClient.phone}</p>}
+                {!selectedClient.email && (
+                  <p className="text-xs text-orange-700 mt-1">
+                    Pas d&apos;email — vous pourrez le saisir a l&apos;envoi du devis.
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">Selectionnez un client ci-dessous.</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">

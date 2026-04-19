@@ -11,6 +11,7 @@ import { createPrismaInvoiceRepository } from '../invoice/invoice.repository.js'
 import { createInMemoryNumberRepo as createInvoiceNumberRepo } from './document-number.js';
 import { createDocumentNumberGenerator as createInvoiceNumberGen } from './document-number.js';
 import { generateQuoteHtml } from './quote-pdf.js';
+import { createPrismaClientRepository } from '../client/client.repository.js';
 import { createEmailService, createConsoleEmailProvider } from '../../lib/email.js';
 import { quoteSentHtml, quoteSentText } from '../../lib/email-templates/quote-sent.js';
 import { authenticate, requirePermission } from '../../plugins/auth.js';
@@ -231,7 +232,20 @@ export async function quoteRoutes(app: FastifyInstance) {
       const tenantProfile = await tenantRepo.findById(quote.tenant_id);
       const companyName = tenantProfile?.company_name ?? 'Votre entreprise';
       const clientName = quote.client_name ?? 'Client';
-      const clientEmail = quote.client_email;
+
+      // Accept an email override from the request body (and persist it on the client if new)
+      const body = request.body as { recipient_email?: string } | undefined;
+      const overrideEmail = body?.recipient_email?.trim();
+      let clientEmail = quote.client_email;
+      if (overrideEmail && overrideEmail !== clientEmail) {
+        try {
+          const clientRepo = createPrismaClientRepository();
+          await clientRepo.update(quote.client_id, quote.tenant_id, { email: overrideEmail });
+        } catch {
+          // Non-blocking: keep override email only for this send
+        }
+        clientEmail = overrideEmail;
+      }
 
       // Send email
       const shareUrl = `${process.env['APP_URL'] ?? 'http://localhost:3000'}/share/quote/${tokenResult.value.token}`;

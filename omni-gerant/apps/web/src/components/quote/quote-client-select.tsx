@@ -54,6 +54,8 @@ export function QuoteClientSelect({ value, onChange }: QuoteClientSelectProps) {
   const [showIndividualForm, setShowIndividualForm] = useState(false);
   const [individualFirstName, setIndividualFirstName] = useState('');
   const [individualLastName, setIndividualLastName] = useState('');
+  const [individualEmail, setIndividualEmail] = useState('');
+  const [individualPhone, setIndividualPhone] = useState('');
   const [creatingIndividual, setCreatingIndividual] = useState(false);
   const [selectedName, setSelectedName] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -148,6 +150,8 @@ export function QuoteClientSelect({ value, onChange }: QuoteClientSelectProps) {
       type: 'individual',
       first_name: individualFirstName.trim(),
       last_name: individualLastName.trim(),
+      email: individualEmail.trim() || undefined,
+      phone: individualPhone.trim() || undefined,
       payment_terms: 30,
     });
     setCreatingIndividual(false);
@@ -288,12 +292,26 @@ export function QuoteClientSelect({ value, onChange }: QuoteClientSelectProps) {
                     className="text-sm"
                   />
                   <Input
-                    placeholder="Nom"
+                    placeholder="Nom *"
                     value={individualLastName}
                     onChange={(e) => setIndividualLastName(e.target.value)}
                     className="text-sm"
                   />
                 </div>
+                <Input
+                  placeholder="Email (pour envoyer le devis)"
+                  type="email"
+                  value={individualEmail}
+                  onChange={(e) => setIndividualEmail(e.target.value)}
+                  className="text-sm"
+                />
+                <Input
+                  placeholder="Telephone"
+                  type="tel"
+                  value={individualPhone}
+                  onChange={(e) => setIndividualPhone(e.target.value)}
+                  className="text-sm"
+                />
                 <div className="flex justify-end gap-2">
                   <Button
                     type="button"
