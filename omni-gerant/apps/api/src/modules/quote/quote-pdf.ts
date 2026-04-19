@@ -177,6 +177,26 @@ ${quote.notes ? `<div class="notes">
   <div style="white-space: pre-wrap;">${escapeHtml(quote.notes)}</div>
 </div>` : ''}
 
+${quote.signature_data && quote.signature_data.signature_image ? `
+<div class="signature-block" style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #2d3748; page-break-inside: avoid;">
+  <div class="notes-title" style="text-transform: uppercase; font-size: 10px; color: #718096; letter-spacing: 1px; margin-bottom: 10px;">Signature et acceptation</div>
+  <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 40px;">
+    <div style="flex: 1;">
+      <div style="font-size: 11px; color: #4a5568; margin-bottom: 6px;">
+        Bon pour accord, le ${formatDate(quote.signature_data.signed_at)}
+      </div>
+      <div style="font-weight: 600; color: #1a202c; margin-bottom: 4px;">
+        ${escapeHtml(quote.signature_data.signer_first_name)} ${escapeHtml(quote.signature_data.signer_name)}
+      </div>
+      ${quote.signature_data.ip_address ? `<div style="font-size: 9px; color: #a0aec0;">IP : ${escapeHtml(quote.signature_data.ip_address)}</div>` : ''}
+    </div>
+    <div style="border: 1px solid #e2e8f0; padding: 8px; background: white; border-radius: 4px;">
+      <img src="${quote.signature_data.signature_image}" alt="Signature" style="display: block; max-width: 280px; max-height: 100px;" />
+    </div>
+  </div>
+</div>
+` : ''}
+
 <div class="legal">
   Devis valable jusqu'au ${formatDate(quote.validity_date)}.
   Bon pour accord a retourner date et signe.

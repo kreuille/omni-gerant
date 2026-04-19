@@ -199,6 +199,7 @@ function mapQuote(row: {
   total_tva_cents: number;
   total_ttc_cents: number;
   signed_at: Date | null;
+  signature_data: unknown;
   created_at: Date;
   updated_at: Date;
   deleted_at: Date | null;
@@ -239,6 +240,7 @@ function mapQuote(row: {
     total_tva_cents: row.total_tva_cents,
     total_ttc_cents: row.total_ttc_cents,
     signed_at: row.signed_at,
+    signature_data: (row.signature_data as Quote['signature_data']) ?? null,
     created_at: row.created_at,
     updated_at: row.updated_at,
     deleted_at: row.deleted_at,

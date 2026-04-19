@@ -23,6 +23,15 @@ export interface QuoteLine {
   total_ht_cents: number;
 }
 
+export interface QuoteSignatureData {
+  signer_name: string;
+  signer_first_name: string;
+  signature_image: string | null;
+  ip_address?: string | null;
+  user_agent?: string | null;
+  signed_at: string;
+}
+
 export interface Quote {
   id: string;
   tenant_id: string;
@@ -41,6 +50,7 @@ export interface Quote {
   total_tva_cents: number;
   total_ttc_cents: number;
   signed_at: Date | null;
+  signature_data: QuoteSignatureData | null;
   created_at: Date;
   updated_at: Date;
   deleted_at: Date | null;
