@@ -107,9 +107,10 @@ export function calculateQuoteTotals(
 
     adjustedHt = Math.max(0, adjustedHt);
 
-    // BUSINESS RULE [CDC-2.1]: TVA = round(HT * rate / 100)
-    if (rate > 100) throw new Error('TVA rate seems in basis points, expected percentage (e.g. 20 for 20%)');
-    const tvaCents = Math.round((adjustedHt * rate) / 100);
+    // BUSINESS RULE [R02][CDC-2.1]: tva_rate en basis points (2000 = 20.00%)
+    // Support legacy percentage values (<= 100) pour la retrocompatibilite.
+    const rateBp = rate > 100 ? rate : rate * 100;
+    const tvaCents = Math.round((adjustedHt * rateBp) / 10000);
 
     breakdown.push({
       tva_rate: rate,

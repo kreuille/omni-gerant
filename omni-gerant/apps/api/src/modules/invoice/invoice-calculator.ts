@@ -44,8 +44,9 @@ export function calculateInvoiceTotals(lines: InvoiceLineInput[]): InvoiceTotals
   let totalTva = 0;
 
   for (const [rate, baseHt] of tvaMap) {
-    if (rate > 100) throw new Error('TVA rate seems in basis points, expected percentage (e.g. 20 for 20%)');
-    const tvaCents = Math.round((baseHt * rate) / 100);
+    // BUSINESS RULE [R02]: tva_rate en basis points (2000 = 20.00%), retrocompat <= 100
+    const rateBp = rate > 100 ? rate : rate * 100;
+    const tvaCents = Math.round((baseHt * rateBp) / 10000);
     breakdown.push({
       tva_rate: rate,
       base_ht_cents: baseHt,

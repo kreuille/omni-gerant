@@ -67,12 +67,13 @@ describe('Invoice Calculator', () => {
       expect(totals.total_ttc_cents).toBe(0);
     });
 
-    // BUSINESS RULE [CALC-002]: Guard against basis points
-    it('rejects tva_rate > 100 (basis points by mistake)', () => {
+    // BUSINESS RULE [R02]: tva_rate accepte en basis points (2000 = 20%) ou percentage (20)
+    it('accepts tva_rate in basis points (2000 = 20%)', () => {
       const lines: InvoiceLineInput[] = [
         { quantity: 1, unit_price_cents: 10000, tva_rate: 2000 },
       ];
-      expect(() => calculateInvoiceTotals(lines)).toThrow('TVA rate seems in basis points');
+      const totals = calculateInvoiceTotals(lines);
+      expect(totals.total_tva_cents).toBe(2000); // 20% of 10000 = 2000
     });
 
     // BUSINESS RULE [CALC-003]: TVA 20% on 45000 centimes = 9000 centimes
