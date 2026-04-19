@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SignaturePad, type SignaturePadHandle } from '@/components/quote/signature-pad';
 
 // BUSINESS RULE [CDC-2.1]: Page publique vue devis client (pas d'auth)
 // BUSINESS RULE [CDC-2.1]: Signature electronique integree (eIDAS)
@@ -75,6 +76,8 @@ export default function SharedQuotePage({ params }: { params: { token: string } 
   const [quote, setQuote] = useState<SharedQuote | null>(null);
   const [company, setCompany] = useState<SharedCompany | null>(null);
   const [canSign, setCanSign] = useState(false);
+  const [hasSignature, setHasSignature] = useState(false);
+  const signaturePadRef = useRef<SignaturePadHandle>(null);
 
   const loadQuote = useCallback(async () => {
     const baseUrl = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001';
@@ -105,6 +108,7 @@ export default function SharedQuotePage({ params }: { params: { token: string } 
   const handleSign = async () => {
     setSigning(true);
     const baseUrl = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001';
+    const signatureImage = signaturePadRef.current?.toDataURL() ?? undefined;
     try {
       const res = await fetch(`${baseUrl}/api/share/quote/${params.token}/sign`, {
         method: 'POST',
@@ -112,6 +116,7 @@ export default function SharedQuotePage({ params }: { params: { token: string } 
         body: JSON.stringify({
           signer_name: signerName,
           signer_first_name: signerFirstName,
+          signature_image: signatureImage,
         }),
       });
       if (res.ok) {
@@ -310,10 +315,36 @@ export default function SharedQuotePage({ params }: { params: { token: string } 
                   <Input value={signerFirstName} onChange={(e) => setSignerFirstName(e.target.value)} placeholder="Prenom" />
                 </div>
               </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Signature manuscrite (dessinez avec le doigt ou la souris)
+                </label>
+                <SignaturePad
+                  ref={signaturePadRef}
+                  width={560}
+                  height={180}
+                  onChange={setHasSignature}
+                />
+                <div className="flex items-center justify-between mt-2">
+                  <p className="text-xs text-gray-500">
+                    {hasSignature ? '✓ Signature capturee' : 'Tracez votre signature dans le cadre ci-dessus'}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => signaturePadRef.current?.clear()}
+                    className="text-xs text-gray-600 hover:text-gray-900 underline"
+                    disabled={!hasSignature}
+                  >
+                    Effacer
+                  </button>
+                </div>
+              </div>
+
               <div className="flex gap-2 flex-wrap">
                 <Button
                   onClick={handleSign}
-                  disabled={!signerName || !signerFirstName || signing}
+                  disabled={!signerName || !signerFirstName || !hasSignature || signing}
                 >
                   {signing ? 'Signature en cours...' : 'Signer et accepter'}
                 </Button>

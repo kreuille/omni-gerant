@@ -549,6 +549,25 @@ export async function quoteRoutes(app: FastifyInstance) {
       return reply.status(status).send({ error: result.error });
     }
 
+    // Persist signature on the quote record for future PDF rendering
+    const signedAt = new Date();
+    try {
+      await repo.update(result.value.quote_id, result.value.tenant_id, {
+        status: 'signed',
+        signed_at: signedAt,
+        signature_data: {
+          signer_name: parsed.data.signer_name,
+          signer_first_name: parsed.data.signer_first_name,
+          signature_image: parsed.data.signature_image ?? null,
+          ip_address: request.ip,
+          user_agent: request.headers['user-agent'] ?? null,
+          signed_at: signedAt.toISOString(),
+        },
+      });
+    } catch {
+      // Non-blocking: the share token itself is marked signed
+    }
+
     // Track signing
     await trackingService.track({
       quote_id: result.value.quote_id,
@@ -560,6 +579,7 @@ export async function quoteRoutes(app: FastifyInstance) {
       metadata: {
         signer_name: parsed.data.signer_name,
         signer_first_name: parsed.data.signer_first_name,
+        has_signature_image: !!parsed.data.signature_image,
       },
     });
 
