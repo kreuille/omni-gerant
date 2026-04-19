@@ -77,13 +77,30 @@ export function createTenantRepository() {
         qualifications: profile.qualifications,
       };
 
-      // BUSINESS RULE [R03]: SIRET is @unique globally — raise a specific
-      // error if another tenant already owns this SIRET instead of the
-      // generic Prisma P2002 stack trace that produced 500s.
+      // BUSINESS RULE [R03]: SIRET is @unique globally. Behavior on conflict:
+      // - If the conflicting tenant has NO users + NO quotes + NO invoices
+      //   (orphan from a previous abandoned signup), we release the SIRET
+      //   and let the current tenant claim it. This unblocks owners who
+      //   tried zenAdmin, abandoned, then came back with a new account.
+      // - Otherwise we raise SiretAlreadyTakenError → 409.
       if (profile.siret) {
         const owner = await prisma.tenant.findUnique({ where: { siret: profile.siret } });
         if (owner && owner.id !== tenantId) {
-          throw new SiretAlreadyTakenError(profile.siret);
+          const [userCount, quoteCount, invoiceCount] = await Promise.all([
+            prisma.user.count({ where: { tenant_id: owner.id, deleted_at: null } }),
+            prisma.quote.count({ where: { tenant_id: owner.id } }),
+            prisma.invoice.count({ where: { tenant_id: owner.id } }),
+          ]);
+          const isOrphan = userCount <= 1 && quoteCount === 0 && invoiceCount === 0;
+          if (isOrphan) {
+            // Release the SIRET from the orphan tenant
+            await prisma.tenant.update({
+              where: { id: owner.id },
+              data: { siret: null, siren: null },
+            });
+          } else {
+            throw new SiretAlreadyTakenError(profile.siret);
+          }
         }
       }
 

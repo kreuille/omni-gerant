@@ -49,7 +49,21 @@ export async function tenantRoutes(app: FastifyInstance) {
         });
       }
 
-      const result = await tenantService.updateProfile(request.auth.tenant_id, parsed.data);
+      let result;
+      try {
+        result = await tenantService.updateProfile(request.auth.tenant_id, parsed.data);
+      } catch (e) {
+        const { SiretAlreadyTakenError } = await import('./tenant.repository.js');
+        if (e instanceof SiretAlreadyTakenError) {
+          return reply.status(409).send({
+            error: {
+              code: 'SIRET_ALREADY_TAKEN',
+              message: `Le SIRET ${e.siret} est deja rattache a un autre compte zenAdmin. Contactez le support si vous pensez que c'est une erreur.`,
+            },
+          });
+        }
+        throw e;
+      }
       if (!result.ok) return reply.status(400).send({ error: result.error });
 
       const profile = result.value;
