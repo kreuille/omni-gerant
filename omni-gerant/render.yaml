@@ -15,7 +15,7 @@ services:
       pnpm --filter @zenadmin/db build &&
       cd packages/db &&
       npx prisma generate &&
-      npx prisma migrate deploy
+      npx prisma db push --accept-data-loss=false
     startCommand: cd apps/api && node --import tsx src/index.ts
     healthCheckPath: /health/ready
     envVars:

@@ -37,6 +37,8 @@ model Tenant {
   rgpd_treatments    RgpdTreatment[]
   insurance_policies InsurancePolicy[]
   tenant_settings    TenantSettings[]
+  hr_positions       HrPosition[]
+  hr_employees       HrEmployee[]
 
   @@map("tenants")
 }
@@ -785,4 +787,172 @@ model TenantSettings {
 
   @@unique([tenant_id, category])
   @@map("tenant_settings")
+}
+
+// ====================================================================
+// HR — Effectif et gestion RH (conforme droit du travail FR)
+// BUSINESS RULE [CDC-RH]: V1 Fondations — persistence reelle des employes
+// ====================================================================
+
+model HrPosition {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id             String    @db.Uuid
+  name                  String
+  slug                  String
+  category              String    @default("other") // btp, restauration, commerce, etc.
+  description           String?
+  naf_code              String?
+  convention_collective String?
+  code_idcc             String?
+  coefficient           String?   // grille conventionnelle
+  echelon               String?
+  classification        String?   // employe, ouvrier_qualifie, agent_maitrise, cadre
+  equipment_used        Json      @default("[]") // string[]
+  chemical_exposures    Json      @default("[]") // string[]
+  physical_constraints  Json      @default("[]") // PhysicalConstraint[]
+  work_schedule         Json      @default("{}") // WorkSchedule
+  mandatory_trainings   Json      @default("[]") // TrainingRequirement[]
+  medical_surveillance  String    @default("standard") // standard | enhanced
+  target_headcount      Int       @default(1)
+  work_unit_ids         Json      @default("[]")
+  is_active             Boolean   @default(true)
+  created_at            DateTime  @default(now())
+  updated_at            DateTime  @updatedAt
+  deleted_at            DateTime?
+
+  tenant    Tenant       @relation(fields: [tenant_id], references: [id])
+  employees HrEmployee[]
+
+  @@index([tenant_id, deleted_at])
+  @@map("hr_positions")
+}
+
+model HrEmployee {
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id              String    @db.Uuid
+  position_id            String?   @db.Uuid
+  // Identite
+  first_name             String
+  last_name              String
+  birth_name             String?
+  email                  String?
+  phone                  String?
+  birth_date             DateTime?
+  birth_place            String?
+  nationality            String    @default("FR")
+  social_security_number String?   // format NIR FR (15 chars)
+  // Adresse
+  address_line1          String?
+  zip_code               String?
+  city                   String?
+  country                String    @default("FR")
+  // Contrat
+  contract_type          String    // cdi | cdd | apprentissage | stage | interim | saisonnier
+  cdd_reason             String?   // obligatoire si cdd
+  start_date             DateTime
+  end_date               DateTime? // requis cdd/apprenti/stage
+  probation_end_date     DateTime?
+  is_part_time           Boolean   @default(false)
+  weekly_hours           Float     @default(35)
+  monthly_gross_cents    Int       @default(0)
+  // Obligations
+  dpae_declared_at       DateTime?
+  dpae_reference         String?
+  contract_signed_at     DateTime?
+  contract_document_url  String?
+  // Sortie
+  exit_date              DateTime?
+  exit_reason            String?   // demission | licenciement | fin_cdd | rupture_conventionnelle | retraite | deces
+  // Meta
+  specific_restrictions  String?
+  work_unit_ids          Json      @default("[]")
+  is_active              Boolean   @default(true)
+  created_at             DateTime  @default(now())
+  updated_at             DateTime  @updatedAt
+  deleted_at             DateTime?
+
+  tenant         Tenant             @relation(fields: [tenant_id], references: [id])
+  position       HrPosition?        @relation(fields: [position_id], references: [id])
+  trainings      HrTrainingRecord[]
+  medical_visits HrMedicalVisit[]
+  leaves         HrLeaveRecord[]
+
+  @@index([tenant_id, deleted_at])
+  @@index([tenant_id, exit_date])
+  @@map("hr_employees")
+}
+
+model HrTrainingRecord {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id       String    @db.Uuid
+  employee_id     String    @db.Uuid
+  training_code   String
+  training_label  String
+  obtained_date   DateTime
+  expiry_date     DateTime?
+  certificate_ref String?
+  provider        String?
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  employee HrEmployee @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+
+  @@index([tenant_id, employee_id])
+  @@index([expiry_date])
+  @@map("hr_training_records")
+}
+
+model HrMedicalVisit {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id       String    @db.Uuid
+  employee_id     String    @db.Uuid
+  visit_type      String    // embauche | periodique | reprise | pre_reprise | occasionnelle
+  visit_date      DateTime
+  result          String?   // apte | apte_avec_reserves | inapte_temporaire | inapte
+  restrictions    String?
+  next_visit_date DateTime?
+  medecin_name    String?
+  created_at      DateTime  @default(now())
+
+  employee HrEmployee @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+
+  @@index([tenant_id, employee_id])
+  @@map("hr_medical_visits")
+}
+
+model HrLeaveRecord {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id   String   @db.Uuid
+  employee_id String   @db.Uuid
+  leave_type  String   // cp | rtt | maladie | maternite | paternite | at | parental | formation | sans_solde
+  start_date  DateTime
+  end_date    DateTime
+  days_taken  Float
+  status      String   @default("approved") // requested | approved | rejected | taken
+  notes       String?
+  created_at  DateTime @default(now())
+
+  employee HrEmployee @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+
+  @@index([tenant_id, employee_id])
+  @@map("hr_leave_records")
+}
+
+model HrRegistryEntry {
+  // Registre Unique du Personnel — append-only, audit legal
+  // Article L1221-13 Code du travail
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id      String   @db.Uuid
+  employee_id    String?  @db.Uuid // null si l'employe a ete supprime
+  entry_type     String   // embauche | sortie | modification_contrat
+  employee_name  String   // snapshot immuable
+  position_name  String?
+  contract_type  String?
+  event_date     DateTime
+  metadata       Json?    // snapshot des changements
+  created_at     DateTime @default(now())
+  created_by     String?  @db.Uuid
+
+  @@index([tenant_id, event_date])
+  @@map("hr_registry_entries")
 }

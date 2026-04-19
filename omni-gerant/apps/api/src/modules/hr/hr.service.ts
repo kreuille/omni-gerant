@@ -139,12 +139,34 @@ export function createHrService(positionRepo: PositionRepository, employeeRepo: 
 
     // ── Employees ────────────────────────────────────────────────
     async createEmployee(tenantId: string, input: CreateEmployeeInput): Promise<Result<Employee, AppError>> {
-      // Validate position exists
-      const position = await positionRepo.findById(input.jobPositionId, tenantId);
-      if (!position) return err(notFound('JobPosition', input.jobPositionId));
+      // Position optionnelle (V1) : si fournie, on la valide.
+      let position = null;
+      if (input.jobPositionId) {
+        position = await positionRepo.findById(input.jobPositionId, tenantId);
+        if (!position) return err(notFound('JobPosition', input.jobPositionId));
+      }
 
       const employee = await employeeRepo.create({ ...input, tenant_id: tenantId });
       emitTrigger('new_employee', employee.id, 'employee');
+
+      // BUSINESS RULE [CDC-RH-V1]: Registre Unique du Personnel — append on hire
+      // L1221-13 du Code du travail : tout employeur doit tenir un registre
+      // chronologique de tous les embauchages.
+      try {
+        const { appendRegistryEntry } = await import('./hr-compliance.js');
+        await appendRegistryEntry({
+          tenant_id: tenantId,
+          employee_id: employee.id,
+          entry_type: 'embauche',
+          employee_name: `${employee.lastName} ${employee.firstName}`,
+          position_name: position?.name ?? null,
+          contract_type: employee.contractType,
+          event_date: new Date(employee.hireDate),
+        });
+      } catch {
+        // Non-blocking: registry failure doesn't prevent hire
+      }
+
       return ok(employee);
     },
 

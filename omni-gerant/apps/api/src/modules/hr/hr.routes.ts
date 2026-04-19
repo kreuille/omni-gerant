@@ -1,189 +1,25 @@
 import type { FastifyInstance } from 'fastify';
-import { createHrService, type PositionRepository, type EmployeeRepository } from './hr.service.js';
-import type { JobPosition } from './workforce.js';
-import { slugify, computeMedicalSurveillance } from './workforce.js';
-import type { Employee } from './employee.js';
+import { createHrService } from './hr.service.js';
+import { createPrismaPositionRepository, createPrismaEmployeeRepository } from './hr.repository.js';
 import {
   createPositionSchema, updatePositionSchema, positionListQuerySchema,
   createEmployeeSchema, updateEmployeeSchema, employeeListQuerySchema,
+  exitEmployeeSchema,
 } from './hr.schemas.js';
 import { findTemplateByNaf, autofillHeadcounts } from './job-templates.js';
 import { buildWorkforceForDuerp } from './workforce-for-duerp.js';
+import { validateSmic, computeAverageHeadcount, appendRegistryEntry, listRegistryEntries } from './hr-compliance.js';
+import { prisma } from '@zenadmin/db';
 import { authenticate, requirePermission } from '../../plugins/auth.js';
 import { injectTenant } from '../../plugins/tenant.js';
 
 // BUSINESS RULE [CDC-2.4]: Module RH — Effectif & Postes
 
 export async function hrRoutes(app: FastifyInstance) {
-  // ── In-memory repositories ──────────────────────────────────────
-  const positions = new Map<string, JobPosition>();
-  const employees = new Map<string, Employee>();
-
-  const positionRepo: PositionRepository = {
-    async create(data) {
-      const id = crypto.randomUUID();
-      const workSchedule = data.workSchedule ?? {
-        type: 'standard' as const, weeklyHours: 35,
-        nightWork: false, weekendWork: false, outdoorWork: false,
-        travelRequired: false, remoteWork: false,
-      };
-      const medLevel = data.medicalSurveillanceLevel ?? computeMedicalSurveillance({
-        physicalConstraints: data.physicalConstraints ?? [],
-        chemicalExposures: data.chemicalExposures ?? [],
-        workSchedule,
-      });
-      const position: JobPosition = {
-        id,
-        tenant_id: data.tenant_id,
-        name: data.name,
-        slug: slugify(data.name),
-        category: data.category,
-        headcount: data.headcount ?? 1,
-        workUnitIds: data.workUnitIds ?? [],
-        equipmentUsed: data.equipmentUsed ?? [],
-        chemicalExposures: data.chemicalExposures ?? [],
-        physicalConstraints: data.physicalConstraints ?? [],
-        workSchedule,
-        mandatoryTrainings: data.mandatoryTrainings ?? [],
-        medicalSurveillanceLevel: medLevel,
-        isActive: true,
-        created_at: new Date(),
-        updated_at: new Date(),
-        deleted_at: null,
-      };
-      positions.set(id, position);
-      return position;
-    },
-    async findById(id, tenantId) {
-      const p = positions.get(id);
-      if (!p || p.tenant_id !== tenantId || p.deleted_at) return null;
-      return p;
-    },
-    async update(id, tenantId, data) {
-      const p = positions.get(id);
-      if (!p || p.tenant_id !== tenantId || p.deleted_at) return null;
-      const updated: JobPosition = {
-        ...p,
-        ...data,
-        slug: data.name ? slugify(data.name) : p.slug,
-        updated_at: new Date(),
-      };
-      if (data.workSchedule || data.physicalConstraints || data.chemicalExposures) {
-        updated.medicalSurveillanceLevel = data.medicalSurveillanceLevel ?? computeMedicalSurveillance({
-          physicalConstraints: updated.physicalConstraints,
-          chemicalExposures: updated.chemicalExposures,
-          workSchedule: updated.workSchedule,
-        });
-      }
-      positions.set(id, updated);
-      return updated;
-    },
-    async softDelete(id, tenantId) {
-      const p = positions.get(id);
-      if (!p || p.tenant_id !== tenantId) return false;
-      p.deleted_at = new Date();
-      p.isActive = false;
-      return true;
-    },
-    async list(tenantId, query) {
-      let items = [...positions.values()].filter((p) => p.tenant_id === tenantId && !p.deleted_at);
-      if (query.search) {
-        const s = query.search.toLowerCase();
-        items = items.filter((p) => p.name.toLowerCase().includes(s));
-      }
-      if (query.category) {
-        items = items.filter((p) => p.category === query.category);
-      }
-      items.sort((a, b) => {
-        const key = query.sort_by === 'headcount' ? 'headcount' : query.sort_by === 'created_at' ? 'created_at' : 'name';
-        if (key === 'headcount') return query.sort_dir === 'asc' ? a.headcount - b.headcount : b.headcount - a.headcount;
-        if (key === 'created_at') return query.sort_dir === 'asc' ? a.created_at.getTime() - b.created_at.getTime() : b.created_at.getTime() - a.created_at.getTime();
-        return query.sort_dir === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
-      });
-      const total = items.length;
-      items = items.slice(0, query.limit);
-      return { items, total };
-    },
-    async findAll(tenantId) {
-      return [...positions.values()].filter((p) => p.tenant_id === tenantId && !p.deleted_at);
-    },
-  };
-
-  const employeeRepo: EmployeeRepository = {
-    async create(data) {
-      const id = crypto.randomUUID();
-      const employee: Employee = {
-        id,
-        tenant_id: data.tenant_id,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        jobPositionId: data.jobPositionId,
-        workUnitIds: data.workUnitIds ?? [],
-        hireDate: data.hireDate,
-        contractType: data.contractType,
-        isPartTime: data.isPartTime ?? false,
-        weeklyHours: data.weeklyHours ?? null,
-        specificTrainings: data.specificTrainings ?? [],
-        medicalVisits: data.medicalVisits ?? [],
-        specificRestrictions: data.specificRestrictions ?? null,
-        isActive: true,
-        created_at: new Date(),
-        updated_at: new Date(),
-        deleted_at: null,
-      };
-      employees.set(id, employee);
-      return employee;
-    },
-    async findById(id, tenantId) {
-      const e = employees.get(id);
-      if (!e || e.tenant_id !== tenantId || e.deleted_at) return null;
-      return e;
-    },
-    async update(id, tenantId, data) {
-      const e = employees.get(id);
-      if (!e || e.tenant_id !== tenantId || e.deleted_at) return null;
-      const updated: Employee = { ...e, ...data, updated_at: new Date() };
-      if (data.weeklyHours === null) updated.weeklyHours = null;
-      if (data.specificRestrictions === null) updated.specificRestrictions = null;
-      employees.set(id, updated);
-      return updated;
-    },
-    async softDelete(id, tenantId) {
-      const e = employees.get(id);
-      if (!e || e.tenant_id !== tenantId) return false;
-      e.deleted_at = new Date();
-      e.isActive = false;
-      return true;
-    },
-    async list(tenantId, query) {
-      let items = [...employees.values()].filter((e) => e.tenant_id === tenantId && !e.deleted_at);
-      if (query.search) {
-        const s = query.search.toLowerCase();
-        items = items.filter((e) => `${e.firstName} ${e.lastName}`.toLowerCase().includes(s));
-      }
-      if (query.jobPositionId) {
-        items = items.filter((e) => e.jobPositionId === query.jobPositionId);
-      }
-      if (query.contractType) {
-        items = items.filter((e) => e.contractType === query.contractType);
-      }
-      items.sort((a, b) => {
-        const key = query.sort_by === 'hireDate' ? 'hireDate' : query.sort_by === 'created_at' ? 'created_at' : 'lastName';
-        if (key === 'hireDate') return query.sort_dir === 'asc' ? a.hireDate.localeCompare(b.hireDate) : b.hireDate.localeCompare(a.hireDate);
-        if (key === 'created_at') return query.sort_dir === 'asc' ? a.created_at.getTime() - b.created_at.getTime() : b.created_at.getTime() - a.created_at.getTime();
-        return query.sort_dir === 'asc' ? a.lastName.localeCompare(b.lastName) : b.lastName.localeCompare(a.lastName);
-      });
-      const total = items.length;
-      items = items.slice(0, query.limit);
-      return { items, total };
-    },
-    async findByPositionId(positionId, tenantId) {
-      return [...employees.values()].filter((e) => e.tenant_id === tenantId && e.jobPositionId === positionId && !e.deleted_at);
-    },
-    async findAll(tenantId) {
-      return [...employees.values()].filter((e) => e.tenant_id === tenantId && !e.deleted_at);
-    },
-  };
+  // BUSINESS RULE [CDC-RH-V1]: Persistance Prisma (remplace les Maps qui perdaient
+  // toutes les donnees RH a chaque redeploy Render).
+  const positionRepo = createPrismaPositionRepository();
+  const employeeRepo = createPrismaEmployeeRepository();
 
   const service = createHrService(positionRepo, employeeRepo);
   const preHandlers = [authenticate, injectTenant];
@@ -450,7 +286,7 @@ export async function hrRoutes(app: FastifyInstance) {
   app.get(
     '/api/hr/workforce-for-duerp',
     { preHandler: [...preHandlers, requirePermission('legal', 'read')] },
-    async (request, reply) => {
+    async (request) => {
       const allPositions = await positionRepo.findAll(request.auth.tenant_id);
       const allEmployees = await employeeRepo.findAll(request.auth.tenant_id);
       const workforce = buildWorkforceForDuerp(allPositions, allEmployees);
@@ -466,6 +302,88 @@ export async function hrRoutes(app: FastifyInstance) {
     { preHandler: [...preHandlers, requirePermission('legal', 'read')] },
     async () => {
       return service.getTriggers();
+    },
+  );
+
+  // ── V1 Fondations : SMIC, effectif moyen, Registre Unique, sortie ──
+
+  // POST /api/hr/employees/:id/exit — enregistre sortie de l'employe
+  app.post(
+    '/api/hr/employees/:id/exit',
+    { preHandler: [...preHandlers, requirePermission('legal', 'update')] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const parsed = exitEmployeeSchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.status(400).send({ error: { code: 'VALIDATION_ERROR', message: 'Invalid exit data', details: { issues: parsed.error.issues } } });
+      }
+      const employee = await employeeRepo.findById(id, request.auth.tenant_id);
+      if (!employee) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Employee not found' } });
+
+      await prisma.hrEmployee.update({
+        where: { id },
+        data: {
+          exit_date: new Date(parsed.data.exitDate),
+          exit_reason: parsed.data.exitReason,
+          is_active: false,
+        },
+      });
+
+      // Registre Unique du Personnel
+      await appendRegistryEntry({
+        tenant_id: request.auth.tenant_id,
+        employee_id: id,
+        entry_type: 'sortie',
+        employee_name: `${employee.lastName} ${employee.firstName}`,
+        contract_type: employee.contractType,
+        event_date: new Date(parsed.data.exitDate),
+        metadata: { reason: parsed.data.exitReason } as any,
+        created_by: request.auth.user_id,
+      });
+
+      return { status: 'exited', exitDate: parsed.data.exitDate, exitReason: parsed.data.exitReason };
+    },
+  );
+
+  // POST /api/hr/validate-smic — valide un salaire par rapport au SMIC
+  app.post(
+    '/api/hr/validate-smic',
+    { preHandler: [...preHandlers, requirePermission('legal', 'read')] },
+    async (request) => {
+      const body = request.body as {
+        monthlyGrossCents: number;
+        weeklyHours: number;
+        contractType: string;
+        birthDate?: string;
+        startDate?: string;
+      };
+      return validateSmic(body);
+    },
+  );
+
+  // GET /api/hr/headcount/:year — effectif mensuel moyen + seuils
+  app.get(
+    '/api/hr/headcount/:year',
+    { preHandler: [...preHandlers, requirePermission('legal', 'read')] },
+    async (request, reply) => {
+      const { year } = request.params as { year: string };
+      const y = parseInt(year, 10);
+      if (isNaN(y) || y < 2000 || y > 2100) {
+        return reply.status(400).send({ error: { code: 'VALIDATION_ERROR', message: 'Annee invalide' } });
+      }
+      const result = await computeAverageHeadcount(request.auth.tenant_id, y);
+      return result;
+    },
+  );
+
+  // GET /api/hr/registry — Registre Unique du Personnel
+  app.get(
+    '/api/hr/registry',
+    { preHandler: [...preHandlers, requirePermission('legal', 'read')] },
+    async (request) => {
+      const limit = parseInt((request.query as Record<string, string>).limit ?? '200', 10);
+      const entries = await listRegistryEntries(request.auth.tenant_id, isNaN(limit) ? 200 : limit);
+      return { entries, total: entries.length };
     },
   );
 }

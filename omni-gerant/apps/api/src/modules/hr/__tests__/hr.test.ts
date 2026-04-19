@@ -6,7 +6,7 @@ import { buildWorkforceForDuerp } from '../workforce-for-duerp.js';
 import { createHrService, type PositionRepository, type EmployeeRepository } from '../hr.service.js';
 import type { JobPosition } from '../workforce.js';
 import type { Employee } from '../employee.js';
-import type { TrainingRecord, MedicalVisitRecord, PhysicalConstraint, WorkSchedule } from '../hr.schemas.js';
+import type { TrainingRecord, MedicalVisitRecord, TrainingRequirement } from '../hr.schemas.js';
 
 // ── Helper factories ────────────────────────────────────────────────
 
@@ -75,7 +75,7 @@ function createInMemoryRepos() {
         equipmentUsed: data.equipmentUsed ?? [],
         chemicalExposures: data.chemicalExposures ?? [],
         physicalConstraints: data.physicalConstraints ?? [],
-        mandatoryTrainings: data.mandatoryTrainings ?? [],
+        mandatoryTrainings: (data.mandatoryTrainings ?? []) as TrainingRequirement[],
       });
       positions.set(id, pos);
       return pos;
@@ -88,7 +88,7 @@ function createInMemoryRepos() {
     async update(id, tenantId, data) {
       const p = positions.get(id);
       if (!p || p.tenant_id !== tenantId || p.deleted_at) return null;
-      const updated = { ...p, ...data, updated_at: new Date() };
+      const updated = { ...p, ...data, updated_at: new Date() } as JobPosition;
       positions.set(id, updated);
       return updated;
     },
@@ -132,7 +132,7 @@ function createInMemoryRepos() {
     async update(id, tenantId, data) {
       const e = employees.get(id);
       if (!e || e.tenant_id !== tenantId || e.deleted_at) return null;
-      const updated = { ...e, ...data, updated_at: new Date() };
+      const updated = { ...e, ...data, updated_at: new Date() } as Employee;
       employees.set(id, updated);
       return updated;
     },

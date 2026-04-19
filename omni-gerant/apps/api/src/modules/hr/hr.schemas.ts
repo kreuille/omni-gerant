@@ -110,7 +110,7 @@ export const createPositionSchema = z.object({
   mandatoryTrainings: z.array(trainingRequirementSchema).default([]),
   medicalSurveillanceLevel: z.enum(['standard', 'enhanced']).default('standard'),
 });
-export type CreatePositionInput = z.infer<typeof createPositionSchema>;
+export type CreatePositionInput = z.input<typeof createPositionSchema>;
 
 export const updatePositionSchema = z.object({
   name: z.string().min(1).max(255).optional(),
@@ -124,38 +124,108 @@ export const updatePositionSchema = z.object({
   mandatoryTrainings: z.array(trainingRequirementSchema).optional(),
   medicalSurveillanceLevel: z.enum(['standard', 'enhanced']).optional(),
 });
-export type UpdatePositionInput = z.infer<typeof updatePositionSchema>;
+export type UpdatePositionInput = z.input<typeof updatePositionSchema>;
 
 // ── Create/Update Employee ──────────────────────────────────────────
+// BUSINESS RULE [CDC-RH-V1]: Champs conformes droit du travail FR
+// NIR (numero SS) : 15 caracteres au total, controle cle 2 chiffres
+const nirSchema = z.string()
+  .regex(/^[12]\d{14}$|^[12]\d{12} \d{2}$|^[12] \d{2} \d{2} \d{2} \d{3} \d{3} \d{2}$/, 'NIR invalide')
+  .optional()
+  .nullable();
+
+export const exitReasonSchema = z.enum([
+  'demission', 'licenciement', 'fin_cdd', 'rupture_conventionnelle', 'retraite', 'deces', 'fin_periode_essai',
+]);
+
 export const createEmployeeSchema = z.object({
+  // Position
+  jobPositionId: z.string().uuid().optional(), // facultatif a la creation
+  workUnitIds: z.array(z.string()).default([]),
+  // Identite
   firstName: z.string().min(1).max(100),
   lastName: z.string().min(1).max(100),
-  jobPositionId: z.string().uuid(),
-  workUnitIds: z.array(z.string()).default([]),
-  hireDate: z.string().datetime(),
+  birthName: z.string().max(100).optional().nullable(),
+  email: z.string().email().max(200).optional().nullable(),
+  phone: z.string().max(30).optional().nullable(),
+  birthDate: z.string().optional().nullable(), // ISO date
+  birthPlace: z.string().max(200).optional().nullable(),
+  nationality: z.string().max(50).default('FR'),
+  socialSecurityNumber: nirSchema,
+  // Adresse
+  addressLine1: z.string().max(255).optional().nullable(),
+  zipCode: z.string().max(10).optional().nullable(),
+  city: z.string().max(100).optional().nullable(),
+  country: z.string().max(50).default('FR'),
+  // Contrat
   contractType: contractTypeSchema,
+  cddReason: z.string().max(500).optional().nullable(),
+  hireDate: z.string(), // yyyy-mm-dd ou ISO datetime
+  endDate: z.string().optional().nullable(),
+  probationEndDate: z.string().optional().nullable(),
   isPartTime: z.boolean().default(false),
-  weeklyHours: z.number().int().min(1).max(60).optional(),
+  weeklyHours: z.number().min(1).max(60).default(35),
+  monthlyGrossCents: z.number().int().min(0).default(0),
+  // Existant (retrocompat)
   specificTrainings: z.array(trainingRecordSchema).default([]),
   medicalVisits: z.array(medicalVisitRecordSchema).default([]),
-  specificRestrictions: z.string().max(500).optional(),
-});
-export type CreateEmployeeInput = z.infer<typeof createEmployeeSchema>;
+  specificRestrictions: z.string().max(500).optional().nullable(),
+}).refine(
+  (data) => {
+    // CDD requires end_date + cddReason
+    if (data.contractType === 'cdd') {
+      return !!data.endDate && !!data.cddReason;
+    }
+    return true;
+  },
+  { message: 'Un CDD doit avoir une date de fin et un motif' },
+).refine(
+  (data) => {
+    // Apprenti / stagiaire : end_date requise aussi
+    if (data.contractType === 'apprentice' || data.contractType === 'intern') {
+      return !!data.endDate;
+    }
+    return true;
+  },
+  { message: 'Un apprenti ou stagiaire doit avoir une date de fin de contrat' },
+);
+export type CreateEmployeeInput = z.input<typeof createEmployeeSchema>;
 
 export const updateEmployeeSchema = z.object({
+  jobPositionId: z.string().uuid().optional().nullable(),
+  workUnitIds: z.array(z.string()).optional(),
   firstName: z.string().min(1).max(100).optional(),
   lastName: z.string().min(1).max(100).optional(),
-  jobPositionId: z.string().uuid().optional(),
-  workUnitIds: z.array(z.string()).optional(),
-  hireDate: z.string().datetime().optional(),
+  birthName: z.string().max(100).optional().nullable(),
+  email: z.string().email().max(200).optional().nullable(),
+  phone: z.string().max(30).optional().nullable(),
+  birthDate: z.string().optional().nullable(),
+  birthPlace: z.string().max(200).optional().nullable(),
+  nationality: z.string().max(50).optional(),
+  socialSecurityNumber: nirSchema,
+  addressLine1: z.string().max(255).optional().nullable(),
+  zipCode: z.string().max(10).optional().nullable(),
+  city: z.string().max(100).optional().nullable(),
+  country: z.string().max(50).optional(),
   contractType: contractTypeSchema.optional(),
+  cddReason: z.string().max(500).optional().nullable(),
+  hireDate: z.string().optional(),
+  endDate: z.string().optional().nullable(),
+  probationEndDate: z.string().optional().nullable(),
   isPartTime: z.boolean().optional(),
-  weeklyHours: z.number().int().min(1).max(60).optional().nullable(),
+  weeklyHours: z.number().min(1).max(60).optional().nullable(),
+  monthlyGrossCents: z.number().int().min(0).optional(),
   specificTrainings: z.array(trainingRecordSchema).optional(),
   medicalVisits: z.array(medicalVisitRecordSchema).optional(),
   specificRestrictions: z.string().max(500).optional().nullable(),
 });
-export type UpdateEmployeeInput = z.infer<typeof updateEmployeeSchema>;
+export type UpdateEmployeeInput = z.input<typeof updateEmployeeSchema>;
+
+export const exitEmployeeSchema = z.object({
+  exitDate: z.string(), // ISO date
+  exitReason: exitReasonSchema,
+});
+export type ExitEmployeeInput = z.infer<typeof exitEmployeeSchema>;
 
 // ── List Queries ────────────────────────────────────────────────────
 export const positionListQuerySchema = z.object({
