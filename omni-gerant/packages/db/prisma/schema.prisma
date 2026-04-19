@@ -1022,6 +1022,15 @@ model HrPayslip {
   ytd_gross_cents           Int @default(0)
   ytd_net_taxable_cents     Int @default(0)
   ytd_net_to_pay_cents      Int @default(0)
+  // V7 : heures sup majorees + avantage nature + PPV + soldes
+  overtime_25_hours         Float @default(0)
+  overtime_50_hours         Float @default(0)
+  overtime_25_cents         Int @default(0)
+  overtime_50_cents         Int @default(0)
+  benefits_in_kind_cents    Int @default(0)
+  ppv_cents                 Int @default(0)
+  cp_balance_end            Float @default(0)
+  rtt_balance_end           Float @default(0)
   // Meta
   gross_rate_cents_per_hour Int
   hours_worked              Float

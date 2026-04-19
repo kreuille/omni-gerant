@@ -12,6 +12,11 @@ export interface GeneratePayslipInput {
   indemnityCents?: number;
   hoursWorked?: number; // defaut = horaire contractuel
   trCount?: number; // V5 : nombre de titres restaurants du mois
+  // V7
+  overtime25Hours?: number;
+  overtime50Hours?: number;
+  benefitsInKindCents?: number;
+  ppvCents?: number;
 }
 
 export interface PayslipRecord {
@@ -54,6 +59,14 @@ export interface PayslipRecord {
   ytd_gross_cents?: number;
   ytd_net_taxable_cents?: number;
   ytd_net_to_pay_cents?: number;
+  overtime_25_hours?: number;
+  overtime_50_hours?: number;
+  overtime_25_cents?: number;
+  overtime_50_cents?: number;
+  benefits_in_kind_cents?: number;
+  ppv_cents?: number;
+  cp_balance_end?: number;
+  rtt_balance_end?: number;
 }
 
 export async function getOrCreatePeriod(tenantId: string, year: number, month: number): Promise<{
@@ -140,7 +153,18 @@ export async function generatePayslip(
     // V6
     atmpRateBp: settings?.atmp_rate_bp ?? 150,
     pasRateBp: employee.pas_rate_bp,
+    // V7
+    overtime25Hours: input.overtime25Hours,
+    overtime50Hours: input.overtime50Hours,
+    benefitsInKindCents: input.benefitsInKindCents,
+    ppvCents: input.ppvCents,
   });
+
+  // V7 : solde CP/RTT a la fin du mois courant
+  const { computeLeaveBalance } = await import('../docs/leaves.service.js');
+  const balanceResult = await computeLeaveBalance(employee.id, tenantId, monthEnd);
+  const cpBalance = balanceResult.ok ? balanceResult.value.cpBalance : 0;
+  const rttBalance = balanceResult.ok ? balanceResult.value.rttBalance : 0;
 
   // V6 : cumuls annuels (YTD jusqu'au mois courant)
   const ytdAgg = await prisma.hrPayslip.aggregate({
@@ -200,6 +224,14 @@ export async function generatePayslip(
     ytd_gross_cents: ytdGross,
     ytd_net_taxable_cents: ytdNetTaxable,
     ytd_net_to_pay_cents: ytdNetToPay,
+    overtime_25_hours: breakdown.overtime25Hours,
+    overtime_50_hours: breakdown.overtime50Hours,
+    overtime_25_cents: breakdown.overtime25Cents,
+    overtime_50_cents: breakdown.overtime50Cents,
+    benefits_in_kind_cents: breakdown.benefitsInKindCents,
+    ppv_cents: breakdown.ppvCents,
+    cp_balance_end: cpBalance,
+    rtt_balance_end: rttBalance,
   };
 
   const payslip = existing

@@ -122,12 +122,40 @@ export function renderPayslipHtml(ctx: PayslipPdfContext): string {
         <td class="num">${formatCentsEur(payslip.gross_rate_cents_per_hour)}</td>
         <td class="num">${formatCentsEur(payslip.gross_base_cents)}</td>
       </tr>
-      ${payslip.overtime_cents > 0 ? `
+      ${(payslip.overtime_25_cents ?? 0) > 0 ? `
       <tr>
-        <td>Heures supplementaires</td>
+        <td>Heures supplementaires +25%</td>
+        <td class="num">${(payslip.overtime_25_hours ?? 0).toFixed(2)} h</td>
+        <td class="num">125%</td>
+        <td class="num">${formatCentsEur(payslip.overtime_25_cents ?? 0)}</td>
+      </tr>` : ''}
+      ${(payslip.overtime_50_cents ?? 0) > 0 ? `
+      <tr>
+        <td>Heures supplementaires +50%</td>
+        <td class="num">${(payslip.overtime_50_hours ?? 0).toFixed(2)} h</td>
+        <td class="num">150%</td>
+        <td class="num">${formatCentsEur(payslip.overtime_50_cents ?? 0)}</td>
+      </tr>` : ''}
+      ${(payslip.overtime_cents - (payslip.overtime_25_cents ?? 0) - (payslip.overtime_50_cents ?? 0)) > 0 ? `
+      <tr>
+        <td>Heures supplementaires (autres)</td>
         <td class="num">—</td>
         <td class="num">—</td>
-        <td class="num">${formatCentsEur(payslip.overtime_cents)}</td>
+        <td class="num">${formatCentsEur(payslip.overtime_cents - (payslip.overtime_25_cents ?? 0) - (payslip.overtime_50_cents ?? 0))}</td>
+      </tr>` : ''}
+      ${(payslip.benefits_in_kind_cents ?? 0) > 0 ? `
+      <tr>
+        <td>Avantage en nature (nourriture)</td>
+        <td class="num">—</td>
+        <td class="num">—</td>
+        <td class="num">${formatCentsEur(payslip.benefits_in_kind_cents ?? 0)}</td>
+      </tr>` : ''}
+      ${(payslip.ppv_cents ?? 0) > 0 ? `
+      <tr>
+        <td>Prime partage de la valeur (PPV)</td>
+        <td class="num">—</td>
+        <td class="num">—</td>
+        <td class="num">${formatCentsEur(payslip.ppv_cents ?? 0)}</td>
       </tr>` : ''}
       ${payslip.bonus_cents > 0 ? `
       <tr>
@@ -256,6 +284,15 @@ export function renderPayslipHtml(ctx: PayslipPdfContext): string {
       </tr>
     </tbody>
   </table>
+
+  ${((payslip.cp_balance_end ?? 0) > 0 || (payslip.rtt_balance_end ?? 0) > 0) ? `
+  <h2>Conges payes et RTT</h2>
+  <table>
+    <tbody>
+      <tr><td>Solde conges payes</td><td class="num">${(payslip.cp_balance_end ?? 0).toFixed(1)} jours</td></tr>
+      ${(payslip.rtt_balance_end ?? 0) > 0 ? `<tr><td>Solde RTT</td><td class="num">${(payslip.rtt_balance_end ?? 0).toFixed(1)} jours</td></tr>` : ''}
+    </tbody>
+  </table>` : ''}
 
   ${(payslip.ytd_gross_cents ?? cumulative?.grossCents ?? 0) > 0 ? `
   <h2>Cumuls annuels</h2>
