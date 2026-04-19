@@ -1008,6 +1008,13 @@ model HrPayslip {
   total_employer_charges_cents Int
   // Reduction Fillon
   fillon_reduction_cents Int @default(0)
+  // V5 : prevoyance
+  prevoyance_employee_cents Int @default(0)
+  prevoyance_employer_cents Int @default(0)
+  // V5 : tickets restaurants
+  tr_count            Int @default(0)
+  tr_employee_cents   Int @default(0)
+  tr_employer_cents   Int @default(0)
   // Meta
   gross_rate_cents_per_hour Int
   hours_worked              Float
@@ -1024,4 +1031,37 @@ model HrPayslip {
   @@unique([period_id, employee_id])
   @@index([tenant_id, period_year, period_month])
   @@map("hr_payslips")
+}
+
+// BUSINESS RULE [CDC-RH-V5]: Parametres paie par tenant — mutuelle / prevoyance
+// Loi ANI 2013 : mutuelle collective obligatoire pour tous les salaries CDI/CDD
+// Prevoyance : obligatoire pour cadres (convention 1947), facultatif autres sauf CC specifique
+
+model HrPayrollSettings {
+  id        String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id String @unique @db.Uuid
+
+  // Mutuelle
+  mutuelle_enabled          Boolean @default(false)
+  mutuelle_employee_rate_bp Int     @default(0) // taux salarial en basis points (100 = 1%)
+  mutuelle_employer_rate_bp Int     @default(0)
+  mutuelle_flat_employee_cents Int @default(0) // ou montant forfaitaire (alternative au taux)
+  mutuelle_flat_employer_cents Int @default(0)
+  mutuelle_organisme        String? // Harmonie, Mercer, AG2R, etc.
+
+  // Prevoyance
+  prevoyance_enabled          Boolean @default(false)
+  prevoyance_employee_rate_bp Int     @default(0)
+  prevoyance_employer_rate_bp Int     @default(0)
+  prevoyance_organisme        String?
+
+  // Titres restaurants (bonus V5)
+  tr_enabled            Boolean @default(false)
+  tr_face_value_cents   Int     @default(0) // valeur faciale du titre (ex: 900 = 9 EUR)
+  tr_employer_share_bp  Int     @default(5000) // 50% patronale (min 50%, max 60% exoneres)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("hr_payroll_settings")
 }

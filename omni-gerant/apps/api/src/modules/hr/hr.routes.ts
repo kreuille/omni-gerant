@@ -537,6 +537,61 @@ export async function hrRoutes(app: FastifyInstance) {
     },
   );
 
+  // ── V5 Settings Paie : mutuelle + prevoyance + TR ─────────────────
+
+  // GET /api/hr/payroll/settings
+  app.get(
+    '/api/hr/payroll/settings',
+    { preHandler: [...preHandlers, requirePermission('legal', 'read')] },
+    async (request) => {
+      const settings = await prisma.hrPayrollSettings.findUnique({ where: { tenant_id: request.auth.tenant_id } });
+      return settings ?? {
+        tenant_id: request.auth.tenant_id,
+        mutuelle_enabled: false,
+        mutuelle_employee_rate_bp: 0, mutuelle_employer_rate_bp: 0,
+        mutuelle_flat_employee_cents: 0, mutuelle_flat_employer_cents: 0,
+        mutuelle_organisme: null,
+        prevoyance_enabled: false,
+        prevoyance_employee_rate_bp: 0, prevoyance_employer_rate_bp: 0,
+        prevoyance_organisme: null,
+        tr_enabled: false, tr_face_value_cents: 0, tr_employer_share_bp: 5000,
+      };
+    },
+  );
+
+  // PUT /api/hr/payroll/settings
+  app.put(
+    '/api/hr/payroll/settings',
+    { preHandler: [...preHandlers, requirePermission('legal', 'update')] },
+    async (request, reply) => {
+      const body = request.body as Record<string, unknown>;
+      if (typeof body !== 'object' || !body) {
+        return reply.status(400).send({ error: { code: 'VALIDATION_ERROR', message: 'Body invalide' } });
+      }
+      const clean = {
+        mutuelle_enabled: Boolean(body['mutuelle_enabled']),
+        mutuelle_employee_rate_bp: Math.max(0, Math.min(5000, Number(body['mutuelle_employee_rate_bp'] ?? 0))),
+        mutuelle_employer_rate_bp: Math.max(0, Math.min(5000, Number(body['mutuelle_employer_rate_bp'] ?? 0))),
+        mutuelle_flat_employee_cents: Math.max(0, Math.round(Number(body['mutuelle_flat_employee_cents'] ?? 0))),
+        mutuelle_flat_employer_cents: Math.max(0, Math.round(Number(body['mutuelle_flat_employer_cents'] ?? 0))),
+        mutuelle_organisme: typeof body['mutuelle_organisme'] === 'string' ? body['mutuelle_organisme'] : null,
+        prevoyance_enabled: Boolean(body['prevoyance_enabled']),
+        prevoyance_employee_rate_bp: Math.max(0, Math.min(5000, Number(body['prevoyance_employee_rate_bp'] ?? 0))),
+        prevoyance_employer_rate_bp: Math.max(0, Math.min(5000, Number(body['prevoyance_employer_rate_bp'] ?? 0))),
+        prevoyance_organisme: typeof body['prevoyance_organisme'] === 'string' ? body['prevoyance_organisme'] : null,
+        tr_enabled: Boolean(body['tr_enabled']),
+        tr_face_value_cents: Math.max(0, Math.round(Number(body['tr_face_value_cents'] ?? 0))),
+        tr_employer_share_bp: Math.max(5000, Math.min(6000, Number(body['tr_employer_share_bp'] ?? 5000))),
+      };
+      const settings = await prisma.hrPayrollSettings.upsert({
+        where: { tenant_id: request.auth.tenant_id },
+        create: { tenant_id: request.auth.tenant_id, ...clean },
+        update: clean,
+      });
+      return settings;
+    },
+  );
+
   // ── V3 Documents : DPAE, contrats, conges, affichages ────────────
 
   // POST /api/hr/employees/:id/dpae/generate — genere la DPAE

@@ -68,6 +68,10 @@ export async function exportPayrollAccounting(
   let totalRetraitePat = 0;
   let totalChomagePat = 0;
   let totalFillon = 0;
+  let totalMutEmp = 0;
+  let totalMutPat = 0;
+  let totalPrevEmp = 0;
+  let totalPrevPat = 0;
 
   for (const p of payslips) {
     totalGross += p.gross_total_cents;
@@ -80,31 +84,41 @@ export async function exportPayrollAccounting(
     totalRetraitePat += p.retirement_employer_cents;
     totalChomagePat += p.unemployment_employer_cents;
     totalFillon += p.fillon_reduction_cents;
+    totalMutEmp += p.mutual_employee_cents;
+    totalMutPat += p.mutual_employer_cents;
+    totalPrevEmp += (p as { prevoyance_employee_cents?: number }).prevoyance_employee_cents ?? 0;
+    totalPrevPat += (p as { prevoyance_employer_cents?: number }).prevoyance_employer_cents ?? 0;
   }
 
   // Debits : charges
   const debit641 = totalGross + totalIndemnities;
-  const debit645 = totalUrssafPat + totalRetraitePat + totalChomagePat - totalFillon;
+  const debit645 = totalUrssafPat + totalRetraitePat + totalChomagePat + totalPrevPat - totalFillon;
+  const debit648 = totalMutPat; // V5 : mutuelle patronale
 
   // Credits : dettes
   const credit421 = totalNetToPay;
   const credit431 = totalUrssafEmp + totalUrssafPat + totalCsgCrds - totalFillon;
-  const credit437 = totalRetraiteEmp + totalRetraitePat + totalChomagePat;
+  const credit437 = totalRetraiteEmp + totalRetraitePat + totalChomagePat + totalMutEmp + totalMutPat + totalPrevEmp + totalPrevPat;
 
   const entries: AccountingEntry[] = [
     { account: '641', label: 'Remunerations du personnel (brut + indemnites)', debitCents: debit641, creditCents: 0 },
     { account: '645', label: 'Charges de securite sociale et prevoyance (part patronale)', debitCents: debit645, creditCents: 0 },
+  ];
+  if (debit648 > 0) {
+    entries.push({ account: '648', label: 'Autres charges de personnel (mutuelle patronale)', debitCents: debit648, creditCents: 0 });
+  }
+  entries.push(
     { account: '421', label: 'Personnel - Remunerations dues', debitCents: 0, creditCents: credit421 },
     { account: '431', label: 'Securite sociale (URSSAF + CSG/CRDS)', debitCents: 0, creditCents: credit431 },
-    { account: '437', label: 'Autres organismes sociaux (retraite + chomage)', debitCents: 0, creditCents: credit437 },
-  ];
+    { account: '437', label: 'Autres organismes sociaux (retraite + chomage + mutuelle + prevoyance)', debitCents: 0, creditCents: credit437 },
+  );
 
   const totalDebit = entries.reduce((s, e) => s + e.debitCents, 0);
   const totalCredit = entries.reduce((s, e) => s + e.creditCents, 0);
 
   // Ecart d'arrondi : equilibre par contre-passation sur 641 si necessaire
   const diff = totalCredit - totalDebit;
-  if (Math.abs(diff) > 0 && Math.abs(diff) <= 10) {
+  if (Math.abs(diff) > 0 && Math.abs(diff) <= 100) {
     entries[0]!.debitCents += diff;
   }
 

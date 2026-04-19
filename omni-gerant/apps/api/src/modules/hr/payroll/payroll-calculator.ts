@@ -48,6 +48,17 @@ export interface PayrollInput {
   hoursWorked: number;       // heures travaillees dans le mois
   weeklyHours: number;       // horaire contractuel
   headcountUnder50: boolean; // entreprise <50 salaries pour coef Fillon
+
+  // V5 : Mutuelle / Prevoyance / Tickets restos
+  mutuelleEmployeeRateBp?: number; // 100 = 1%
+  mutuelleEmployerRateBp?: number;
+  mutuelleFlatEmployeeCents?: number; // montant forfaitaire alternatif
+  mutuelleFlatEmployerCents?: number;
+  prevoyanceEmployeeRateBp?: number;
+  prevoyanceEmployerRateBp?: number;
+  trCount?: number;
+  trFaceValueCents?: number;
+  trEmployerShareBp?: number; // 5000 = 50%
 }
 
 export interface PayrollBreakdown {
@@ -76,6 +87,13 @@ export interface PayrollBreakdown {
   fillonReductionCents: number;
 
   grossRateCentsPerHour: number;
+
+  // V5
+  prevoyanceEmployeeCents: number;
+  prevoyanceEmployerCents: number;
+  trCount: number;
+  trEmployeeCents: number;
+  trEmployerCents: number;
 }
 
 /**
@@ -95,7 +113,15 @@ export function computePayroll(input: PayrollInput): PayrollBreakdown {
   const urssafEmployeeCents = Math.round(grossTotalCents * RATE_SS_EMPLOYEE);
   const retirementEmployeeCents = Math.round(grossTotalCents * RATE_RETIREMENT_EMPLOYEE);
   const unemploymentEmployeeCents = Math.round(grossTotalCents * RATE_UNEMPLOYMENT_EMPLOYEE);
-  const mutualEmployeeCents = 0; // V2 : mutuelle non geree
+
+  // V5 : Mutuelle (loi ANI 2013) — taux en bp OU montant forfaitaire
+  const mutuelleRateEmp = (input.mutuelleEmployeeRateBp ?? 0) / 10000;
+  const mutualEmployeeCents = mutuelleRateEmp > 0
+    ? Math.round(grossTotalCents * mutuelleRateEmp)
+    : (input.mutuelleFlatEmployeeCents ?? 0);
+
+  // V5 : Prevoyance (obligatoire cadres convention 1947, facultatif autres sauf CC)
+  const prevoyanceEmployeeCents = Math.round(grossTotalCents * ((input.prevoyanceEmployeeRateBp ?? 0) / 10000));
 
   // CSG / CRDS : assiette = 98.25% du brut (abattement forfaitaire frais pro)
   const csgBase = grossTotalCents * CSG_BASE_RATIO;
@@ -108,18 +134,33 @@ export function computePayroll(input: PayrollInput): PayrollBreakdown {
     retirementEmployeeCents +
     unemploymentEmployeeCents +
     mutualEmployeeCents +
+    prevoyanceEmployeeCents +
     csgCrdsCents;
 
   // Net imposable = brut − cotisations deductibles (hors CSG non deductible et CRDS)
   const netTaxableCents = grossTotalCents - (totalEmployeeDeductionsCents - csgCrdsNonDeductibleCents);
-  // Net a payer = brut − total cotisations salariales + indemnites non soumises
-  const netToPayCents = grossTotalCents - totalEmployeeDeductionsCents + indemnityCents;
+
+  // V5 : Tickets restaurants (part salariale deduite du net, part patronale non soumise)
+  const trCount = Math.max(0, input.trCount ?? 0);
+  const trFaceValue = Math.max(0, input.trFaceValueCents ?? 0);
+  const trEmployerShareBp = Math.max(0, Math.min(6000, input.trEmployerShareBp ?? 5000));
+  const trEmployerCents = Math.round(trCount * trFaceValue * (trEmployerShareBp / 10000));
+  const trEmployeeCents = trCount * trFaceValue - trEmployerCents;
+
+  // Net a payer = brut − total cotisations salariales + indemnites non soumises − part salariale TR
+  const netToPayCents = grossTotalCents - totalEmployeeDeductionsCents + indemnityCents - trEmployeeCents;
 
   // ── Cotisations patronales ──────────────────────────────────────
   const urssafEmployerCents = Math.round(grossTotalCents * RATE_SS_EMPLOYER);
   const retirementEmployerCents = Math.round(grossTotalCents * RATE_RETIREMENT_EMPLOYER);
   const unemploymentEmployerCents = Math.round(grossTotalCents * RATE_UNEMPLOYMENT_EMPLOYER);
-  const mutualEmployerCents = 0;
+
+  // V5 : Mutuelle patronale
+  const mutuelleRateEmpr = (input.mutuelleEmployerRateBp ?? 0) / 10000;
+  const mutualEmployerCents = mutuelleRateEmpr > 0
+    ? Math.round(grossTotalCents * mutuelleRateEmpr)
+    : (input.mutuelleFlatEmployerCents ?? 0);
+  const prevoyanceEmployerCents = Math.round(grossTotalCents * ((input.prevoyanceEmployerRateBp ?? 0) / 10000));
 
   // ── Reduction Fillon (reduction generale) ───────────────────────
   // SMIC mensuel proratise selon horaire contractuel
@@ -136,7 +177,9 @@ export function computePayroll(input: PayrollInput): PayrollBreakdown {
     urssafEmployerCents +
     retirementEmployerCents +
     unemploymentEmployerCents +
-    mutualEmployerCents -
+    mutualEmployerCents +
+    prevoyanceEmployerCents +
+    trEmployerCents -
     fillonReductionCents;
 
   const grossRateCentsPerHour = input.hoursWorked > 0
@@ -164,6 +207,11 @@ export function computePayroll(input: PayrollInput): PayrollBreakdown {
     totalEmployerChargesCents,
     fillonReductionCents,
     grossRateCentsPerHour,
+    prevoyanceEmployeeCents,
+    prevoyanceEmployerCents,
+    trCount,
+    trEmployeeCents,
+    trEmployerCents,
   };
 }
 

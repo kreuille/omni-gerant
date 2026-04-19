@@ -178,10 +178,31 @@ export function renderPayslipHtml(ctx: PayslipPdfContext): string {
         <td class="num">${formatPct(0.0240)}</td>
         <td class="num">${formatCentsEur(Math.round(csgBase * 0.024))}</td>
       </tr>
+      ${payslip.mutual_employee_cents > 0 ? `
+      <tr>
+        <td>Mutuelle complementaire sante (ANI 2013)</td>
+        <td class="num">${formatCentsEur(grossBase)}</td>
+        <td class="num">—</td>
+        <td class="num">${formatCentsEur(payslip.mutual_employee_cents)}</td>
+      </tr>` : ''}
+      ${(payslip.prevoyance_employee_cents ?? 0) > 0 ? `
+      <tr>
+        <td>Prevoyance complementaire</td>
+        <td class="num">${formatCentsEur(grossBase)}</td>
+        <td class="num">—</td>
+        <td class="num">${formatCentsEur(payslip.prevoyance_employee_cents ?? 0)}</td>
+      </tr>` : ''}
       <tr class="total">
         <td colspan="3">TOTAL COTISATIONS SALARIALES</td>
         <td class="num">${formatCentsEur(payslip.total_employee_deductions_cents)}</td>
       </tr>
+      ${(payslip.tr_count ?? 0) > 0 ? `
+      <tr>
+        <td>Titres restaurants (part salariale)</td>
+        <td class="num">${payslip.tr_count} titres</td>
+        <td class="num">—</td>
+        <td class="num">- ${formatCentsEur(payslip.tr_employee_cents ?? 0)}</td>
+      </tr>` : ''}
     </tbody>
   </table>
 

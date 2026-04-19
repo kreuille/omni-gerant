@@ -11,6 +11,7 @@ export interface GeneratePayslipInput {
   bonusCents?: number;
   indemnityCents?: number;
   hoursWorked?: number; // defaut = horaire contractuel
+  trCount?: number; // V5 : nombre de titres restaurants du mois
 }
 
 export interface PayslipRecord {
@@ -44,6 +45,11 @@ export interface PayslipRecord {
   sent_to_employee_at: Date | null;
   pdf_url: string | null;
   created_at: Date;
+  prevoyance_employee_cents?: number;
+  prevoyance_employer_cents?: number;
+  tr_count?: number;
+  tr_employee_cents?: number;
+  tr_employer_cents?: number;
 }
 
 export async function getOrCreatePeriod(tenantId: string, year: number, month: number): Promise<{
@@ -106,6 +112,9 @@ export async function generatePayslip(
   const hoursWorked = input.hoursWorked ?? (employee.weekly_hours * 52) / 12;
   const headcount = await countActiveNonExcludedHeadcount(tenantId, monthEnd);
 
+  // V5 : charger les parametres paie du tenant
+  const settings = await prisma.hrPayrollSettings.findUnique({ where: { tenant_id: tenantId } });
+
   const breakdown = computePayroll({
     grossBaseCents: employee.monthly_gross_cents,
     overtimeCents: input.overtimeCents,
@@ -114,6 +123,16 @@ export async function generatePayslip(
     hoursWorked,
     weeklyHours: employee.weekly_hours,
     headcountUnder50: headcount < 50,
+    // V5 : settings tenant
+    mutuelleEmployeeRateBp: settings?.mutuelle_enabled ? settings.mutuelle_employee_rate_bp : 0,
+    mutuelleEmployerRateBp: settings?.mutuelle_enabled ? settings.mutuelle_employer_rate_bp : 0,
+    mutuelleFlatEmployeeCents: settings?.mutuelle_enabled ? settings.mutuelle_flat_employee_cents : 0,
+    mutuelleFlatEmployerCents: settings?.mutuelle_enabled ? settings.mutuelle_flat_employer_cents : 0,
+    prevoyanceEmployeeRateBp: settings?.prevoyance_enabled ? settings.prevoyance_employee_rate_bp : 0,
+    prevoyanceEmployerRateBp: settings?.prevoyance_enabled ? settings.prevoyance_employer_rate_bp : 0,
+    trCount: (input as { trCount?: number }).trCount,
+    trFaceValueCents: settings?.tr_enabled ? settings.tr_face_value_cents : 0,
+    trEmployerShareBp: settings?.tr_enabled ? settings.tr_employer_share_bp : 0,
   });
 
   const existing = await prisma.hrPayslip.findUnique({
@@ -147,6 +166,11 @@ export async function generatePayslip(
     fillon_reduction_cents: breakdown.fillonReductionCents,
     gross_rate_cents_per_hour: breakdown.grossRateCentsPerHour,
     hours_worked: hoursWorked,
+    prevoyance_employee_cents: breakdown.prevoyanceEmployeeCents,
+    prevoyance_employer_cents: breakdown.prevoyanceEmployerCents,
+    tr_count: breakdown.trCount,
+    tr_employee_cents: breakdown.trEmployeeCents,
+    tr_employer_cents: breakdown.trEmployerCents,
   };
 
   const payslip = existing
