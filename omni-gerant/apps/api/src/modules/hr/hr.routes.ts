@@ -17,6 +17,9 @@ import { generateDpae, renderDpaeHtml } from './docs/dpae.js';
 import { loadContractContext, renderContract, markContractSigned } from './docs/contract-templates.js';
 import { computeLeaveBalance, createLeave, listLeaves, type LeaveType } from './docs/leaves.service.js';
 import { getApplicablePostings, renderPostingsChecklistHtml, MANDATORY_POSTINGS } from './docs/postings.js';
+import { computeTermination, type TerminationReason } from './termination/termination.service.js';
+import { renderSoldeToutCompte, renderCertificatTravail, renderAttestationPoleEmploi } from './termination/termination-docs.js';
+import { exportPayrollAccounting, formatAccountingExportCsv } from './termination/payroll-accounting.js';
 import { prisma } from '@zenadmin/db';
 import { authenticate, requirePermission } from '../../plugins/auth.js';
 import { injectTenant } from '../../plugins/tenant.js';
@@ -671,6 +674,147 @@ export async function hrRoutes(app: FastifyInstance) {
       const tenant = await prisma.tenant.findUnique({ where: { id: request.auth.tenant_id } });
       const postings = getApplicablePostings({ headcount: isNaN(headcount) ? 0 : headcount, isErp });
       return reply.type('text/html').send(renderPostingsChecklistHtml(tenant?.name ?? 'Entreprise', postings));
+    },
+  );
+
+  // ── V4 Rupture + Compta ──────────────────────────────────────────
+
+  async function loadTerminationDocContext(employeeId: string, tenantId: string, reason: TerminationReason, terminationDate: Date, extra?: {
+    avgMonthlyGrossCents?: number; cpDaysRemaining?: number; totalGrossPaidCents?: number; noticeDaysPaid?: number; noticeDailyCents?: number;
+  }) {
+    const breakdownResult = await computeTermination(tenantId, {
+      employeeId, terminationDate, reason,
+      ...(extra ?? {}),
+    });
+    if (!breakdownResult.ok) return { ok: false as const, error: breakdownResult.error };
+    const employee = await prisma.hrEmployee.findUnique({ where: { id: employeeId }, include: { position: true } });
+    const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
+    if (!employee || !tenant) return { ok: false as const, error: { code: 'NOT_FOUND' as const, message: 'Employe ou tenant introuvable' } };
+    return {
+      ok: true as const,
+      ctx: {
+        employer: {
+          name: tenant.name,
+          siret: tenant.siret,
+          address: tenant.address ? JSON.stringify(tenant.address) : null,
+          nafCode: tenant.naf_code,
+        },
+        employee: {
+          firstName: employee.first_name,
+          lastName: employee.last_name,
+          birthDate: employee.birth_date,
+          socialSecurityNumber: employee.social_security_number,
+          address: [employee.address_line1, employee.zip_code, employee.city].filter(Boolean).join(', ') || null,
+          position: employee.position?.name ?? null,
+          contractType: employee.contract_type,
+          hireDate: employee.start_date,
+        },
+        breakdown: breakdownResult.value,
+      },
+    };
+  }
+
+  // POST /api/hr/employees/:id/termination/compute — calcule les indemnites de sortie
+  app.post(
+    '/api/hr/employees/:id/termination/compute',
+    { preHandler: [...preHandlers, requirePermission('legal', 'read')] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const body = request.body as {
+        reason: TerminationReason; terminationDate: string;
+        avgMonthlyGrossCents?: number; cpDaysRemaining?: number;
+        totalGrossPaidCents?: number; noticeDaysPaid?: number; noticeDailyCents?: number;
+      };
+      if (!body?.reason || !body?.terminationDate) {
+        return reply.status(400).send({ error: { code: 'VALIDATION_ERROR', message: 'reason + terminationDate requis' } });
+      }
+      const result = await computeTermination(request.auth.tenant_id, {
+        employeeId: id,
+        terminationDate: new Date(body.terminationDate),
+        reason: body.reason,
+        avgMonthlyGrossCents: body.avgMonthlyGrossCents,
+        cpDaysRemaining: body.cpDaysRemaining,
+        totalGrossPaidCents: body.totalGrossPaidCents,
+        noticeDaysPaid: body.noticeDaysPaid,
+        noticeDailyCents: body.noticeDailyCents,
+      });
+      if (!result.ok) {
+        const status = result.error.code === 'NOT_FOUND' ? 404 : 400;
+        return reply.status(status).send({ error: result.error });
+      }
+      return result.value;
+    },
+  );
+
+  // GET /api/hr/employees/:id/termination/solde?reason=...&date=... — HTML solde de tout compte
+  app.get(
+    '/api/hr/employees/:id/termination/solde',
+    { preHandler: [...preHandlers, requirePermission('legal', 'read')] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const q = request.query as { reason?: TerminationReason; date?: string };
+      if (!q.reason || !q.date) {
+        return reply.status(400).send({ error: { code: 'VALIDATION_ERROR', message: 'reason et date requis' } });
+      }
+      const ctxRes = await loadTerminationDocContext(id, request.auth.tenant_id, q.reason, new Date(q.date));
+      if (!ctxRes.ok) return reply.status(404).send({ error: ctxRes.error });
+      return reply.type('text/html').send(renderSoldeToutCompte(ctxRes.ctx));
+    },
+  );
+
+  // GET /api/hr/employees/:id/termination/certificat
+  app.get(
+    '/api/hr/employees/:id/termination/certificat',
+    { preHandler: [...preHandlers, requirePermission('legal', 'read')] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const q = request.query as { reason?: TerminationReason; date?: string };
+      if (!q.reason || !q.date) {
+        return reply.status(400).send({ error: { code: 'VALIDATION_ERROR', message: 'reason et date requis' } });
+      }
+      const ctxRes = await loadTerminationDocContext(id, request.auth.tenant_id, q.reason, new Date(q.date));
+      if (!ctxRes.ok) return reply.status(404).send({ error: ctxRes.error });
+      return reply.type('text/html').send(renderCertificatTravail(ctxRes.ctx));
+    },
+  );
+
+  // GET /api/hr/employees/:id/termination/attestation-pe
+  app.get(
+    '/api/hr/employees/:id/termination/attestation-pe',
+    { preHandler: [...preHandlers, requirePermission('legal', 'read')] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const q = request.query as { reason?: TerminationReason; date?: string };
+      if (!q.reason || !q.date) {
+        return reply.status(400).send({ error: { code: 'VALIDATION_ERROR', message: 'reason et date requis' } });
+      }
+      const ctxRes = await loadTerminationDocContext(id, request.auth.tenant_id, q.reason, new Date(q.date));
+      if (!ctxRes.ok) return reply.status(404).send({ error: ctxRes.error });
+      return reply.type('text/html').send(renderAttestationPoleEmploi(ctxRes.ctx));
+    },
+  );
+
+  // GET /api/hr/accounting/:year/:month — export OD comptable classe 64
+  app.get(
+    '/api/hr/accounting/:year/:month',
+    { preHandler: [...preHandlers, requirePermission('legal', 'read')] },
+    async (request, reply) => {
+      const { year, month } = request.params as { year: string; month: string };
+      const result = await exportPayrollAccounting(request.auth.tenant_id, parseInt(year, 10), parseInt(month, 10));
+      if (!result.ok) return reply.status(400).send({ error: result.error });
+      return result.value;
+    },
+  );
+
+  // GET /api/hr/accounting/:year/:month/csv — export CSV
+  app.get(
+    '/api/hr/accounting/:year/:month/csv',
+    { preHandler: [...preHandlers, requirePermission('legal', 'read')] },
+    async (request, reply) => {
+      const { year, month } = request.params as { year: string; month: string };
+      const result = await exportPayrollAccounting(request.auth.tenant_id, parseInt(year, 10), parseInt(month, 10));
+      if (!result.ok) return reply.status(400).send({ error: result.error });
+      return reply.type('text/csv').header('content-disposition', `attachment; filename="paie-${result.value.periodLabel}.csv"`).send(formatAccountingExportCsv(result.value));
     },
   );
 }
