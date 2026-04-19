@@ -33,6 +33,13 @@ interface TenantExtras {
   qualifications?: Array<{ type: string; number: string; label: string; valid_until?: string }>;
 }
 
+export class SiretAlreadyTakenError extends Error {
+  constructor(public readonly siret: string) {
+    super(`SIRET ${siret} deja rattache a un autre compte zenAdmin`);
+    this.name = 'SiretAlreadyTakenError';
+  }
+}
+
 export function createTenantRepository() {
   return {
     async findById(tenantId: string): Promise<TenantProfile | null> {
@@ -69,6 +76,16 @@ export function createTenantRepository() {
         insurance_rc_pro_insurer: profile.insurance_rc_pro_insurer,
         qualifications: profile.qualifications,
       };
+
+      // BUSINESS RULE [R03]: SIRET is @unique globally — raise a specific
+      // error if another tenant already owns this SIRET instead of the
+      // generic Prisma P2002 stack trace that produced 500s.
+      if (profile.siret) {
+        const owner = await prisma.tenant.findUnique({ where: { siret: profile.siret } });
+        if (owner && owner.id !== tenantId) {
+          throw new SiretAlreadyTakenError(profile.siret);
+        }
+      }
 
       const data = {
         name: profile.company_name,
