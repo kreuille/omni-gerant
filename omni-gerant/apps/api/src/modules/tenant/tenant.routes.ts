@@ -92,28 +92,14 @@ export async function tenantRoutes(app: FastifyInstance) {
         return reply.status(status).send({ error: lookupResult.error });
       }
 
-      // Auto-fill profile
-      let fillResult;
-      try {
-        fillResult = await tenantService.autoFillFromSiret(
-          request.auth.tenant_id,
-          lookupResult.value,
-        );
-      } catch (e) {
-        const { SiretAlreadyTakenError } = await import('./tenant.repository.js');
-        if (e instanceof SiretAlreadyTakenError) {
-          return reply.status(409).send({
-            error: {
-              code: 'SIRET_ALREADY_TAKEN',
-              message: `Le SIRET ${e.siret} est deja rattache a un autre compte zenAdmin. Contactez le support si vous pensez que c'est une erreur.`,
-            },
-          });
-        }
-        throw e;
-      }
-      if (!fillResult.ok) return reply.status(500).send({ error: fillResult.error });
-
-      const profile = fillResult.value;
+      // Dry-run : build the profile without saving. The user reviews
+      // the pre-filled fields and clicks Enregistrer to persist.
+      // This avoids the SIRET unique-constraint crash when another test
+      // tenant already claimed the same SIRET.
+      const profile = await tenantService.previewFromSiret(
+        request.auth.tenant_id,
+        lookupResult.value,
+      );
       const franchiseCheck = tenantService.getFranchiseCheck(profile);
       const legalMentions = tenantService.getLegalMentions(profile);
 

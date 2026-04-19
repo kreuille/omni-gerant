@@ -151,6 +151,38 @@ function createDefaultProfile(tenantId: string): TenantProfile {
   };
 }
 
+function applySiretInfoToProfile(profile: TenantProfile, siretInfo: EnrichedSiretInfo): TenantProfile {
+  profile.siret = siretInfo.siret;
+  profile.siren = siretInfo.siren;
+  profile.company_name = siretInfo.company_name;
+  profile.naf_code = siretInfo.naf_code;
+  profile.naf_label = siretInfo.naf_label;
+  profile.address = {
+    line1: siretInfo.address.line1,
+    zip_code: siretInfo.address.zip_code,
+    city: siretInfo.address.city,
+    country: siretInfo.address.country,
+  };
+  profile.tva_number = siretInfo.tva_number ?? computeFrenchTvaNumber(siretInfo.siren);
+  profile.creation_date = siretInfo.creation_date;
+  profile.effectif = siretInfo.effectif_reel;
+  profile.convention_collective = siretInfo.convention_collective;
+  profile.code_idcc = siretInfo.code_idcc;
+  if (siretInfo.dirigeants.length > 0) profile.dirigeants = siretInfo.dirigeants;
+  if (siretInfo.capital_cents && siretInfo.capital_cents > 0) profile.capital_cents = siretInfo.capital_cents;
+  if (!profile.rcs_city && siretInfo.address.zip_code) {
+    profile.rcs_city = detectRcsCity(siretInfo.address.zip_code);
+  }
+  const legalFormCode = siretInfo.legal_form;
+  if (legalFormCode && /^\d+$/.test(legalFormCode)) {
+    profile.legal_form = detectLegalForm(legalFormCode);
+  } else if (legalFormCode) {
+    profile.legal_form = detectLegalFormFromLabel(legalFormCode);
+  }
+  profile.tva_regime = detectDefaultTvaRegime(profile.legal_form);
+  return profile;
+}
+
 export function createTenantService() {
   const tenantRepo = createTenantRepository();
 
@@ -208,6 +240,18 @@ export function createTenantService() {
 
       const updated = await tenantRepo.upsertProfile(tenantId, profile);
       return ok(updated);
+    },
+
+    // BUSINESS RULE [CDC-4]: Dry-run lookup — build a profile from SIRET
+    // without persisting. Used by the Profil page so the user can review
+    // the pre-filled fields and click Enregistrer to save.
+    async previewFromSiret(
+      tenantId: string,
+      siretInfo: EnrichedSiretInfo,
+    ): Promise<TenantProfile> {
+      let profile = await tenantRepo.findById(tenantId);
+      if (!profile) profile = createDefaultProfile(tenantId);
+      return applySiretInfoToProfile(profile, siretInfo);
     },
 
     async autoFillFromSiret(
