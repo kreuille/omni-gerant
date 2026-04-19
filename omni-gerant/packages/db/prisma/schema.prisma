@@ -1085,6 +1085,40 @@ model HrPayrollSettings {
   @@map("hr_payroll_settings")
 }
 
+// V8 : Acces portail salarie (magic link)
+model HrEmployeePortalAccess {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id    String   @db.Uuid
+  employee_id  String   @unique @db.Uuid
+  token_hash   String   @unique
+  issued_at    DateTime @default(now())
+  expires_at   DateTime
+  last_used_at DateTime?
+  revoked_at   DateTime?
+
+  @@index([tenant_id, employee_id])
+  @@map("hr_employee_portal_access")
+}
+
+// V8 : Signature electronique contrat (eIDAS simple)
+model HrContractSignature {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id       String   @db.Uuid
+  employee_id     String   @db.Uuid
+  contract_type   String   // cdi, cdd, apprentice, intern
+  signed_by_employer_at DateTime?
+  employer_signature    String? // hash ou base64
+  signed_by_employee_at DateTime?
+  employee_signature    String?
+  document_html         String @db.Text
+  document_hash         String // SHA-256 document final
+  status                String @default("pending") // pending | employer_signed | fully_signed | cancelled
+  created_at            DateTime @default(now())
+
+  @@index([tenant_id, employee_id])
+  @@map("hr_contract_signatures")
+}
+
 // V6 : Declaration Sociale Nominative mensuelle
 model HrDsnFiling {
   id                String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
