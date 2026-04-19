@@ -21,6 +21,8 @@ import { computeTermination, type TerminationReason } from './termination/termin
 import { renderSoldeToutCompte, renderCertificatTravail, renderAttestationPoleEmploi } from './termination/termination-docs.js';
 import { exportPayrollAccounting, formatAccountingExportCsv } from './termination/payroll-accounting.js';
 import { generateMonthlyDsn, generateExitEventDsn, listDsnFilings } from './payroll/dsn.service.js';
+import { issueMagicLink, verifyMagicLink, listPayslipsForEmployee } from './portal/portal.service.js';
+import { initContractSignature, signAsEmployer, signAsEmployee, getSignature } from './portal/signature.service.js';
 import { prisma } from '@zenadmin/db';
 import { authenticate, requirePermission } from '../../plugins/auth.js';
 import { injectTenant } from '../../plugins/tenant.js';
@@ -592,6 +594,103 @@ export async function hrRoutes(app: FastifyInstance) {
       return { items, total: items.length };
     },
   );
+
+  // ── V8 Portail salarie + signature ────────────────────────────
+
+  // POST /api/hr/employees/:id/portal-link — genere un magic link
+  app.post(
+    '/api/hr/employees/:id/portal-link',
+    { preHandler: [...preHandlers, requirePermission('legal', 'create')] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const r = await issueMagicLink(request.auth.tenant_id, id);
+      if (!r.ok) return reply.status(400).send({ error: r.error });
+      return r.value;
+    },
+  );
+
+  // GET /api/hr/portal/verify?token=... — verifie et retourne les bulletins du salarie
+  app.get('/api/hr/portal/verify', async (request, reply) => {
+    const { token } = request.query as { token?: string };
+    if (!token) return reply.status(400).send({ error: { code: 'VALIDATION_ERROR', message: 'Token requis' } });
+    const v = await verifyMagicLink(token);
+    if (!v.ok) return reply.status(401).send({ error: v.error });
+    const payslips = await listPayslipsForEmployee(v.value.tenantId, v.value.employeeId);
+    return { employee: v.value.employee, payslips };
+  });
+
+  // GET /api/hr/portal/payslip/:id?token=... — PDF bulletin via magic link
+  app.get('/api/hr/portal/payslip/:id', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const { token } = request.query as { token?: string };
+    if (!token) return reply.status(400).send({ error: { code: 'VALIDATION_ERROR', message: 'Token requis' } });
+    const v = await verifyMagicLink(token);
+    if (!v.ok) return reply.status(401).send({ error: v.error });
+    const p = await prisma.hrPayslip.findFirst({ where: { id, tenant_id: v.value.tenantId, employee_id: v.value.employeeId } });
+    if (!p) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Bulletin introuvable' } });
+    const emp = await prisma.hrEmployee.findUnique({ where: { id: p.employee_id }, include: { position: true } });
+    const tenant = await prisma.tenant.findUnique({ where: { id: p.tenant_id } });
+    const { renderPayslipHtml } = await import('./payroll/payroll-pdf.js');
+    const html = renderPayslipHtml({
+      employer: { name: tenant?.name ?? '', siret: tenant?.siret ?? null, nafCode: tenant?.naf_code ?? null, address: null },
+      employee: { firstName: emp?.first_name ?? '', lastName: emp?.last_name ?? '', position: emp?.position?.name ?? null, classification: null, socialSecurityNumber: emp?.social_security_number ?? null, startDate: emp?.start_date ?? null, contractType: emp?.contract_type ?? null },
+      payslip: p as Parameters<typeof renderPayslipHtml>[0]['payslip'],
+    });
+    return reply.type('text/html').send(html);
+  });
+
+  // POST /api/hr/employees/:id/signature — init signature
+  app.post(
+    '/api/hr/employees/:id/signature',
+    { preHandler: [...preHandlers, requirePermission('legal', 'create')] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const { loadContractContext, renderContract } = await import('./docs/contract-templates.js');
+      const ctxR = await loadContractContext(id, request.auth.tenant_id);
+      if (!ctxR.ok) return reply.status(400).send({ error: ctxR.error });
+      const html = renderContract(ctxR.value);
+      const r = await initContractSignature(request.auth.tenant_id, id, ctxR.value.employment.contractType, html);
+      if (!r.ok) return reply.status(400).send({ error: r.error });
+      return reply.status(201).send(r.value);
+    },
+  );
+
+  // POST /api/hr/signatures/:id/sign-employer
+  app.post(
+    '/api/hr/signatures/:id/sign-employer',
+    { preHandler: [...preHandlers, requirePermission('legal', 'update')] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const r = await signAsEmployer(id, request.auth.tenant_id, `employer-${request.auth.user_id.slice(0, 8)}@company`);
+      if (!r.ok) return reply.status(400).send({ error: r.error });
+      return r.value;
+    },
+  );
+
+  // GET /api/hr/signatures/:id/view — public (employee) signs from portal
+  app.get('/api/hr/signatures/:id/view', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const sig = await getSignature(id);
+    if (!sig) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Signature introuvable' } });
+    return { id: sig.id, contractType: sig.contractType, status: sig.status, documentHash: sig.documentHash, signedByEmployerAt: sig.signedByEmployerAt, signedByEmployeeAt: sig.signedByEmployeeAt };
+  });
+
+  app.get('/api/hr/signatures/:id/document', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const sig = await getSignature(id);
+    if (!sig) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Introuvable' } });
+    return reply.type('text/html').send(sig.documentHtml);
+  });
+
+  // POST /api/hr/signatures/:id/sign-employee — public, avec email confirmation
+  app.post('/api/hr/signatures/:id/sign-employee', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const body = request.body as { email?: string };
+    if (!body?.email) return reply.status(400).send({ error: { code: 'VALIDATION_ERROR', message: 'Email requis' } });
+    const r = await signAsEmployee(id, body.email);
+    if (!r.ok) return reply.status(400).send({ error: r.error });
+    return r.value;
+  });
 
   // V6 PAS — modifier le taux PAS d'un employe
   app.patch(
