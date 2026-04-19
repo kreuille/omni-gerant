@@ -26,17 +26,31 @@ export async function quoteRoutes(app: FastifyInstance) {
   const repo = createPrismaQuoteRepository();
   const tenantRepo = createTenantRepository();
 
-  // Placeholder share token repo (will be migrated in a future prompt)
+  // In-memory share token repo. Survives until next redeploy.
+  // BUSINESS RULE [CDC-2.1]: Persist share tokens so clients can open the link.
+  const shareTokens = new Map<string, ShareToken>(); // keyed by token_hash
+  const shareTokensById = new Map<string, ShareToken>();
   const shareTokenRepo: ShareTokenRepository = {
     async create(data) {
-      return {
+      const token: ShareToken = {
         id: crypto.randomUUID(), ...data,
         viewed_at: null, signed_at: null, created_at: new Date(),
       };
+      shareTokens.set(data.token_hash, token);
+      shareTokensById.set(token.id, token);
+      return token;
     },
-    async findByTokenHash(_hash) { return null; },
-    async markViewed(_id) {},
-    async markSigned(_id, _sig) {},
+    async findByTokenHash(hash) { return shareTokens.get(hash) ?? null; },
+    async markViewed(id) {
+      const t = shareTokensById.get(id);
+      if (t) t.viewed_at = new Date();
+    },
+    async markSigned(id, sig) {
+      const t = shareTokensById.get(id);
+      if (t) {
+        t.signed_at = sig.signed_at;
+      }
+    },
   };
 
   // Placeholder tracking repo (will be migrated in a future prompt)
