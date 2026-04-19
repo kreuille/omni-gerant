@@ -6,6 +6,7 @@ import { cn } from '@/lib/cn';
 
 const items = [
   { href: '/hr', label: 'Setup' },
+  { href: '/hr/analytics', label: 'Dashboard' },
   { href: '/hr/registre', label: 'Registre unique' },
   { href: '/hr/effectif-moyen', label: 'Effectif moyen' },
   { href: '/hr/paie', label: 'Paie' },

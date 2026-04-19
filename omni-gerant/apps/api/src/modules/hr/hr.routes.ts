@@ -23,6 +23,7 @@ import { exportPayrollAccounting, formatAccountingExportCsv } from './terminatio
 import { generateMonthlyDsn, generateExitEventDsn, listDsnFilings } from './payroll/dsn.service.js';
 import { issueMagicLink, verifyMagicLink, listPayslipsForEmployee } from './portal/portal.service.js';
 import { initContractSignature, signAsEmployer, signAsEmployee, getSignature } from './portal/signature.service.js';
+import { getHrDashboard } from './analytics/hr-analytics.service.js';
 import { prisma } from '@zenadmin/db';
 import { authenticate, requirePermission } from '../../plugins/auth.js';
 import { injectTenant } from '../../plugins/tenant.js';
@@ -592,6 +593,15 @@ export async function hrRoutes(app: FastifyInstance) {
     async (request) => {
       const items = await listDsnFilings(request.auth.tenant_id);
       return { items, total: items.length };
+    },
+  );
+
+  // V10 Dashboard analytics RH
+  app.get(
+    '/api/hr/dashboard/analytics',
+    { preHandler: [...preHandlers, requirePermission('legal', 'read')] },
+    async (request) => {
+      return await getHrDashboard(request.auth.tenant_id);
     },
   );
 
