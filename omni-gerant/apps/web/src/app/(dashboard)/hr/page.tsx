@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api-client';
+import { HrNav } from '@/components/hr/hr-nav';
 
 // ── Types ───────────────────────────────────────────────────────────
 
@@ -217,6 +218,7 @@ export default function HrPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      <HrNav />
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Effectif & Postes</h1>
         <p className="text-gray-500 mt-1">Gerez les postes, employes et formations de votre entreprise</p>
