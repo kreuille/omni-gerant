@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RgpdExport } from '@/components/legal/rgpd-export';
+import { RgpdDataExport } from '@/components/legal/rgpd-data-export';
 import { api } from '@/lib/api-client';
 
 // BUSINESS RULE [CDC-2.4]: Page registre RGPD
@@ -239,6 +240,9 @@ export default function RgpdPage() {
         treatmentCount={treatmentCount}
         onExport={handleExport}
       />
+
+      {/* C3 : export portabilite RGPD Art.20 */}
+      <RgpdDataExport />
     </div>
   );
 }

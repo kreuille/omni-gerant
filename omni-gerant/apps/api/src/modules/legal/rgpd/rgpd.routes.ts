@@ -17,6 +17,28 @@ export async function rgpdRoutes(app: FastifyInstance) {
   const rgpdService = createRgpdService(repo);
   const preHandlers = [authenticate, injectTenant];
 
+  // C3 : GET /api/legal/rgpd/export — Export portabilite donnees (RGPD Art.20)
+  // Reserve au proprietaire du tenant (propriete des donnees).
+  app.get(
+    '/api/legal/rgpd/export',
+    { preHandler: [...preHandlers, requirePermission('legal', 'read')] },
+    async (request, reply) => {
+      if (request.auth.role !== 'owner') {
+        return reply.status(403).send({
+          error: { code: 'FORBIDDEN', message: 'Seul le propriétaire peut exporter les données du tenant (droit à la portabilité RGPD).' },
+        });
+      }
+      const { generateRgpdExport } = await import('./rgpd-export.service.js');
+      const result = await generateRgpdExport(request.auth.tenant_id);
+      if (!result.ok) return reply.status(500).send({ error: result.error });
+      const filename = `zenadmin-export-${request.auth.tenant_id}-${new Date().toISOString().slice(0, 10)}.json`;
+      return reply
+        .type('application/json')
+        .header('content-disposition', `attachment; filename="${filename}"`)
+        .send(result.value);
+    },
+  );
+
   // POST /api/legal/rgpd — Create registry
   app.post(
     '/api/legal/rgpd',

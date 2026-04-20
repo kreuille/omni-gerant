@@ -147,6 +147,27 @@ export async function generateQuotePdfBinary(quote: Quote, tenant: TenantProfile
     draw(`${tenant.legal_form} - SIRET ${tenant.siret ?? ''}`, margin, y, 8); y -= 10;
   }
 
+  // C1 : bloc signature eIDAS simple (si signe)
+  const sig = quote.signature_data as null | { signer_name?: string; signer_first_name?: string; signed_at?: string; ip_address?: string; content_hash?: string; signature_hash?: string; signature_image?: string };
+  if (sig && sig.signer_name) {
+    y -= 14;
+    page.drawLine({ start: { x: margin, y: y + 6 }, end: { x: width - margin, y: y + 6 }, thickness: 1, color: rgb(0.1, 0.45, 0.1) });
+    draw('Signature electronique (eIDAS niveau simple)', margin, y, 10, true, rgb(0.1, 0.45, 0.1)); y -= 13;
+    draw(`Signe par : ${sig.signer_first_name ?? ''} ${sig.signer_name}`, margin, y, 9); y -= 11;
+    if (sig.signed_at) {
+      const d = new Date(sig.signed_at);
+      draw(`Date : ${d.toLocaleString('fr-FR')}`, margin, y, 9); y -= 11;
+    }
+    if (sig.ip_address) { draw(`IP : ${sig.ip_address}`, margin, y, 9); y -= 11; }
+    if (sig.content_hash) {
+      draw(`Empreinte SHA-256 : ${sig.content_hash.slice(0, 32)}...${sig.content_hash.slice(-8)}`, margin, y, 7, false, rgb(0.4, 0.4, 0.4)); y -= 9;
+    }
+    if (sig.signature_hash) {
+      draw(`Preuve : ${sig.signature_hash.slice(0, 32)}...${sig.signature_hash.slice(-8)}`, margin, y, 7, false, rgb(0.4, 0.4, 0.4)); y -= 9;
+    }
+    draw('Ce document a ete signe electroniquement. Toute modification du contenu invalide la signature.', margin, y, 7, false, rgb(0.4, 0.4, 0.4));
+  }
+
   const bytes = await pdf.save();
   return Buffer.from(bytes);
 }

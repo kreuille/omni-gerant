@@ -561,6 +561,43 @@ export async function quoteRoutes(app: FastifyInstance) {
     },
   );
 
+  // C1 : GET /api/quotes/:id/signature/verify — verifie l'integrite de la signature eIDAS
+  app.get(
+    '/api/quotes/:id/signature/verify',
+    { preHandler: [...preHandlers, requirePermission('quote', 'read')] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const result = await quoteService.getById(id, request.auth.tenant_id);
+      if (!result.ok) return reply.status(404).send({ error: result.error });
+
+      const { computeQuoteContentHash, verifyQuoteSignature } = await import('./quote-signature.service.js');
+      const currentHash = computeQuoteContentHash({
+        id: result.value.id,
+        number: result.value.number,
+        total_ht_cents: result.value.total_ht_cents,
+        total_tva_cents: result.value.total_tva_cents,
+        total_ttc_cents: result.value.total_ttc_cents,
+        validity_date: result.value.validity_date,
+        lines: result.value.lines.map((l) => ({
+          position: l.position, label: l.label, quantity: l.quantity,
+          unit_price_cents: l.unit_price_cents, tva_rate: l.tva_rate,
+        })),
+      });
+
+      const sigData = result.value.signature_data as Parameters<typeof verifyQuoteSignature>[1];
+      const check = verifyQuoteSignature(currentHash, sigData);
+      return {
+        signed: !!sigData,
+        valid: check.valid,
+        reason: check.reason,
+        current_hash: currentHash,
+        stored_hash: sigData?.content_hash ?? null,
+        signed_at: sigData?.signed_at ?? null,
+        signer: sigData ? `${sigData.signer_first_name} ${sigData.signer_name}` : null,
+      };
+    },
+  );
+
   // GET /api/quotes/:id/timeline
   app.get(
     '/api/quotes/:id/timeline',
@@ -671,21 +708,38 @@ export async function quoteRoutes(app: FastifyInstance) {
       return reply.status(status).send({ error: result.error });
     }
 
-    // Persist signature on the quote record for future PDF rendering
+    // C1 : signature eIDAS simple avec hash du contenu + chain proof
     const signedAt = new Date();
     try {
-      await repo.update(result.value.quote_id, result.value.tenant_id, {
-        status: 'signed',
-        signed_at: signedAt,
-        signature_data: {
+      const { computeQuoteContentHash, buildSignatureRecord } = await import('./quote-signature.service.js');
+      const fullQuote = await quoteService.getById(result.value.quote_id, result.value.tenant_id);
+      if (fullQuote.ok) {
+        const contentHash = computeQuoteContentHash({
+          id: fullQuote.value.id,
+          number: fullQuote.value.number,
+          total_ht_cents: fullQuote.value.total_ht_cents,
+          total_tva_cents: fullQuote.value.total_tva_cents,
+          total_ttc_cents: fullQuote.value.total_ttc_cents,
+          validity_date: fullQuote.value.validity_date,
+          lines: fullQuote.value.lines.map((l) => ({
+            position: l.position, label: l.label, quantity: l.quantity,
+            unit_price_cents: l.unit_price_cents, tva_rate: l.tva_rate,
+          })),
+        });
+        const signatureRecord = buildSignatureRecord(contentHash, {
           signer_name: parsed.data.signer_name,
           signer_first_name: parsed.data.signer_first_name,
-          signature_image: parsed.data.signature_image ?? null,
+          signature_image: parsed.data.signature_image,
           ip_address: request.ip,
-          user_agent: request.headers['user-agent'] ?? null,
-          signed_at: signedAt.toISOString(),
-        },
-      });
+          user_agent: request.headers['user-agent'] ?? '',
+        }, signedAt.getTime());
+
+        await repo.update(result.value.quote_id, result.value.tenant_id, {
+          status: 'signed',
+          signed_at: signedAt,
+          signature_data: signatureRecord as unknown as Parameters<typeof repo.update>[2]['signature_data'],
+        });
+      }
     } catch {
       // Non-blocking: the share token itself is marked signed
     }
