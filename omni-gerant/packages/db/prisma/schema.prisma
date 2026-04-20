@@ -2167,3 +2167,76 @@ model InventoryCountLine {
   @@index([count_id])
   @@map("inventory_count_lines")
 }
+
+// ============================================================================
+// Vague W - Service apres-vente (RMA + avoirs + garanties)
+// ============================================================================
+
+model ReturnAuthorization {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id         String    @db.Uuid
+  number            String    // RMA-YYYY-NNNN
+  client_id         String    @db.Uuid
+  invoice_id        String?   @db.Uuid               // facture d'origine
+  reason            String                           // defect | wrong_item | damaged | customer_change | other
+  status            String    @default("pending")    // pending | approved | received | refunded | rejected | cancelled
+  condition         String?                          // new | like_new | used | defective | broken
+  description       String?
+  requested_at      DateTime  @default(now())
+  approved_at       DateTime?
+  approved_by       String?   @db.Uuid
+  received_at       DateTime?
+  refunded_at       DateTime?
+  credit_note_id    String?   @db.Uuid               // facture d'avoir generee
+  total_refund_cents Int      @default(0)
+  notes             String?
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+
+  @@unique([tenant_id, number])
+  @@index([tenant_id, status])
+  @@index([tenant_id, client_id])
+  @@index([tenant_id, invoice_id])
+  @@map("return_authorizations")
+}
+
+model ReturnLine {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  return_id         String   @db.Uuid
+  product_id        String?  @db.Uuid
+  variant_id        String?  @db.Uuid
+  invoice_line_id   String?  @db.Uuid
+  label             String
+  quantity          Int
+  unit_price_cents  Int      @default(0)
+  tva_rate          Int      @default(2000)
+  refund_ht_cents   Int      @default(0)
+  restock           Boolean  @default(true)            // remet en stock si true
+
+  @@index([return_id])
+  @@map("return_lines")
+}
+
+model Warranty {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id         String    @db.Uuid
+  client_id         String    @db.Uuid
+  product_id        String?   @db.Uuid
+  variant_id        String?   @db.Uuid
+  invoice_id        String?   @db.Uuid
+  serial_number     String?
+  starts_at         DateTime
+  ends_at           DateTime                          // date fin de garantie
+  duration_months   Int       @default(24)
+  kind              String    @default("standard")    // standard | extended | manufacturer
+  terms             String?                           // CGV / texte garantie
+  is_active         Boolean   @default(true)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+
+  @@index([tenant_id, client_id])
+  @@index([tenant_id, ends_at])
+  @@index([tenant_id, is_active])
+  @@index([serial_number])
+  @@map("warranties")
+}

@@ -6,6 +6,18 @@ Versionnage : [SemVer](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Vague W — Service apres-vente (SAV)
+- **W1 Retours client (RMA)** : `ReturnAuthorization` RMA-YYYY-NNNN +
+  `ReturnLine`, workflow pending → approved → received → refunded.
+  Reception re-integre le stock des lignes `restock=true` via StockMovement.
+- **W2 Avoirs** : `POST /api/sav/returns/:id/credit-note` cree une
+  `Invoice type=credit_note` numero AV-YYYY-NNNNN avec montants negatifs,
+  met a jour RMA.status=refunded et credit_note_id.
+- **W3 Garanties** : `Warranty` (standard/extended/manufacturer) avec
+  duration_months + starts_at → ends_at calcule, endpoint `/extend`
+  (ajoute des mois, kind devient extended) et `/check?serial_number=`
+  verifie la validite.
+
 ### Vague V — Inventaire mobile
 - **V1 Scanner** : `POST /api/stock/scan` — match SKU variant, fallback
   reference produit, retour stock_qty pour l'app mobile.
