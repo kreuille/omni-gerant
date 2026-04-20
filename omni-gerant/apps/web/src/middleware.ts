@@ -41,7 +41,7 @@ export function middleware(request: NextRequest) {
   // Auth redirect — protect dashboard routes
   const { pathname } = request.nextUrl;
   const isAuthPage = pathname === '/login' || pathname === '/register';
-  const isPublicPage = pathname.startsWith('/onboarding') || pathname.startsWith('/step-') || pathname.startsWith('/public') || pathname.startsWith('/share') || pathname.startsWith('/portal/') || pathname.startsWith('/sign/') || pathname === '/maintenance';
+  const isPublicPage = pathname.startsWith('/onboarding') || pathname.startsWith('/step-') || pathname.startsWith('/public') || pathname.startsWith('/share') || pathname.startsWith('/portal/') || pathname.startsWith('/sign/') || pathname.startsWith('/accept-invite/') || pathname === '/maintenance';
   const isApiRoute = pathname.startsWith('/api/');
   const isStaticAsset = pathname.startsWith('/_next');
 

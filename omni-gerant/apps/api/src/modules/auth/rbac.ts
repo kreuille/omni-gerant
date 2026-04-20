@@ -46,7 +46,7 @@ const PERMISSION_MATRIX: Record<UserRole, Set<string>> = {
     'bank:create', 'bank:read', 'bank:update', 'bank:delete',
     'audit:read',
     'settings:read', 'settings:update',
-    'billing:read', 'billing:update',
+    'billing:create', 'billing:read', 'billing:update', 'billing:delete',
     'export:read', 'export:export',
     'legal:create', 'legal:read', 'legal:update', 'legal:delete',
     'dashboard:read',

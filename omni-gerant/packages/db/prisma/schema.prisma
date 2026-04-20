@@ -66,6 +66,84 @@ model User {
   @@map("users")
 }
 
+// S1 : sessions actives (pour UI list+revoke + protection device theft)
+model UserSession {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id        String   @db.Uuid
+  tenant_id      String   @db.Uuid
+  token_hash     String   @unique
+  ip_address     String?
+  user_agent     String?
+  device_label   String?  // "Chrome on Windows" / "Safari iPhone" etc.
+  last_active_at DateTime @default(now())
+  created_at     DateTime @default(now())
+  expires_at     DateTime
+  revoked_at     DateTime?
+
+  @@index([user_id, revoked_at])
+  @@index([tenant_id])
+  @@index([token_hash])
+  @@map("user_sessions")
+}
+
+// S1 : tentatives de login pour detection bruteforce + account lockout
+model LoginAttempt {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email      String
+  tenant_id  String?  @db.Uuid
+  ip_address String?
+  user_agent String?
+  success    Boolean
+  reason     String?  // "invalid_password" | "2fa_required" | "2fa_invalid" | "locked"
+  created_at DateTime @default(now())
+
+  @@index([email, created_at])
+  @@index([ip_address, created_at])
+  @@map("login_attempts")
+}
+
+// S2 : invitations utilisateurs dans un tenant
+model UserInvitation {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id   String    @db.Uuid
+  email       String
+  role        String    // owner | admin | member | accountant
+  token_hash  String    @unique
+  invited_by  String    @db.Uuid
+  expires_at  DateTime
+  accepted_at DateTime?
+  revoked_at  DateTime?
+  created_at  DateTime  @default(now())
+
+  @@unique([tenant_id, email])
+  @@index([token_hash])
+  @@map("user_invitations")
+}
+
+// S4 : abonnement Stripe + plan
+model TenantSubscription {
+  id                      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id               String   @unique @db.Uuid
+  stripe_customer_id      String?  @unique
+  stripe_subscription_id  String?  @unique
+  plan_code               String   @default("trial") // trial | starter | pro | business
+  status                  String   @default("trialing") // trialing | active | past_due | canceled | unpaid
+  trial_ends_at           DateTime?
+  current_period_start    DateTime?
+  current_period_end      DateTime?
+  cancel_at_period_end    Boolean  @default(false)
+  canceled_at             DateTime?
+  // Limites par plan (denormalisees pour rapidite)
+  max_users               Int      @default(2)
+  max_invoices_per_month  Int      @default(10)
+  max_employees           Int      @default(5)
+  features                Json     @default("{}")
+  created_at              DateTime @default(now())
+  updated_at              DateTime @updatedAt
+
+  @@map("tenant_subscriptions")
+}
+
 model RefreshToken {
   id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   user_id    String    @db.Uuid

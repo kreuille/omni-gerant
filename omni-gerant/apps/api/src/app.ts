@@ -102,6 +102,8 @@ export async function buildApp() {
   await app.register(ppfRoutes);
   await app.register(hrRoutes);
   await app.register(clientRoutes);
+  const { billingRoutes } = await import('./modules/billing/billing.routes.js');
+  await app.register(billingRoutes);
 
   return app;
 }
