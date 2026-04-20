@@ -183,4 +183,84 @@ export async function ppfRoutes(app: FastifyInstance) {
       return result.value;
     },
   );
+
+  // F4 : POST /api/ppf/webhook — Endpoint webhook PPF (public, signature HMAC)
+  app.post('/api/ppf/webhook', async (request, reply) => {
+    const sig = request.headers['x-ppf-signature'] as string | undefined;
+    const body = request.body as {
+      event: 'status_changed' | 'rejected' | 'accepted' | 'paid';
+      invoiceId: string;
+      invoiceNumber: string;
+      newStatus: PpfStatus;
+      timestamp: string;
+      reason?: string;
+    };
+
+    // Verification signature HMAC (placeholder : ppf-client a la fonction validate)
+    if (!sig) {
+      return reply.status(401).send({ error: { code: 'UNAUTHORIZED', message: 'Signature manquante' } });
+    }
+    const isValid = ppfClient.verifyWebhookSignature(JSON.stringify(body), sig);
+    if (!isValid) {
+      return reply.status(401).send({ error: { code: 'UNAUTHORIZED', message: 'Signature invalide' } });
+    }
+
+    if (!body?.invoiceId || !body?.newStatus) {
+      return reply.status(400).send({ error: { code: 'VALIDATION_ERROR', message: 'invoiceId et newStatus requis' } });
+    }
+
+    // Mettre a jour le statut PPF en DB + synchroniser statut interne facture
+    const { prisma } = await import('@zenadmin/db');
+    const invoice = await prisma.invoice.findUnique({ where: { id: body.invoiceId } });
+    if (!invoice) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Invoice introuvable' } });
+
+    // Mapping PPF -> statut interne
+    const statusMap: Record<string, string | null> = {
+      'deposited': 'sent',
+      'received': 'sent',
+      'accepted': 'sent',
+      'rejected': 'cancelled',
+      'paid': 'paid',
+    };
+    const newInternal = statusMap[body.newStatus] ?? null;
+    if (newInternal && newInternal !== invoice.status) {
+      await prisma.invoice.update({
+        where: { id: invoice.id },
+        data: {
+          status: newInternal,
+          ...(newInternal === 'paid' ? { paid_at: new Date() } : {}),
+        },
+      });
+    }
+
+    return { acknowledged: true, invoiceId: invoice.id, newStatus: newInternal ?? invoice.status };
+  });
+
+  // F4 : GET /api/ppf/obligation/:invoiceId — verifier obligation PPF pour une facture
+  app.get(
+    '/api/ppf/obligation/:invoiceId',
+    { preHandler: [...preHandlers, requirePermission('invoice', 'read')] },
+    async (request) => {
+      const { invoiceId } = request.params as { invoiceId: string };
+      const { detectPpfObligation } = await import('./ppf-obligation.service.js');
+      return await detectPpfObligation(invoiceId, request.auth.tenant_id);
+    },
+  );
+
+  // F4 : GET /api/ppf/obligations — liste factures classees par obligation
+  app.get(
+    '/api/ppf/obligations',
+    { preHandler: [...preHandlers, requirePermission('invoice', 'read')] },
+    async (request) => {
+      const { listInvoicesByObligation } = await import('./ppf-obligation.service.js');
+      const items = await listInvoicesByObligation(request.auth.tenant_id, 100);
+      const summary = {
+        required: items.filter((i) => i.status === 'required').length,
+        e_reporting_only: items.filter((i) => i.status === 'e_reporting_only').length,
+        chorus_pro: items.filter((i) => i.status === 'chorus_pro').length,
+        not_applicable: items.filter((i) => i.status === 'not_applicable').length,
+      };
+      return { items, summary };
+    },
+  );
 }

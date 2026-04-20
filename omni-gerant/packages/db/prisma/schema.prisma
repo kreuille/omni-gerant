@@ -210,6 +210,15 @@ model Invoice {
   previous_situation_cents Int?   // Montant deja facture
   payment_terms         Int       @default(30)
   notes                 String?
+  // F5 : escompte paiement anticipe (ex: 2% si paye sous 10 jours)
+  early_payment_rate_bp   Int?    // taux escompte en basis points (200 = 2%)
+  early_payment_days      Int?    // delai pour bénéficier de l'escompte
+  // F5 : mentions legales figées au moment de la finalisation (audit legal)
+  mentions_legales_snapshot Json?
+  // F5 : signature electronique facture (eIDAS simple)
+  e_signature_hash        String?
+  e_signature_signed_at   DateTime?
+  e_signature_signer      String? // email signataire employeur
   total_ht_cents        Int       @default(0)
   total_tva_cents       Int       @default(0)
   total_ttc_cents       Int       @default(0)
