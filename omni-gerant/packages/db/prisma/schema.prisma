@@ -1313,3 +1313,32 @@ model StockMovement {
   @@index([tenant_id, variant_id, created_at(sort: Desc)])
   @@map("stock_movements")
 }
+
+// Vague H3 : Agenda / evenements
+model CalendarEvent {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id       String   @db.Uuid
+  user_id         String   @db.Uuid
+  title           String
+  description     String?
+  starts_at       DateTime
+  ends_at         DateTime
+  all_day         Boolean  @default(false)
+  location        String?
+  kind            String   @default("appointment") // appointment | reminder | deadline | personal
+  color           String?  // hex
+  // Liens metier optionnels
+  client_id       String?  @db.Uuid
+  quote_id        String?  @db.Uuid
+  invoice_id      String?  @db.Uuid
+  reminder_minutes Int?    // minutes avant l'evt pour notif
+  reminder_sent_at DateTime?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  deleted_at      DateTime?
+
+  @@index([tenant_id, starts_at])
+  @@index([tenant_id, user_id, starts_at])
+  @@index([tenant_id, client_id])
+  @@map("calendar_events")
+}

@@ -5,6 +5,7 @@ import { duerpAlertsJob } from './duerp-alerts.job.js';
 import { bankSyncJob } from './bank-sync.job.js';
 import { reconciliationJob } from './reconciliation.job.js';
 import { dsnMonthlyJob } from './dsn-monthly.job.js';
+import { calendarRemindersJob } from './calendar-reminders.job.js';
 import { registerJob } from './registry.js';
 
 // Vague A2 : expose les jobs cron via HTTP pour scheduler externe
@@ -18,6 +19,7 @@ registerJob(duerpAlertsJob);
 registerJob(bankSyncJob);
 registerJob(reconciliationJob);
 registerJob(dsnMonthlyJob);
+registerJob(calendarRemindersJob);
 
 // Demarrage automatique du tick interne (fallback si pas de scheduler externe)
 let intervalHandle: ReturnType<typeof setInterval> | null = null;

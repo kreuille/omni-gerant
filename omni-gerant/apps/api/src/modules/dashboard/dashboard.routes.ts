@@ -37,4 +37,25 @@ export async function dashboardRoutes(app: FastifyInstance) {
       return result.value;
     },
   );
+
+  // H1 : GET /api/dashboard/analytics — P&L + cash-flow previsionnel + top clients/fournisseurs + DSO/DPO
+  app.get(
+    '/api/dashboard/analytics',
+    { preHandler: [...preHandlers, requirePermission('dashboard', 'read')] },
+    async (request, reply) => {
+      try {
+        const { pnl_months, forecast_days } = request.query as { pnl_months?: string; forecast_days?: string };
+        const { computeAnalytics } = await import('./analytics.service.js');
+        const data = await computeAnalytics(
+          request.auth.tenant_id,
+          new Date(),
+          Math.max(3, Math.min(24, Number(pnl_months ?? 12))),
+          Math.max(30, Math.min(180, Number(forecast_days ?? 90))),
+        );
+        return data;
+      } catch (e) {
+        return reply.status(500).send({ error: { code: 'INTERNAL_ERROR', message: e instanceof Error ? e.message : 'unknown' } });
+      }
+    },
+  );
 }

@@ -89,6 +89,20 @@ export async function quoteRoutes(app: FastifyInstance) {
 
   const preHandlers = [authenticate, injectTenant];
 
+  // H2 : GET /api/quotes/pipeline — kanban + stats
+  app.get(
+    '/api/quotes/pipeline',
+    { preHandler: [...preHandlers, requirePermission('quote', 'read')] },
+    async (request, reply) => {
+      try {
+        const { getPipeline } = await import('./pipeline.service.js');
+        return await getPipeline(request.auth.tenant_id);
+      } catch (e) {
+        return reply.status(500).send({ error: { code: 'INTERNAL_ERROR', message: e instanceof Error ? e.message : 'unknown' } });
+      }
+    },
+  );
+
   // POST /api/quotes
   app.post(
     '/api/quotes',
