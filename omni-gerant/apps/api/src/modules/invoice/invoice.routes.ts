@@ -5,6 +5,8 @@ import { createDocumentNumberGenerator, createInMemoryNumberRepo, createPrismaNu
 import { createPrismaInvoiceRepository } from './invoice.repository.js';
 import { authenticate, requirePermission } from '../../plugins/auth.js';
 import { injectTenant } from '../../plugins/tenant.js';
+import { createEmailService, createDefaultEmailProvider } from '../../lib/email.js';
+import { invoiceSentHtml, invoiceSentText } from '../../lib/email-templates/invoice-sent.js';
 
 // BUSINESS RULE [CDC-2.1]: Endpoints factures
 
@@ -63,6 +65,115 @@ export async function invoiceRoutes(app: FastifyInstance) {
       const result = await invoiceService.getById(id, request.auth.tenant_id);
       if (!result.ok) return reply.status(404).send({ error: result.error });
       return result.value;
+    },
+  );
+
+  // POST /api/invoices/:id/send — envoie la facture par email avec PDF en piece jointe
+  // BUSINESS RULE [CDC-2.1 / Vague A1] : Email transactionnel devis/facture
+  const emailService = createEmailService(createDefaultEmailProvider());
+  app.post(
+    '/api/invoices/:id/send',
+    { preHandler: [...preHandlers, requirePermission('invoice', 'update')], schema: { body: { type: 'object', additionalProperties: true } } },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const body = (request.body ?? {}) as { recipient_email?: string; include_pdf?: boolean };
+
+      const { prisma } = await import('@zenadmin/db');
+      const invoice = await prisma.invoice.findFirst({
+        where: { id, tenant_id: request.auth.tenant_id, deleted_at: null },
+        include: { client: true, lines: true },
+      });
+      if (!invoice) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Facture introuvable' } });
+
+      const tenant = await prisma.tenant.findUnique({ where: { id: request.auth.tenant_id } });
+      if (!tenant) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Tenant introuvable' } });
+
+      const recipientEmail = body.recipient_email?.trim() || invoice.client?.email;
+      if (!recipientEmail) {
+        return reply.status(400).send({
+          error: { code: 'VALIDATION_ERROR', message: 'Aucune adresse email destinataire. Renseignez recipient_email ou mettez à jour le client.' },
+        });
+      }
+
+      const formatCents = (c: number) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(c / 100);
+      const addr = tenant.address as { line1?: string; zip?: string; city?: string } | null;
+      const tenantSettings = (tenant.settings ?? {}) as Record<string, string | undefined>;
+      const clientName = invoice.client?.company_name ?? ([invoice.client?.first_name, invoice.client?.last_name].filter(Boolean).join(' ') || 'Client');
+      const paymentTerms = invoice.payment_terms === 0 ? 'Paiement comptant' : `${invoice.payment_terms} jours`;
+
+      // Generer le PDF/A-3 Factur-X si include_pdf (defaut true)
+      let attachments;
+      if (body.include_pdf !== false) {
+        try {
+          const { generateFacturxXml, getTypeCode } = await import('./facturx/facturx-xml.js');
+          const { generateFacturxPdf } = await import('./facturx/facturx-pdf.js');
+          const taxGroups = new Map<number, { base: number; tva: number }>();
+          for (const l of invoice.lines) {
+            const rate = l.tva_rate / 100;
+            const ex = taxGroups.get(rate) ?? { base: 0, tva: 0 };
+            ex.base += l.total_ht_cents;
+            ex.tva += Math.round(l.total_ht_cents * rate / 100);
+            taxGroups.set(rate, ex);
+          }
+          const xml = generateFacturxXml({
+            number: invoice.number, type_code: getTypeCode(invoice.type),
+            issue_date: invoice.issue_date, due_date: invoice.due_date, currency: 'EUR',
+            seller: { name: tenant.name, siret: tenant.siret ?? undefined, address_line: addr?.line1 ?? tenant.name, zip_code: addr?.zip ?? '', city: addr?.city ?? '', country_code: 'FR' },
+            buyer: { name: clientName, siret: invoice.client?.siret ?? undefined, address_line: invoice.client?.address_line1 ?? '', zip_code: invoice.client?.zip_code ?? '', city: invoice.client?.city ?? '', country_code: invoice.client?.country ?? 'FR' },
+            lines: invoice.lines.map((l) => ({ position: l.position, label: l.label, quantity: Number(l.quantity), unit: l.unit, unit_price_cents: l.unit_price_cents, tva_rate: l.tva_rate / 100, total_ht_cents: l.total_ht_cents })),
+            tax_groups: [...taxGroups.entries()].map(([rate, v]) => ({ tva_rate: rate, base_ht_cents: v.base, tva_cents: v.tva })),
+            total_ht_cents: invoice.total_ht_cents, total_tva_cents: invoice.total_tva_cents, total_ttc_cents: invoice.total_ttc_cents,
+            payment_terms_days: invoice.payment_terms, profile: 'EN 16931',
+          });
+          const pdfResult = await generateFacturxPdf({
+            employer: { name: tenant.name, siret: tenant.siret, address: addr?.line1 ?? null, nafCode: tenant.naf_code },
+            client: { name: clientName, siret: invoice.client?.siret ?? null, address: [invoice.client?.address_line1, invoice.client?.zip_code, invoice.client?.city].filter(Boolean).join(', ') },
+            number: invoice.number, issueDate: invoice.issue_date, dueDate: invoice.due_date,
+            lines: invoice.lines.map((l) => ({ label: l.label, quantity: Number(l.quantity), unitPriceCents: l.unit_price_cents, tvaRate: l.tva_rate, totalHtCents: l.total_ht_cents })),
+            totalHtCents: invoice.total_ht_cents, totalTvaCents: invoice.total_tva_cents, totalTtcCents: invoice.total_ttc_cents,
+          }, xml, 'EN 16931');
+          if (pdfResult.ok) {
+            attachments = [{
+              filename: `${invoice.number}.pdf`,
+              content: Buffer.from(pdfResult.value.pdf_buffer).toString('base64'),
+              content_type: 'application/pdf',
+            }];
+          }
+        } catch (e) {
+          request.log.warn({ err: e }, 'invoice pdf attachment skipped');
+        }
+      }
+
+      const templateData = {
+        client_name: clientName,
+        company_name: tenantSettings.company_name ?? tenant.name,
+        invoice_number: invoice.number,
+        issue_date: invoice.issue_date.toLocaleDateString('fr-FR'),
+        due_date: invoice.due_date?.toLocaleDateString('fr-FR') ?? '—',
+        total_ttc: formatCents(invoice.total_ttc_cents),
+        total_ht: formatCents(invoice.total_ht_cents),
+        payment_terms: paymentTerms,
+        iban: tenantSettings.iban,
+        bic: tenantSettings.bic,
+        company_siret: tenant.siret ?? undefined,
+        company_address: addr ? `${addr.line1}, ${addr.zip} ${addr.city}` : undefined,
+        company_phone: tenantSettings.phone,
+        company_email: tenantSettings.email,
+      };
+
+      const emailResult = await emailService.send({
+        to: recipientEmail,
+        subject: `Facture ${invoice.number} de ${templateData.company_name}`,
+        html: invoiceSentHtml(templateData),
+        text: invoiceSentText(templateData),
+        attachments,
+      });
+
+      if (!emailResult.ok) {
+        return reply.status(500).send({ error: emailResult.error });
+      }
+
+      return { sent: true, recipient: recipientEmail, message_id: emailResult.value.messageId, attached_pdf: !!attachments };
     },
   );
 

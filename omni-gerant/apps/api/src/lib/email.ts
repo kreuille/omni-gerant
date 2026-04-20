@@ -4,6 +4,12 @@ import type { AppError } from '@zenadmin/shared';
 
 // BUSINESS RULE [CDC-2.1]: Envoi email transactionnel (Resend ou SMTP)
 
+export interface EmailAttachment {
+  filename: string;
+  content: string; // base64
+  content_type?: string;
+}
+
 export interface EmailOptions {
   to: string;
   subject: string;
@@ -11,6 +17,7 @@ export interface EmailOptions {
   text?: string;
   from?: string;
   reply_to?: string;
+  attachments?: EmailAttachment[];
 }
 
 export interface EmailProvider {
@@ -68,6 +75,11 @@ export function createResendEmailProvider(config: {
             html: options.html,
             text: options.text,
             reply_to: options.reply_to ?? config.replyTo,
+            attachments: options.attachments?.map((a) => ({
+              filename: a.filename,
+              content: a.content,
+              content_type: a.content_type,
+            })),
           }),
         });
 

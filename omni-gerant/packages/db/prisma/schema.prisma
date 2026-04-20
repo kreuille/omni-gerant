@@ -1237,3 +1237,21 @@ model HrDsnFiling {
   @@index([tenant_id, period_year, period_month])
   @@map("hr_dsn_filings")
 }
+
+// Vague A3 : Notifications in-app
+model Notification {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id  String   @db.Uuid
+  user_id    String?  @db.Uuid // null = pour tous les users du tenant
+  level      String   @default("info") // info | success | warning | danger
+  category   String   // duerp | invoice | training | billing | system
+  title      String
+  body       String?  @db.Text
+  link       String?  // URL relative, ex: /legal/duerp/abc123
+  read_at    DateTime?
+  created_at DateTime @default(now())
+
+  @@index([tenant_id, user_id, read_at])
+  @@index([tenant_id, created_at(sort: Desc)])
+  @@map("notifications")
+}

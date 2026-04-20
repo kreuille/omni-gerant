@@ -35,6 +35,8 @@ import { hrRoutes } from './modules/hr/hr.routes.js';
 import { clientRoutes } from './modules/client/client.routes.js';
 import { settingsRoutes } from './modules/settings/settings.routes.js';
 import { ocrRoutes } from './modules/ocr/ocr.routes.js';
+import { notificationRoutes } from './modules/notification/notification.routes.js';
+import { jobsRoutes, startInternalJobTicker } from './jobs/jobs.routes.js';
 import { createRequestContext, runWithContext } from './middleware/request-context.js';
 
 export async function buildApp() {
@@ -110,6 +112,9 @@ export async function buildApp() {
   await app.register(clientRoutes);
   await app.register(settingsRoutes);
   await app.register(ocrRoutes);
+  await app.register(notificationRoutes);
+  await app.register(jobsRoutes);
+  startInternalJobTicker();
   const { billingRoutes } = await import('./modules/billing/billing.routes.js');
   await app.register(billingRoutes);
 
