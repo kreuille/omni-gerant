@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { MobileNav } from './mobile-nav';
+import { NotificationsBell } from './notifications-bell';
 
 interface StoredUser {
   first_name?: string;
@@ -72,8 +73,9 @@ export function Header() {
             <h2 className="text-sm font-semibold text-gray-700">{companyName}</h2>
           </div>
 
-          {/* User menu */}
+          {/* User menu + notifications */}
           <div className="flex items-center gap-3">
+            <NotificationsBell />
             {userName && (
               <span className="hidden sm:block text-sm text-gray-600">{userName}</span>
             )}
