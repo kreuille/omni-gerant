@@ -87,6 +87,10 @@ export async function buildApp() {
   const { registerObservabilityPlugin } = await import('./plugins/observability.js');
   registerObservabilityPlugin(app);
 
+  // E2 : Sentry optionnel (si SENTRY_DSN defini)
+  const { registerSentryPlugin } = await import('./plugins/sentry.js');
+  registerSentryPlugin(app);
+
   // Error handler
   registerErrorHandler(app);
 

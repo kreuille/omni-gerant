@@ -17,6 +17,36 @@ export async function purchaseRoutes(app: FastifyInstance) {
   const purchaseService = createPurchaseService(repo);
   const preHandlers = [authenticate, injectTenant];
 
+  // E3 : POST /api/purchases/categorize — suggere la categorie PCG pour un achat
+  // Body : { label, supplier_name?, description?, amount_cents?, use_llm? }
+  app.post(
+    '/api/purchases/categorize',
+    { preHandler: [...preHandlers, requirePermission('purchase', 'read')] },
+    async (request, reply) => {
+      const body = (request.body ?? {}) as {
+        label?: string;
+        supplier_name?: string;
+        description?: string;
+        amount_cents?: number;
+        use_llm?: boolean;
+      };
+      if (!body.label || body.label.trim().length === 0) {
+        return reply.status(400).send({
+          error: { code: 'VALIDATION_ERROR', message: 'Le champ label est obligatoire.' },
+        });
+      }
+      const { categorizeHeuristic, categorizeWithLlm } = await import('./categorization.service.js');
+      const fn = body.use_llm ? categorizeWithLlm : (async (i: Parameters<typeof categorizeHeuristic>[0]) => categorizeHeuristic(i));
+      const result = await fn({
+        label: body.label,
+        supplier_name: body.supplier_name,
+        description: body.description,
+        amount_cents: body.amount_cents,
+      });
+      return result;
+    },
+  );
+
   // POST /api/purchases
   app.post(
     '/api/purchases',
