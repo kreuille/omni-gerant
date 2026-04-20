@@ -2093,3 +2093,77 @@ model CouponRedemption {
   @@index([tenant_id, client_id])
   @@map("coupon_redemptions")
 }
+
+// ============================================================================
+// Vague V - Inventaire mobile (scanner + bons de reception + inventaires)
+// ============================================================================
+
+model StockReceipt {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id       String    @db.Uuid
+  number          String    // BR-YYYY-NNNN
+  purchase_id     String?   @db.Uuid              // achat associe (optionnel)
+  supplier_id     String?   @db.Uuid
+  warehouse_id    String?   @db.Uuid
+  received_by     String    @db.Uuid              // user qui a saisi
+  received_at     DateTime  @default(now())
+  status          String    @default("draft")     // draft | received | partial | cancelled
+  notes           String?
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  @@unique([tenant_id, number])
+  @@index([tenant_id, status])
+  @@index([tenant_id, purchase_id])
+  @@map("stock_receipts")
+}
+
+model StockReceiptLine {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  receipt_id      String    @db.Uuid
+  product_id      String    @db.Uuid
+  variant_id      String?   @db.Uuid
+  expected_qty    Int       @default(0)
+  received_qty    Int
+  unit_cost_cents Int       @default(0)
+  batch_number    String?
+  expiry_date     DateTime?
+
+  @@index([receipt_id])
+  @@map("stock_receipt_lines")
+}
+
+model InventoryCount {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id       String    @db.Uuid
+  number          String    // INV-YYYY-NNNN
+  warehouse_id    String?   @db.Uuid
+  status          String    @default("open")      // open | counting | reviewed | applied | cancelled
+  started_at      DateTime  @default(now())
+  completed_at    DateTime?
+  applied_at      DateTime?
+  started_by      String    @db.Uuid
+  notes           String?
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  @@unique([tenant_id, number])
+  @@index([tenant_id, status])
+  @@map("inventory_counts")
+}
+
+model InventoryCountLine {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  count_id        String   @db.Uuid
+  product_id      String   @db.Uuid
+  variant_id      String?  @db.Uuid
+  expected_qty    Int      @default(0)
+  counted_qty     Int?
+  variance        Int?                 // counted - expected (calcule apres)
+  counted_at      DateTime?
+  counted_by      String?  @db.Uuid
+  notes           String?
+
+  @@index([count_id])
+  @@map("inventory_count_lines")
+}

@@ -6,6 +6,18 @@ Versionnage : [SemVer](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Vague V — Inventaire mobile
+- **V1 Scanner** : `POST /api/stock/scan` — match SKU variant, fallback
+  reference produit, retour stock_qty pour l'app mobile.
+- **V2 Bons de reception** : `StockReceipt` BR-YYYY-NNNN + lignes,
+  auto-increment `variant.stock_qty` + `WarehouseStock` + creation
+  `StockMovement` direction=in, statut received|partial selon ecart
+  expected/received.
+- **V3 Inventaires tournants** : `InventoryCount` INV-YYYY-NNNN, generation
+  auto des lignes depuis variantes actives, endpoint `/count` pour saisir,
+  `/apply` qui met a jour `variant.stock_qty` + cree `StockMovement` adjust
+  pour chaque ecart non nul.
+
 ### Vague U — Fidelisation
 - **U1 Programme points** : `LoyaltyAccount` par client + `LoyaltyTransaction`
   (earn/redeem/adjust/expire). Endpoint auto-credit depuis facture payee
