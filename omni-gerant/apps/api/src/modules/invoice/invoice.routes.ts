@@ -95,6 +95,155 @@ export async function invoiceRoutes(app: FastifyInstance) {
     },
   );
 
+  // F1 : GET /api/invoices/:id/facturx.pdf — genere et retourne PDF/A-3 avec XML Factur-X embedded
+  app.get(
+    '/api/invoices/:id/facturx.pdf',
+    { preHandler: [...preHandlers, requirePermission('invoice', 'read')] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const { profile } = request.query as { profile?: 'MINIMUM' | 'BASIC WL' | 'BASIC' | 'EN 16931' | 'EXTENDED' };
+      const chosenProfile = profile ?? 'EN 16931';
+
+      const { prisma } = await import('@zenadmin/db');
+      const invoice = await prisma.invoice.findFirst({
+        where: { id, tenant_id: request.auth.tenant_id, deleted_at: null },
+        include: { lines: true, client: true },
+      });
+      if (!invoice) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Facture introuvable' } });
+      const tenant = await prisma.tenant.findUnique({ where: { id: request.auth.tenant_id } });
+      if (!tenant) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Tenant introuvable' } });
+
+      const { generateFacturxXml, getTypeCode } = await import('./facturx/facturx-xml.js');
+      const { generateFacturxPdf } = await import('./facturx/facturx-pdf.js');
+
+      const addr = tenant.address as { line1?: string; zip?: string; city?: string; country?: string } | null;
+      const clientAddr = {
+        line1: invoice.client?.address_line1 ?? '',
+        zip: invoice.client?.zip_code ?? '',
+        city: invoice.client?.city ?? '',
+        country: invoice.client?.country ?? 'FR',
+      };
+
+      const taxGroups = new Map<number, { base: number; tva: number }>();
+      for (const l of invoice.lines) {
+        const rate = l.tva_rate / 100;
+        const existing = taxGroups.get(rate) ?? { base: 0, tva: 0 };
+        existing.base += l.total_ht_cents;
+        existing.tva += Math.round(l.total_ht_cents * rate / 100);
+        taxGroups.set(rate, existing);
+      }
+
+      const xml = generateFacturxXml({
+        number: invoice.number,
+        type_code: getTypeCode(invoice.type),
+        issue_date: invoice.issue_date,
+        due_date: invoice.due_date,
+        currency: 'EUR',
+        seller: {
+          name: tenant.name,
+          siret: tenant.siret ?? undefined,
+          vat_number: undefined,
+          address_line: addr?.line1 ?? tenant.name,
+          zip_code: addr?.zip ?? '',
+          city: addr?.city ?? '',
+          country_code: addr?.country ?? 'FR',
+        },
+        buyer: {
+          name: invoice.client?.company_name ?? ([invoice.client?.first_name, invoice.client?.last_name].filter(Boolean).join(' ') || 'Client'),
+          siret: invoice.client?.siret ?? undefined,
+          address_line: clientAddr.line1,
+          zip_code: clientAddr.zip,
+          city: clientAddr.city,
+          country_code: clientAddr.country,
+        },
+        lines: invoice.lines.map((l) => ({
+          position: l.position,
+          label: l.label,
+          quantity: Number(l.quantity),
+          unit: l.unit,
+          unit_price_cents: l.unit_price_cents,
+          tva_rate: l.tva_rate / 100,
+          total_ht_cents: l.total_ht_cents,
+        })),
+        tax_groups: [...taxGroups.entries()].map(([rate, v]) => ({ tva_rate: rate, base_ht_cents: v.base, tva_cents: v.tva })),
+        total_ht_cents: invoice.total_ht_cents,
+        total_tva_cents: invoice.total_tva_cents,
+        total_ttc_cents: invoice.total_ttc_cents,
+        payment_terms_days: invoice.payment_terms,
+        profile: chosenProfile,
+      });
+
+      const pdfResult = await generateFacturxPdf({
+        employer: { name: tenant.name, siret: tenant.siret, address: addr?.line1 ?? null, nafCode: tenant.naf_code },
+        client: {
+          name: invoice.client?.company_name ?? ([invoice.client?.first_name, invoice.client?.last_name].filter(Boolean).join(' ') || 'Client'),
+          siret: invoice.client?.siret ?? null,
+          address: [clientAddr.line1, clientAddr.zip, clientAddr.city].filter(Boolean).join(', '),
+        },
+        number: invoice.number,
+        issueDate: invoice.issue_date,
+        dueDate: invoice.due_date,
+        lines: invoice.lines.map((l) => ({ label: l.label, quantity: Number(l.quantity), unitPriceCents: l.unit_price_cents, tvaRate: l.tva_rate, totalHtCents: l.total_ht_cents })),
+        totalHtCents: invoice.total_ht_cents,
+        totalTvaCents: invoice.total_tva_cents,
+        totalTtcCents: invoice.total_ttc_cents,
+      }, xml, chosenProfile);
+
+      if (!pdfResult.ok) return reply.status(500).send({ error: pdfResult.error });
+      return reply
+        .type('application/pdf')
+        .header('content-disposition', `inline; filename="${pdfResult.value.filename}"`)
+        .header('x-facturx-profile', pdfResult.value.profile)
+        .header('x-pdfa-version', pdfResult.value.pdfaVersion)
+        .send(pdfResult.value.pdf_buffer);
+    },
+  );
+
+  // F1 : GET /api/invoices/:id/facturx.xml — XML seul
+  app.get(
+    '/api/invoices/:id/facturx.xml',
+    { preHandler: [...preHandlers, requirePermission('invoice', 'read')] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const { profile } = request.query as { profile?: 'MINIMUM' | 'BASIC WL' | 'BASIC' | 'EN 16931' | 'EXTENDED' };
+      const { prisma } = await import('@zenadmin/db');
+      const invoice = await prisma.invoice.findFirst({
+        where: { id, tenant_id: request.auth.tenant_id, deleted_at: null },
+        include: { lines: true, client: true },
+      });
+      if (!invoice) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Facture introuvable' } });
+      const tenant = await prisma.tenant.findUnique({ where: { id: request.auth.tenant_id } });
+      if (!tenant) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Tenant introuvable' } });
+
+      const { generateFacturxXml, getTypeCode } = await import('./facturx/facturx-xml.js');
+      const addr = tenant.address as { line1?: string; zip?: string; city?: string; country?: string } | null;
+      const xml = generateFacturxXml({
+        number: invoice.number,
+        type_code: getTypeCode(invoice.type),
+        issue_date: invoice.issue_date,
+        due_date: invoice.due_date,
+        currency: 'EUR',
+        seller: { name: tenant.name, address_line: addr?.line1 ?? '', zip_code: addr?.zip ?? '', city: addr?.city ?? '', country_code: addr?.country ?? 'FR', siret: tenant.siret ?? undefined },
+        buyer: {
+          name: invoice.client?.company_name ?? 'Client',
+          siret: invoice.client?.siret ?? undefined,
+          address_line: invoice.client?.address_line1 ?? '',
+          zip_code: invoice.client?.zip_code ?? '',
+          city: invoice.client?.city ?? '',
+          country_code: invoice.client?.country ?? 'FR',
+        },
+        lines: invoice.lines.map((l) => ({ position: l.position, label: l.label, quantity: Number(l.quantity), unit: l.unit, unit_price_cents: l.unit_price_cents, tva_rate: l.tva_rate / 100, total_ht_cents: l.total_ht_cents })),
+        tax_groups: [{ tva_rate: 20, base_ht_cents: invoice.total_ht_cents, tva_cents: invoice.total_tva_cents }],
+        total_ht_cents: invoice.total_ht_cents,
+        total_tva_cents: invoice.total_tva_cents,
+        total_ttc_cents: invoice.total_ttc_cents,
+        payment_terms_days: invoice.payment_terms,
+        profile: profile ?? 'EN 16931',
+      });
+      return reply.type('application/xml').send(xml);
+    },
+  );
+
   // F5 : POST /api/invoices/:id/sign — signature eIDAS simple
   app.post(
     '/api/invoices/:id/sign',
