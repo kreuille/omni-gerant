@@ -11,17 +11,25 @@ export interface PayslipPdfContext {
     siret?: string | null;
     address?: string | null;
     nafCode?: string | null;
-    urssafRef?: string | null;
+    urssafRef?: string | null;       // nouveau : ref URSSAF obligatoire R3243-1
+    carsatRef?: string | null;       // nouveau : ref CARSAT obligatoire
+    conventionCollective?: string | null; // nouveau : obligatoire
+    idcc?: string | null;                // code IDCC convention
+    tvaNumber?: string | null;
+    atmpRateBp?: number;             // taux AT-MP propre entreprise
   };
   employee: {
     firstName: string;
     lastName: string;
     position?: string | null;
-    classification?: string | null;
+    classification?: string | null;  // nouveau : ex "Cadre", "Employe"
+    coefficient?: string | null;     // nouveau : grille conventionnelle
+    echelon?: string | null;         // nouveau
     socialSecurityNumber?: string | null;
     startDate?: Date | null;
     contractType?: string | null;
   };
+  paymentDate?: Date | null;          // nouveau : date paiement
   payslip: PayslipRecord & {
     mutual_employee_cents?: number;
     prevoyance_employee_cents?: number;
@@ -96,6 +104,9 @@ export async function generatePayslipPdf(ctx: PayslipPdfContext): Promise<Buffer
   if (ctx.employer.address) { page.drawText(clean(ctx.employer.address).slice(0, 90), { x: left, y, size: 9, font }); y -= 11; }
   if (ctx.employer.siret) { page.drawText(`SIRET : ${ctx.employer.siret}`, { x: left, y, size: 9, font }); y -= 11; }
   if (ctx.employer.nafCode) { page.drawText(`Code APE : ${ctx.employer.nafCode}`, { x: left, y, size: 9, font }); y -= 11; }
+  if (ctx.employer.tvaNumber) { page.drawText(`TVA : ${ctx.employer.tvaNumber}`, { x: left, y, size: 9, font }); y -= 11; }
+  if (ctx.employer.urssafRef) { page.drawText(clean(`URSSAF : ${ctx.employer.urssafRef}`), { x: left, y, size: 8, font }); y -= 10; }
+  if (ctx.employer.carsatRef) { page.drawText(clean(`CARSAT : ${ctx.employer.carsatRef}`), { x: left, y, size: 8, font }); y -= 10; }
 
   // Salarie (colonne droite)
   let ye = height - 62;
@@ -105,12 +116,25 @@ export async function generatePayslipPdf(ctx: PayslipPdfContext): Promise<Buffer
   page.drawText(clean(`${ctx.employee.lastName.toUpperCase()} ${ctx.employee.firstName}`), { x: right, y: ye, size: 11, font: bold });
   ye -= 12;
   if (ctx.employee.position) { page.drawText(clean(`Emploi : ${ctx.employee.position}`), { x: right, y: ye, size: 9, font }); ye -= 11; }
+  if (ctx.employee.classification) {
+    const classLine = [ctx.employee.classification, ctx.employee.coefficient && `coef ${ctx.employee.coefficient}`, ctx.employee.echelon && `ech ${ctx.employee.echelon}`].filter(Boolean).join(' - ');
+    page.drawText(clean(`Classification : ${classLine}`), { x: right, y: ye, size: 8, font }); ye -= 10;
+  }
   if (ctx.employee.socialSecurityNumber) { page.drawText(`N SS : ${ctx.employee.socialSecurityNumber}`, { x: right, y: ye, size: 9, font }); ye -= 11; }
   if (ctx.employee.contractType) { page.drawText(clean(`Contrat : ${ctx.employee.contractType.toUpperCase()}`), { x: right, y: ye, size: 9, font }); ye -= 11; }
   if (ctx.employee.startDate) {
     const years = Math.floor((Date.now() - ctx.employee.startDate.getTime()) / (365.25 * 24 * 3600 * 1000));
-    page.drawText(clean(`Anciennete : ${years} an(s)`), { x: right, y: ye, size: 9, font });
-    ye -= 11;
+    page.drawText(clean(`Entree : ${ctx.employee.startDate.toLocaleDateString('fr-FR')} — Anciennete : ${years} an(s)`), { x: right, y: ye, size: 8, font });
+    ye -= 10;
+  }
+
+  // Bandeau convention collective (obligatoire R3243-1)
+  y = Math.min(y, ye) - 8;
+  if (ctx.employer.conventionCollective || ctx.employer.idcc) {
+    const ccLine = [ctx.employer.conventionCollective, ctx.employer.idcc && `IDCC ${ctx.employer.idcc}`].filter(Boolean).join(' - ');
+    page.drawRectangle({ x: left - 2, y: y - 3, width: width - 2 * left + 4, height: 12, color: rgb(0.95, 0.95, 0.98) });
+    page.drawText(clean(`Convention collective : ${ccLine}`), { x: left, y, size: 8, font });
+    y -= 14;
   }
 
   y = Math.min(y, ye) - 10;
@@ -186,20 +210,41 @@ export async function generatePayslipPdf(ctx: PayslipPdfContext): Promise<Buffer
   if (p.indemnity_cents > 0) drawRow('Indemnites non soumises', '', '', eur(p.indemnity_cents));
   if (p.tr_count && p.tr_count > 0 && p.tr_employee_cents && p.tr_employee_cents > 0) drawRow('Titres restaurants (part salariale)', `${p.tr_count} titres`, '-', '-' + eur(p.tr_employee_cents));
 
+  // Net social (obligatoire depuis 2023) : net avant CSG non deductible et mutuelle patronale
+  const netSocial = p.gross_total_cents - p.urssaf_employee_cents - p.retirement_employee_cents - p.unemployment_employee_cents;
+  drawRow('Net social (reference aides sociales)', '', '', eur(netSocial));
+
   // NET A PAYER mis en valeur
   y -= 4;
   page.drawRectangle({ x: left - 2, y: y - 4, width: width - 2 * left + 4, height: 18, color: rgb(0.9, 1, 0.9) });
   drawRow('NET A PAYER', '', '', eur(p.net_to_pay_cents), true);
+  // Date de paiement
+  if (ctx.paymentDate) {
+    page.drawText(clean(`Paye par virement le ${ctx.paymentDate.toLocaleDateString('fr-FR')}`), { x: left, y, size: 8, font, color: rgb(0.3, 0.3, 0.3) });
+    y -= 11;
+  }
   y -= 10;
 
-  // Charges patronales
-  page.drawText(clean('CHARGES PATRONALES (info)'), { x: left, y, size: 9, font: bold, color: rgb(0.4, 0.4, 0.4) });
-  y -= 12;
-  page.drawText(`Total patronal : ${eur(p.total_employer_charges_cents)}`, { x: left, y, size: 8, font });
+  // Charges patronales — detail par rubrique R3243-1 (depuis 2018)
+  page.drawText(clean('CHARGES PATRONALES — Detail par rubrique'), { x: left, y, size: 9, font: bold, color: rgb(0.3, 0.3, 0.3) });
+  y -= 13;
+  const atmpRate = (ctx.employer.atmpRateBp ?? 150) / 10000;
+  drawRow('Sante (maladie-vieillesse URSSAF)', eur(gross), '20,60%', eur(p.urssaf_employer_cents));
+  drawRow('AT-MP (accident travail)', eur(gross), `${(atmpRate * 100).toFixed(2)}%`, eur(Math.round(gross * atmpRate)));
+  drawRow('Retraite AGIRC-ARRCO T1 patronale', eur(gross), '6,01%', eur(p.retirement_employer_cents));
+  drawRow('Assurance chomage', eur(gross), '4,05%', eur(p.unemployment_employer_cents));
+  if (p.mutual_employer_cents > 0) drawRow('Mutuelle patronale', eur(gross), '-', eur(p.mutual_employer_cents));
+  if ((p.prevoyance_employer_cents ?? 0) > 0) drawRow('Prevoyance patronale', eur(gross), '-', eur(p.prevoyance_employer_cents ?? 0));
+  if ((p.tr_employer_cents ?? 0) > 0) drawRow('TR part patronale (exoneree)', '-', '-', eur(p.tr_employer_cents ?? 0));
   if (p.fillon_reduction_cents > 0) {
-    page.drawText(`(incl. reduction Fillon -${eur(p.fillon_reduction_cents)})`, { x: 260, y, size: 8, font, color: rgb(0.5, 0.5, 0.5) });
+    drawRow('Reduction generale (Fillon)', '-', '-', '-' + eur(p.fillon_reduction_cents));
   }
-  y -= 14;
+  drawRow('TOTAL CHARGES PATRONALES', '', '', eur(p.total_employer_charges_cents), true);
+  y -= 3;
+  // Total verse employeur (brut + patronal) — obligatoire 2018
+  page.drawRectangle({ x: left - 2, y: y - 4, width: width - 2 * left + 4, height: 16, color: rgb(0.95, 0.95, 1) });
+  drawRow('TOTAL VERSE PAR L\'EMPLOYEUR (cout total)', '', '', eur(gross + p.total_employer_charges_cents), true);
+  y -= 6;
 
   // Conges et cumuls
   if ((p.cp_balance_end ?? 0) > 0 || (p.rtt_balance_end ?? 0) > 0) {

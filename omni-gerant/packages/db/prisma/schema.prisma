@@ -1093,6 +1093,13 @@ model HrPayrollSettings {
   // V6 : taux AT-MP specifique notifie par CARSAT
   atmp_rate_bp Int @default(150) // 1.5% par defaut
 
+  // Conformite legale bulletin (R3243-1)
+  urssaf_ref             String? // ex : "URSSAF Ile-de-France - 750000000000000"
+  carsat_ref             String? // reference affiliation CARSAT/CGSS
+  convention_collective  String? // ex : "Convention collective nationale HCR"
+  idcc                   String? // Code IDCC 4 chiffres ex : "1979"
+  payment_day_of_month   Int     @default(28) // jour de paiement (25, 28, 30...)
+
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 

@@ -489,23 +489,37 @@ export async function hrRoutes(app: FastifyInstance) {
       const { formatAddress } = await import('./payroll/address-format.js');
       const { generatePayslipPdf } = await import('./payroll/payroll-pdf-binary.js');
 
+      // Charger settings paie (URSSAF/CARSAT/CC/AT-MP)
+      const settings = await prisma.hrPayrollSettings.findUnique({ where: { tenant_id: request.auth.tenant_id } });
+      // Date de paiement : jour configure du mois suivant la periode
+      const paymentDay = settings?.payment_day_of_month ?? 28;
+      const paymentDate = new Date(payslip.period_year, payslip.period_month, Math.min(paymentDay, 28));
+
       const pdfBuffer = await generatePayslipPdf({
         employer: {
           name: tenant?.name ?? '',
           siret: tenant?.siret ?? null,
           nafCode: tenant?.naf_code ?? null,
           address: formatAddress(tenant?.address),
+          urssafRef: settings?.urssaf_ref ?? null,
+          carsatRef: settings?.carsat_ref ?? null,
+          conventionCollective: settings?.convention_collective ?? employee?.position?.convention_collective ?? null,
+          idcc: settings?.idcc ?? employee?.position?.code_idcc ?? null,
+          atmpRateBp: settings?.atmp_rate_bp ?? 150,
         },
         employee: {
           firstName: employee?.first_name ?? '',
           lastName: employee?.last_name ?? '',
           position: employee?.position?.name ?? null,
-          classification: null,
+          classification: employee?.position?.classification ?? null,
+          coefficient: employee?.position?.coefficient ?? null,
+          echelon: employee?.position?.echelon ?? null,
           socialSecurityNumber: employee?.social_security_number ?? null,
           startDate: employee?.start_date ?? null,
           contractType: employee?.contract_type ?? null,
         },
         payslip,
+        paymentDate,
       });
 
       const filename = `bulletin-${employee?.last_name ?? 'salarie'}-${payslip.period_year}-${String(payslip.period_month).padStart(2, '0')}.pdf`;
@@ -749,6 +763,11 @@ export async function hrRoutes(app: FastifyInstance) {
         tr_face_value_cents: Math.max(0, Math.round(Number(body['tr_face_value_cents'] ?? 0))),
         tr_employer_share_bp: Math.max(5000, Math.min(6000, Number(body['tr_employer_share_bp'] ?? 5000))),
         atmp_rate_bp: Math.max(0, Math.min(1500, Number(body['atmp_rate_bp'] ?? 150))),
+        urssaf_ref: typeof body['urssaf_ref'] === 'string' ? body['urssaf_ref'] : null,
+        carsat_ref: typeof body['carsat_ref'] === 'string' ? body['carsat_ref'] : null,
+        convention_collective: typeof body['convention_collective'] === 'string' ? body['convention_collective'] : null,
+        idcc: typeof body['idcc'] === 'string' ? body['idcc'] : null,
+        payment_day_of_month: Math.max(1, Math.min(31, Math.round(Number(body['payment_day_of_month'] ?? 28)))),
       };
       const settings = await prisma.hrPayrollSettings.upsert({
         where: { tenant_id: request.auth.tenant_id },

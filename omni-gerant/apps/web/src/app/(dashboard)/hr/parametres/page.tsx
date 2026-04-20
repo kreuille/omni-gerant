@@ -18,6 +18,12 @@ interface Settings {
   tr_enabled: boolean;
   tr_face_value_cents: number;
   tr_employer_share_bp: number;
+  atmp_rate_bp?: number;
+  urssaf_ref?: string | null;
+  carsat_ref?: string | null;
+  convention_collective?: string | null;
+  idcc?: string | null;
+  payment_day_of_month?: number;
 }
 
 const empty: Settings = {
@@ -29,6 +35,9 @@ const empty: Settings = {
   prevoyance_employee_rate_bp: 0, prevoyance_employer_rate_bp: 0,
   prevoyance_organisme: null,
   tr_enabled: false, tr_face_value_cents: 900, tr_employer_share_bp: 5000,
+  atmp_rate_bp: 150,
+  urssaf_ref: null, carsat_ref: null, convention_collective: null, idcc: null,
+  payment_day_of_month: 28,
 };
 
 export default function ParametresPaiePage() {
@@ -131,6 +140,22 @@ export default function ParametresPaiePage() {
             <Input label="Part patronale (%)" value={bp(s.tr_employer_share_bp)} onChange={(v) => setS({ ...s, tr_employer_share_bp: Math.max(5000, Math.min(6000, Math.round(parseFloat(v || '50') * 100))) })} />
           </div>
         )}
+      </section>
+
+      {/* INFOS OBLIGATOIRES R3243-1 */}
+      <section className="bg-white border border-gray-200 rounded-lg p-5 mb-4">
+        <div className="mb-4">
+          <h2 className="font-semibold text-gray-900">Mentions légales obligatoires (Article R3243-1)</h2>
+          <p className="text-xs text-gray-500">Ces informations apparaissent sur chaque bulletin de paie et sont obligatoires pour la conformité légale.</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <Input label="Référence URSSAF" value={s.urssaf_ref ?? ''} onChange={(v) => setS({ ...s, urssaf_ref: v || null })} placeholder="ex: URSSAF Île-de-France - 750000000000000" full />
+          <Input label="Référence CARSAT / CGSS" value={s.carsat_ref ?? ''} onChange={(v) => setS({ ...s, carsat_ref: v || null })} placeholder="ex: CRAMIF - 93000123" full />
+          <Input label="Convention collective" value={s.convention_collective ?? ''} onChange={(v) => setS({ ...s, convention_collective: v || null })} placeholder="ex: CCN HCR - Hôtels Cafés Restaurants" />
+          <Input label="Code IDCC" value={s.idcc ?? ''} onChange={(v) => setS({ ...s, idcc: v || null })} placeholder="ex: 1979" />
+          <Input label="Taux AT-MP (%)" value={((s.atmp_rate_bp ?? 150) / 100).toFixed(2)} onChange={(v) => setS({ ...s, atmp_rate_bp: Math.round(parseFloat(v || '1.5') * 100) })} placeholder="1.50" />
+          <Input label="Jour de paiement" value={String(s.payment_day_of_month ?? 28)} onChange={(v) => setS({ ...s, payment_day_of_month: parseInt(v, 10) || 28 })} placeholder="28" />
+        </div>
       </section>
 
       <div className="flex items-center gap-3">
