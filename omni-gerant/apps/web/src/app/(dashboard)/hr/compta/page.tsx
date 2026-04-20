@@ -55,9 +55,15 @@ export default function ComptaPage() {
             {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
           </select>
         </div>
-        <a href={`${apiBase}/api/hr/accounting/${year}/${month}/csv`} target="_blank" rel="noopener noreferrer" className="bg-primary-600 text-white px-4 py-1.5 rounded text-sm font-medium hover:bg-primary-700">
+        <button
+          onClick={async () => {
+            const { openAuthenticatedDocument } = await import('@/lib/download');
+            await openAuthenticatedDocument(`/api/hr/accounting/${year}/${month}/csv`, `paie-${year}-${String(month).padStart(2,'0')}.csv`);
+          }}
+          className="bg-primary-600 text-white px-4 py-1.5 rounded text-sm font-medium hover:bg-primary-700"
+        >
           Télécharger CSV
-        </a>
+        </button>
       </div>
 
       {loading && <p className="text-gray-500">Chargement…</p>}

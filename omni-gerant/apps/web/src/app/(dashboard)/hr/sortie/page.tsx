@@ -72,8 +72,12 @@ export default function SortiePage() {
     setLoading(false);
   }
 
-  const apiBase = process.env['NEXT_PUBLIC_API_URL'] ?? 'https://omni-gerant-api.onrender.com';
-  const docUrl = (type: string) => `${apiBase}/api/hr/employees/${employeeId}/termination/${type}?reason=${reason}&date=${terminationDate}`;
+  async function openDoc(type: string, label: string) {
+    const { openAuthenticatedDocument } = await import('@/lib/download');
+    const path = `/api/hr/employees/${employeeId}/termination/${type}?reason=${reason}&date=${terminationDate}`;
+    const r = await openAuthenticatedDocument(path, `${label}-${employeeId.slice(0,8)}.html`);
+    if (!r.ok) setError(r.error ?? 'Erreur téléchargement');
+  }
 
   return (
     <div>
@@ -168,13 +172,13 @@ export default function SortiePage() {
             <h2 className="font-semibold text-gray-900 mb-3">Documents à remettre au salarié</h2>
             <div className="flex flex-wrap gap-3">
               {breakdown.documentsRequis.includes('solde_tout_compte') && (
-                <a href={docUrl('solde')} target="_blank" rel="noopener noreferrer" className="bg-primary-600 text-white px-3 py-2 rounded text-sm font-medium hover:bg-primary-700">Solde de tout compte</a>
+                <button onClick={() => openDoc('solde', 'solde-tout-compte')} className="bg-primary-600 text-white px-3 py-2 rounded text-sm font-medium hover:bg-primary-700">Solde de tout compte</button>
               )}
               {breakdown.documentsRequis.includes('certificat_travail') && (
-                <a href={docUrl('certificat')} target="_blank" rel="noopener noreferrer" className="bg-primary-600 text-white px-3 py-2 rounded text-sm font-medium hover:bg-primary-700">Certificat de travail</a>
+                <button onClick={() => openDoc('certificat', 'certificat-travail')} className="bg-primary-600 text-white px-3 py-2 rounded text-sm font-medium hover:bg-primary-700">Certificat de travail</button>
               )}
               {breakdown.documentsRequis.includes('attestation_pole_emploi') && (
-                <a href={docUrl('attestation-pe')} target="_blank" rel="noopener noreferrer" className="bg-primary-600 text-white px-3 py-2 rounded text-sm font-medium hover:bg-primary-700">Attestation Pôle Emploi</a>
+                <button onClick={() => openDoc('attestation-pe', 'attestation-pole-emploi')} className="bg-primary-600 text-white px-3 py-2 rounded text-sm font-medium hover:bg-primary-700">Attestation Pôle Emploi</button>
               )}
             </div>
             <p className="text-xs text-gray-500 mt-3">

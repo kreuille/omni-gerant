@@ -75,6 +75,12 @@ export default function PaiePage() {
     else setMessage('Erreur : ' + res.error.message);
   }
 
+  async function downloadPdf(id: string, filename: string) {
+    const { openAuthenticatedDocument } = await import('@/lib/download');
+    const r = await openAuthenticatedDocument(`/api/hr/payroll/payslips/${id}/pdf`, filename);
+    if (!r.ok) setMessage('Erreur téléchargement : ' + r.error);
+  }
+
   async function sendPayslip(id: string) {
     const res = await api.post<{ sent: boolean; email: string }>(`/api/hr/payroll/payslips/${id}/send`, {});
     if (res.ok) setMessage(`Envoyé à ${res.value.email}`);
@@ -165,7 +171,7 @@ export default function PaiePage() {
                     <td className="px-4 py-3 text-right text-gray-500 text-xs">{p.fillon_reduction_cents > 0 ? `-${euro(p.fillon_reduction_cents)}` : '—'}</td>
                     <td className="px-4 py-3 text-xs text-gray-500">{p.sent_to_employee_at ? new Date(p.sent_to_employee_at).toLocaleDateString('fr-FR') : '—'}</td>
                     <td className="px-4 py-3 text-right space-x-2">
-                      <a href={`${process.env['NEXT_PUBLIC_API_URL'] ?? 'https://omni-gerant-api.onrender.com'}/api/hr/payroll/payslips/${p.id}/pdf`} target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:underline text-xs font-medium">PDF</a>
+                      <button onClick={() => downloadPdf(p.id, `bulletin-${emp?.lastName ?? 'salarie'}-${p.period_year}-${String(p.period_month).padStart(2, '0')}.html`)} className="text-primary-600 hover:underline text-xs font-medium">PDF</button>
                       <button onClick={() => sendPayslip(p.id)} className="text-blue-600 hover:underline text-xs font-medium">Envoyer</button>
                     </td>
                   </tr>

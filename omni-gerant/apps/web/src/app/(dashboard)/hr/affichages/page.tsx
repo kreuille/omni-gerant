@@ -47,9 +47,15 @@ export default function AffichagesPage() {
           <input type="checkbox" id="erp" checked={isErp} onChange={(e) => setIsErp(e.target.checked)} />
           <label htmlFor="erp" className="text-sm text-gray-700">Etablissement recevant du public (ERP)</label>
         </div>
-        <a href={`${apiBase}/api/hr/postings/checklist${`?headcount=${headcount}&isErp=${isErp}`}`} target="_blank" rel="noopener noreferrer" className="ml-auto bg-primary-600 text-white px-4 py-1.5 rounded text-sm font-medium hover:bg-primary-700">
+        <button
+          onClick={async () => {
+            const { openAuthenticatedDocument } = await import('@/lib/download');
+            await openAuthenticatedDocument(`/api/hr/postings/checklist?headcount=${headcount}&isErp=${isErp}`, 'affichages-obligatoires.html');
+          }}
+          className="ml-auto bg-primary-600 text-white px-4 py-1.5 rounded text-sm font-medium hover:bg-primary-700"
+        >
           Télécharger la checklist imprimable
-        </a>
+        </button>
       </div>
 
       <p className="text-sm text-gray-600 mb-3">{applicable.length} sur {all.length} applicable(s) à votre entreprise.</p>
