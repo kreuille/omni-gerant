@@ -1,0 +1,70 @@
+# Changelog zenAdmin
+
+Toutes les modifications notables de ce projet sont documentees ici.
+Format : [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
+Versionnage : [SemVer](https://semver.org/lang/fr/).
+
+## [Unreleased]
+
+### Vague J — Experience client avancee
+- **J1 Booking** : modele `BookingSlotConfig` + `Booking`, config avec
+  `availability` JSON par jour, calcul automatique des creneaux libres sur
+  14j, endpoint public `/api/public/booking/:slug`, booking + annulation par
+  token. Genere automatiquement un `CalendarEvent` lie avec rappel 15min.
+- **J2 NPS** : `POST /api/public/nps` (token-less), `GET /api/nps/summary`
+  (promoteurs / passifs / detracteurs + score -100..+100).
+- **J3 IA devis** : `POST /api/quotes/ai-generate` prompt FR -> lignes
+  structurees (OpenAI gpt-4o-mini si `OPENAI_API_KEY` sinon fallback
+  heuristique). Respect whitelist TVA P1-01.
+
+### Vague I — Securite avancee & Integration (PR #83)
+- **I1 WebAuthn/FIDO2** : 6 endpoints (options + verify pour register/login),
+  cookies HttpOnly comme login classique, compteur + last_used_at.
+- **I2 Portail client** : magic link `/portal/client/:token`, download PDF
+  devis/facture, paiement Stripe Checkout (Connect-aware).
+- **I3 Webhooks sortants** : outbox pattern, HMAC SHA-256, retry exp backoff
+  30s→24h, 12 event types, CRUD endpoints + historique + retry manuel,
+  cron 1x/min.
+
+### Vague H — Pilotage & CRM (PR #82)
+- **H1** Analytics : P&L mensuel 12 mois + cash-flow previsionnel 90j + DSO/DPO
+  + top 5 clients/fournisseurs. `GET /api/dashboard/analytics`.
+- **H2** Pipeline CRM : kanban 8 colonnes + stats conversion + win/loss YTD.
+  `GET /api/quotes/pipeline`.
+- **H3** Agenda : `CalendarEvent`, CRUD, export iCal RFC 5545, cron rappels.
+
+### Vague G — Data & Integrations (PR #81)
+- **G1** Import CSV clients/produits (parser RFC 4180, templates DL).
+- **G2** `ProductVariant` + `StockMovement` + alerte low-stock.
+- **G3** Export Pennylane / Dougs JSON normalise.
+
+### Vague F — Productivite (PR #80)
+- **F1** `QuoteTemplate` reutilisable.
+- **F2** SMS OVH + Twilio + console fallback.
+- **F3** Signature tactile refactor (lissage Bezier + pression par velocite).
+
+### Vague E — Quality & Intelligence (PR #79)
+- **E1** Tests E2E Playwright critical path.
+- **E2** Sentry SDK-less (envelope v7 fetch direct).
+- **E3** IA categorisation achats (17 regles + OpenAI fallback).
+
+### Vague D — Ship-ready (PR #78)
+- **D1** Stripe Connect (payment-link sur facture).
+- **D2** DSN mensuelle auto.
+- **D3** PWA mobile (bottom nav + install prompt).
+- **D4** CI GitHub Actions + k6.
+- **D5** Observabilite (slow requests + error envelopes).
+- **D6** Multi-devise EUR/USD/GBP/CHF.
+
+### Vague C — Production polish (PR #77)
+- **C1** Signature eIDAS SES avec proof chain SHA-256.
+- **C2** PWA manifest + service worker.
+- **C3** Export RGPD Art.20 (droit a la portabilite).
+
+### Vague B — Bank (PR #76)
+- Bank sync quotidien + reconciliation automatique + notifications paiement.
+
+### QA Closeout (PR #75)
+- 57/57 bugs du rapport QA 2026-04-20 fermes (100 %).
+- Cookies HttpOnly + CSRF double-submit.
+- Completeness badge profil entreprise.
