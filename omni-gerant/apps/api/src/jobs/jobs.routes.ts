@@ -7,6 +7,7 @@ import { reconciliationJob } from './reconciliation.job.js';
 import { dsnMonthlyJob } from './dsn-monthly.job.js';
 import { calendarRemindersJob } from './calendar-reminders.job.js';
 import { webhookDeliverJob } from './webhook-deliver.job.js';
+import { contractRenewalJob } from './contract-renewal.job.js';
 import { registerJob } from './registry.js';
 
 // Vague A2 : expose les jobs cron via HTTP pour scheduler externe
@@ -22,6 +23,7 @@ registerJob(reconciliationJob);
 registerJob(dsnMonthlyJob);
 registerJob(calendarRemindersJob);
 registerJob(webhookDeliverJob);
+registerJob(contractRenewalJob);
 
 // Demarrage automatique du tick interne (fallback si pas de scheduler externe)
 let intervalHandle: ReturnType<typeof setInterval> | null = null;

@@ -6,6 +6,16 @@ Versionnage : [SemVer](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Vague P — Contrats & documents legaux
+- **P1 Contrats** : `Contract` (CTR-YYYY-NNNNN, kind service/nda/cgv/
+  maintenance/employment), CRUD + signature hash-chain SHA-256,
+  `GET /api/contracts/renewals/upcoming`.
+- **P2 Renewal alerts** : cron `contract-renewal` 1x/jour — notification
+  warning 30-60j avant, danger <= 15j, distingue auto-renew.
+- **P3 Bibliotheque legale** : `LegalDocument` (CGV/CGU/mentions_legales/
+  politique_confidentialite/cookies), versionnage + is_current unique par
+  kind, `GET /api/public/legal/:tenantId/:kind` pour exposition publique.
+
 ### Vague O — HR avancee
 - **O1 Conges** : `LeaveRequest` + `LeaveBalance`, workflow
   pending/approved/refused, comptage jours ouvrables, mise a jour auto
