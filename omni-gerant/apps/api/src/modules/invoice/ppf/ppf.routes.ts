@@ -206,6 +206,29 @@ export async function ppfRoutes(app: FastifyInstance) {
     },
   );
 
+  // BL5 : GET /api/ppf/platforms — liste des plateformes PPF/PDP connues
+  app.get(
+    '/api/ppf/platforms',
+    { preHandler: [...preHandlers, requirePermission('legal', 'read')] },
+    async () => {
+      const { KNOWN_PLATFORMS } = await import('./pdp-routing.service.js');
+      return { items: KNOWN_PLATFORMS, total: KNOWN_PLATFORMS.length };
+    },
+  );
+
+  // BL5 : GET /api/ppf/directory/:siret — lookup PDP destinataire
+  app.get(
+    '/api/ppf/directory/:siret',
+    { preHandler: [...preHandlers, requirePermission('legal', 'read')] },
+    async (request, reply) => {
+      const { siret } = request.params as { siret: string };
+      const { lookupReceiverPlatform } = await import('./pdp-routing.service.js');
+      const r = await lookupReceiverPlatform(siret);
+      if (!r.ok) return reply.status(400).send({ error: r.error });
+      return r.value;
+    },
+  );
+
   // F4 : GET /api/ppf/obligation/:invoiceId — verifier obligation PPF pour une facture
   app.get(
     '/api/ppf/obligation/:invoiceId',

@@ -8,14 +8,18 @@ import { api } from '@/lib/api-client';
 // BUSINESS RULE [CDC-2.3]: Flow de connexion bancaire Open Banking
 
 const POPULAR_BANKS = [
-  { id: 'credit-agricole', name: 'Credit Agricole', logo: 'CA' },
-  { id: 'bnp-paribas', name: 'BNP Paribas', logo: 'BNP' },
-  { id: 'societe-generale', name: 'Societe Generale', logo: 'SG' },
-  { id: 'credit-mutuel', name: 'Credit Mutuel', logo: 'CM' },
-  { id: 'la-banque-postale', name: 'La Banque Postale', logo: 'LBP' },
-  { id: 'caisse-epargne', name: 'Caisse d\'Epargne', logo: 'CE' },
-  { id: 'lcl', name: 'LCL', logo: 'LCL' },
-  { id: 'hsbc', name: 'HSBC', logo: 'HSBC' },
+  { id: 'qonto', name: 'Qonto', logo: 'Qonto', category: 'fintech' },
+  { id: 'revolut', name: 'Revolut Business', logo: 'Rv', category: 'fintech' },
+  { id: 'n26', name: 'N26 Business', logo: 'N26', category: 'fintech' },
+  { id: 'shine', name: 'Shine', logo: 'Sh', category: 'fintech' },
+  { id: 'credit-agricole', name: 'Credit Agricole', logo: 'CA', category: 'traditional' },
+  { id: 'bnp-paribas', name: 'BNP Paribas', logo: 'BNP', category: 'traditional' },
+  { id: 'societe-generale', name: 'Societe Generale', logo: 'SG', category: 'traditional' },
+  { id: 'credit-mutuel', name: 'Credit Mutuel', logo: 'CM', category: 'traditional' },
+  { id: 'la-banque-postale', name: 'La Banque Postale', logo: 'LBP', category: 'traditional' },
+  { id: 'caisse-epargne', name: 'Caisse d\'Epargne', logo: 'CE', category: 'traditional' },
+  { id: 'lcl', name: 'LCL', logo: 'LCL', category: 'traditional' },
+  { id: 'hsbc', name: 'HSBC', logo: 'HSBC', category: 'traditional' },
 ];
 
 type Step = 'select' | 'connecting' | 'success' | 'error';
@@ -36,8 +40,12 @@ export default function ConnectBankPage() {
     });
 
     if (!result.ok) {
-      // If Bridge is not configured (no client ID), show a graceful message
-      setErrorMessage(result.error.message || 'Impossible de se connecter a la banque.');
+      // Bridge API not configured ? Affiche un message detaille avec alternative
+      const msg = result.error.message ?? '';
+      const isBridgeConfig = msg.includes('Bridge') || msg.includes('CLIENT_ID') || msg.includes('credentials');
+      setErrorMessage(isBridgeConfig
+        ? 'Connexion Open Banking non activee (compte Bridge API requis). Utilisez l\'import CSV depuis /bank/import en attendant.'
+        : (msg || 'Impossible de se connecter a la banque.'));
       setStep('error');
       return;
     }

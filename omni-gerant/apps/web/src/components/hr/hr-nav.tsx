@@ -11,6 +11,7 @@ const items = [
   { href: '/hr/effectif-moyen', label: 'Effectif moyen' },
   { href: '/hr/paie', label: 'Paie' },
   { href: '/hr/conges', label: 'Congés' },
+  { href: '/hr/documents', label: 'Documents' },
   { href: '/hr/dsn', label: 'DSN' },
   { href: '/hr/parametres', label: 'Paramètres paie' },
   { href: '/hr/affichages', label: 'Affichages' },
