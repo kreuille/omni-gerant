@@ -2000,3 +2000,96 @@ model IntercompanyTransfer {
   @@index([to_tenant_id])
   @@map("intercompany_transfers")
 }
+
+// ============================================================================
+// Vague U - Fidelisation (LoyaltyAccount + Tiers + Coupons)
+// ============================================================================
+
+model LoyaltyAccount {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id         String    @db.Uuid
+  client_id         String    @db.Uuid @unique
+  points_balance    Int       @default(0)   // points disponibles
+  points_total      Int       @default(0)   // points gagnes au total (lifetime)
+  points_spent      Int       @default(0)
+  tier              String    @default("bronze") // bronze | silver | gold | platinum
+  tier_since        DateTime  @default(now())
+  last_activity_at  DateTime?
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+
+  @@index([tenant_id, client_id])
+  @@index([tenant_id, tier])
+  @@map("loyalty_accounts")
+}
+
+model LoyaltyTransaction {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id     String   @db.Uuid
+  account_id    String   @db.Uuid
+  kind          String   // earn | redeem | adjust | expire
+  points        Int                  // positif ou negatif
+  reason        String?              // "Facture FAC-2026-00001", "Coupon XYZ"
+  invoice_id    String?  @db.Uuid
+  coupon_id     String?  @db.Uuid
+  created_at    DateTime @default(now())
+
+  @@index([tenant_id, account_id, created_at])
+  @@map("loyalty_transactions")
+}
+
+model LoyaltyTier {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id           String   @db.Uuid
+  name                String   // bronze | silver | gold | platinum (ou custom)
+  min_points          Int      @default(0)
+  discount_bp         Int      @default(0)    // reduction auto en basis points
+  earn_multiplier_bp  Int      @default(10_000) // multiplicateur gain points (10000 = x1)
+  benefits            Json     @default("[]") // liste libre d'avantages
+  order               Int      @default(0)
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  @@unique([tenant_id, name])
+  @@index([tenant_id, order])
+  @@map("loyalty_tiers")
+}
+
+model Coupon {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id           String   @db.Uuid
+  code                String
+  description         String?
+  kind                String   @default("percent") // percent | amount | free_shipping
+  discount_bp         Int      @default(0)        // % en bp (si percent)
+  discount_amount_cents Int   @default(0)       // montant fixe (si amount)
+  min_order_cents     Int      @default(0)
+  max_uses            Int?                        // null = illimite
+  max_uses_per_client Int?
+  uses_count          Int      @default(0)
+  valid_from          DateTime?
+  valid_until         DateTime?
+  applies_to          String   @default("all")    // all | product | category
+  applies_to_ids      Json     @default("[]")
+  is_active           Boolean  @default(true)
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  @@unique([tenant_id, code])
+  @@index([tenant_id, is_active])
+  @@map("coupons")
+}
+
+model CouponRedemption {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id     String   @db.Uuid
+  coupon_id     String   @db.Uuid
+  client_id     String?  @db.Uuid
+  invoice_id    String?  @db.Uuid
+  amount_applied_cents Int @default(0)
+  redeemed_at   DateTime @default(now())
+
+  @@index([tenant_id, coupon_id])
+  @@index([tenant_id, client_id])
+  @@map("coupon_redemptions")
+}
