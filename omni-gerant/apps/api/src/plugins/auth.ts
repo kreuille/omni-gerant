@@ -1,8 +1,10 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
+import { createHash } from 'node:crypto';
 import type { UserRole } from '@zenadmin/shared';
 import { verifyAccessToken } from '../modules/auth/jwt.js';
 import { checkPermission, type Resource, type Action } from '../modules/auth/rbac.js';
+import { isJwtBlacklisted } from '../modules/auth/auth.routes.js';
 import { getRequestContext } from '../middleware/request-context.js';
 
 // BUSINESS RULE [R03]: Multi-tenant - every authenticated request carries tenant context
@@ -34,6 +36,14 @@ export function authenticate(request: FastifyRequest, reply: FastifyReply, done:
   }
 
   const token = authHeader.slice(7);
+  // P1-07 : blacklist post-logout
+  const tokenHash = createHash('sha256').update(token).digest('hex');
+  if (isJwtBlacklisted(tokenHash)) {
+    reply.status(401).send({
+      error: { code: 'TOKEN_REVOKED', message: 'Session déconnectée.' },
+    });
+    return;
+  }
   const result = verifyAccessToken(token);
   if (!result.ok) {
     reply.status(401).send({

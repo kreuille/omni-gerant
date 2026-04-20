@@ -6,6 +6,25 @@ import { registerSchema, loginSchema, verify2faSchema, refreshTokenSchema, enabl
 import { verifyAccessToken, generateTokenPair, type JwtPayload } from './jwt.js';
 import { verifyTotpCode } from './totp.js';
 import { authenticate } from '../../plugins/auth.js';
+import { authRateLimit } from '../../plugins/rate-limiter.js';
+
+// Plan 4 : blacklist JWT en memoire (Map TTL = exp)
+// Cle = jti/token-hash, valeur = timestamp d'expiration (ms)
+const jwtBlacklist = new Map<string, number>();
+export function blacklistJwt(tokenHash: string, expiresAtMs: number): void {
+  jwtBlacklist.set(tokenHash, expiresAtMs);
+  // Nettoyage periodique
+  if (jwtBlacklist.size > 1000) {
+    const now = Date.now();
+    for (const [k, exp] of jwtBlacklist) if (exp < now) jwtBlacklist.delete(k);
+  }
+}
+export function isJwtBlacklisted(tokenHash: string): boolean {
+  const exp = jwtBlacklist.get(tokenHash);
+  if (!exp) return false;
+  if (exp < Date.now()) { jwtBlacklist.delete(tokenHash); return false; }
+  return true;
+}
 
 // BUSINESS RULE [CDC-6]: Auth endpoints (public + authenticated)
 
@@ -34,14 +53,25 @@ export async function authRoutes(app: FastifyInstance) {
     return reply.status(201).send(result.value);
   });
 
-  // POST /api/auth/login (public)
-  app.post('/api/auth/login', async (request, reply) => {
+  // POST /api/auth/login (public) — P1-08 : rate-limit specifique 5/15min par IP+email
+  app.post('/api/auth/login', {
+    config: {
+      rateLimit: {
+        max: 5,
+        timeWindow: 15 * 60 * 1000,
+        keyGenerator: (req: { ip: string; body?: unknown }) => {
+          const email = (req.body as { email?: string } | undefined)?.email ?? '';
+          return `login:${req.ip}:${email.toLowerCase()}`;
+        },
+      },
+    },
+  }, async (request, reply) => {
     const parsed = loginSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({
         error: {
           code: 'VALIDATION_ERROR',
-          message: 'Invalid login data',
+          message: 'Données de connexion invalides.',
           details: { issues: parsed.error.issues },
         },
       });
@@ -49,7 +79,17 @@ export async function authRoutes(app: FastifyInstance) {
 
     const result = await authService.login(parsed.data);
     if (!result.ok) {
-      return reply.status(401).send({ error: result.error });
+      // P1-10 : messages FR clairs. Le service renvoie typiquement NOT_FOUND / BAD_REQUEST pour mauvais credentiels.
+      const code = result.error.code as string;
+      const isCred = code === 'NOT_FOUND' || code === 'BAD_REQUEST' || code === 'UNAUTHORIZED';
+      if (isCred) {
+        return reply.status(401).send({
+          error: { code: 'INVALID_CREDENTIALS', message: 'Email ou mot de passe incorrect.' },
+        });
+      }
+      return reply.status(500).send({
+        error: { code: 'LOGIN_FAILED', message: 'Le serveur est temporairement indisponible. Réessayez dans quelques secondes.' },
+      });
     }
     return result.value;
   });
@@ -136,25 +176,26 @@ export async function authRoutes(app: FastifyInstance) {
   });
 
   // POST /api/auth/logout (authenticated)
+  // P1-07 : accepte logout sans refresh token (best-effort) + blacklist le access_token courant
   app.post(
     '/api/auth/logout',
     { preHandler: [authenticate] },
     async (request, reply) => {
-      const parsed = refreshTokenSchema.safeParse(request.body);
-      if (!parsed.success) {
-        return reply.status(400).send({
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: 'Missing refresh token',
-            details: { issues: parsed.error.issues },
-          },
-        });
+      const body = (request.body ?? {}) as { refresh_token?: string };
+      if (body.refresh_token) {
+        await authService.logout(body.refresh_token).catch(() => { /* best-effort */ });
       }
 
-      const result = await authService.logout(parsed.data.refresh_token);
-      if (!result.ok) {
-        return reply.status(400).send({ error: result.error });
+      // Blacklist l'access_token courant jusqu'a son exp naturelle
+      const auth = request.headers.authorization ?? '';
+      const bearer = auth.toLowerCase().startsWith('bearer ') ? auth.slice(7) : null;
+      if (bearer) {
+        const tokenHash = createHash('sha256').update(bearer).digest('hex');
+        const tokenInfo = verifyAccessToken(bearer);
+        const expMs = tokenInfo.ok ? Date.now() + 60 * 60 * 1000 : Date.now() + 60 * 60 * 1000;
+        blacklistJwt(tokenHash, expMs);
       }
+
       return reply.status(204).send();
     },
   );

@@ -1,22 +1,34 @@
 import { z } from 'zod';
 
+// P1-09 : sanitization XSS basique (strip balises HTML + entites dangereuses)
+// Evite les exploits dans PDF servi via Puppeteer et autres rendus serveur.
+function stripHtml(input: string): string {
+  return input
+    .replace(/<[^>]*>/g, '')            // supprime balises
+    .replace(/&[#a-zA-Z0-9]+;?/g, '')   // supprime entites
+    .replace(/javascript:/gi, '')
+    .replace(/on\w+\s*=/gi, '')
+    .trim();
+}
+const cleanString = (max: number) => z.string().max(max).transform(stripHtml);
+
 export const createClientSchema = z.object({
   type: z.enum(['company', 'individual']).default('company'),
-  company_name: z.string().min(1).max(255).optional(),
+  company_name: cleanString(255).pipe(z.string().min(2, 'Le nom de l\'entreprise doit contenir au moins 2 caractères.')).optional(),
   siret: z
     .string()
     .regex(/^\d{14}$/, 'SIRET must be 14 digits')
     .optional(),
-  first_name: z.string().min(1).max(100).optional(),
-  last_name: z.string().min(1).max(100).optional(),
+  first_name: cleanString(100).pipe(z.string().min(1)).optional(),
+  last_name: cleanString(100).pipe(z.string().min(1)).optional(),
   email: z.string().email().optional(),
   phone: z.string().max(20).optional(),
-  address_line1: z.string().max(255).optional(),
-  address_line2: z.string().max(255).optional(),
+  address_line1: cleanString(255).optional(),
+  address_line2: cleanString(255).optional(),
   zip_code: z.string().max(10).optional(),
-  city: z.string().max(100).optional(),
+  city: cleanString(100).optional(),
   country: z.string().length(2).default('FR'),
-  notes: z.string().max(2000).optional(),
+  notes: cleanString(2000).optional(),
   payment_terms: z.number().int().min(0).max(365).default(30),
 }).refine(
   (data) => {
