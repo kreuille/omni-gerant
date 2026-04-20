@@ -144,9 +144,40 @@ export default function ParametresPaiePage() {
 
       {/* INFOS OBLIGATOIRES R3243-1 */}
       <section className="bg-white border border-gray-200 rounded-lg p-5 mb-4">
-        <div className="mb-4">
-          <h2 className="font-semibold text-gray-900">Mentions légales obligatoires (Article R3243-1)</h2>
-          <p className="text-xs text-gray-500">Ces informations apparaissent sur chaque bulletin de paie et sont obligatoires pour la conformité légale.</p>
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <h2 className="font-semibold text-gray-900">Mentions légales obligatoires (Article R3243-1)</h2>
+            <p className="text-xs text-gray-500">Ces informations apparaissent sur chaque bulletin de paie et sont obligatoires pour la conformité légale.</p>
+          </div>
+          <button
+            onClick={async () => {
+              setMessage('Recherche en cours…');
+              const r = await api.post<{
+                suggested: { urssaf_ref: string | null; carsat_ref: string | null; convention_collective: string | null; idcc: string | null };
+                sources: { siret: string | null; nafCode: string | null; department: string | null; apiConventionFound: boolean };
+                notes: string[];
+              }>('/api/hr/payroll/settings/autofill', {});
+              if (!r.ok) { setMessage('Erreur : ' + r.error.message); return; }
+              setS({
+                ...s,
+                urssaf_ref: r.value.suggested.urssaf_ref ?? s.urssaf_ref,
+                carsat_ref: r.value.suggested.carsat_ref ?? s.carsat_ref,
+                convention_collective: r.value.suggested.convention_collective ?? s.convention_collective,
+                idcc: r.value.suggested.idcc ?? s.idcc,
+              });
+              const msg = [
+                r.value.suggested.convention_collective ? '✓ Convention : ' + r.value.suggested.convention_collective : '',
+                r.value.suggested.urssaf_ref ? '✓ ' + r.value.suggested.urssaf_ref : '',
+                r.value.suggested.carsat_ref ? '✓ ' + r.value.suggested.carsat_ref : '',
+                ...r.value.notes,
+                '→ Vérifiez puis cliquez Enregistrer.',
+              ].filter(Boolean).join(' · ');
+              setMessage(msg);
+            }}
+            className="bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-blue-700 whitespace-nowrap"
+          >
+            🔍 Auto-remplir depuis SIRET
+          </button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Input label="Référence URSSAF" value={s.urssaf_ref ?? ''} onChange={(v) => setS({ ...s, urssaf_ref: v || null })} placeholder="ex: URSSAF Île-de-France - 750000000000000" full />

@@ -739,6 +739,18 @@ export async function hrRoutes(app: FastifyInstance) {
     },
   );
 
+  // POST /api/hr/payroll/settings/autofill — cherche URSSAF/CARSAT/CC/IDCC depuis SIRET
+  app.post(
+    '/api/hr/payroll/settings/autofill',
+    { preHandler: [...preHandlers, requirePermission('legal', 'read')] },
+    async (request, reply) => {
+      const { autofillPayrollSettings } = await import('./payroll/autofill-settings.service.js');
+      const r = await autofillPayrollSettings(request.auth.tenant_id);
+      if (!r.ok) return reply.status(r.error.code === 'NOT_FOUND' ? 404 : 400).send({ error: r.error });
+      return r.value;
+    },
+  );
+
   // PUT /api/hr/payroll/settings
   app.put(
     '/api/hr/payroll/settings',
