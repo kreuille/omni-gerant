@@ -135,6 +135,12 @@ export async function buildApp() {
   await app.register(productVariantRoutes);
   const { calendarRoutes } = await import('./modules/calendar/calendar.routes.js');
   await app.register(calendarRoutes);
+  const { webauthnRoutes } = await import('./modules/auth/webauthn.routes.js');
+  await app.register(webauthnRoutes);
+  const { clientPortalRoutes } = await import('./modules/portal/client-portal.routes.js');
+  await app.register(clientPortalRoutes);
+  const { webhookRoutes } = await import('./modules/webhooks/webhook.routes.js');
+  await app.register(webhookRoutes);
   await app.register(notificationRoutes);
   const { smsRoutes } = await import('./modules/notification/sms.routes.js');
   await app.register(smsRoutes);

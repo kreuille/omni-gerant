@@ -1342,3 +1342,87 @@ model CalendarEvent {
   @@index([tenant_id, client_id])
   @@map("calendar_events")
 }
+
+// Vague I1 : WebAuthn credentials (FIDO2 passkeys)
+model WebauthnCredential {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id          String   @db.Uuid
+  tenant_id        String   @db.Uuid
+  credential_id    String   @unique  // base64url de la clef publique credential ID
+  public_key       String   @db.Text // COSE key base64url
+  counter          BigInt   @default(0)
+  transports       String[] @default([])
+  device_name      String?
+  last_used_at     DateTime?
+  created_at       DateTime @default(now())
+
+  @@index([user_id])
+  @@index([tenant_id])
+  @@map("webauthn_credentials")
+}
+
+// Challenges WebAuthn (validation nonce registration/authentication)
+model WebauthnChallenge {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  challenge    String   @unique
+  user_id      String?  @db.Uuid  // null pour auth (discovery)
+  kind         String   // "registration" | "authentication"
+  expires_at   DateTime
+  created_at   DateTime @default(now())
+
+  @@index([user_id])
+  @@index([expires_at])
+  @@map("webauthn_challenges")
+}
+
+// Vague I2 : Portail client public (lien magique)
+model ClientPortalToken {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id  String   @db.Uuid
+  client_id  String   @db.Uuid
+  token_hash String   @unique
+  expires_at DateTime
+  last_accessed_at DateTime?
+  created_at DateTime @default(now())
+  revoked_at DateTime?
+
+  @@index([tenant_id, client_id])
+  @@map("client_portal_tokens")
+}
+
+// Vague I3 : Webhooks sortants
+model WebhookEndpoint {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id    String   @db.Uuid
+  url          String
+  secret       String   // signing secret pour HMAC
+  events       String[] @default([]) // "invoice.paid", "quote.signed", "*"...
+  description  String?
+  is_active    Boolean  @default(true)
+  last_error   String?
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  deleted_at   DateTime?
+
+  @@index([tenant_id, is_active])
+  @@map("webhook_endpoints")
+}
+
+model WebhookDelivery {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id      String   @db.Uuid
+  endpoint_id    String   @db.Uuid
+  event_type     String
+  payload        Json
+  status         String   @default("pending") // pending | delivered | failed | dropped
+  attempt_count  Int      @default(0)
+  last_status_code Int?
+  last_error     String?
+  next_retry_at  DateTime?
+  delivered_at   DateTime?
+  created_at     DateTime @default(now())
+
+  @@index([tenant_id, status, next_retry_at])
+  @@index([endpoint_id, created_at(sort: Desc)])
+  @@map("webhook_deliveries")
+}
