@@ -177,6 +177,14 @@ export async function tenantRoutes(app: FastifyInstance) {
     return result.value;
   });
 
+  // GET /api/tenants/me/completeness — P2-03 score de completude du profil
+  app.get('/api/tenants/me/completeness', { preHandler: preHandlers }, async (request, reply) => {
+    const result = await tenantService.getProfile(request.auth.tenant_id);
+    if (!result.ok) return reply.status(404).send({ error: result.error });
+    const { computeCompleteness } = await import('./completeness.js');
+    return computeCompleteness(result.value);
+  });
+
   // PATCH /api/tenants/me — Legacy update
   app.patch('/api/tenants/me', { preHandler: preHandlers }, async (request, reply) => {
     const parsed = updateTenantProfileSchema.safeParse(request.body);

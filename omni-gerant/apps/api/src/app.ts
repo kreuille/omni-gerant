@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import cookie from '@fastify/cookie';
 import { loadConfig } from './config.js';
 import { installFrenchZodErrors } from './lib/zod-fr.js';
 
@@ -52,6 +53,12 @@ export async function buildApp() {
     },
     requestIdHeader: 'x-correlation-id',
     genReqId: () => crypto.randomUUID(),
+  });
+
+  // P1-06 : cookies signes
+  await app.register(cookie, {
+    secret: config.JWT_SECRET,
+    parseOptions: {},
   });
 
   // CORS — strict origin in production
