@@ -37,3 +37,24 @@ services:
           property: connectionString
       - key: KIWIZ_API_URL
         value: https://api.kiwiz.io
+      - key: OCR_SERVICE_URL
+        value: https://zenadmin-ocr.onrender.com
+      - key: OCR_SERVICE_API_KEY
+        sync: false
+
+  # P0-07 : service OCR Python FastAPI (apps/ocr/)
+  - type: web
+    name: zenadmin-ocr
+    runtime: python
+    plan: free
+    rootDir: apps/ocr
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: OCR_SERVICE_API_KEY
+        sync: false
+      - key: API_ORIGIN
+        value: https://omni-gerant-api.onrender.com
