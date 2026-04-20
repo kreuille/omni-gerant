@@ -6,6 +6,17 @@ Versionnage : [SemVer](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Vague K — Compliance & Archivage
+- **K1 Audit trail v2** : `AuditEvent` append-only (correlation_id, metadata
+  JSON, indexes tenant+created_at+resource). `logAuditEvent()` helper
+  best-effort. `GET /api/audit/events`.
+- **K2 Archivage fiscal 10 ans** : `FiscalArchive` avec chaine SHA-256
+  (chain_hash = SHA256(prev + doc_hash)). `archiveDocument()` idempotent +
+  `verifyArchiveChain()` pour audit d'integrite.
+- **K3 2FA email** : `EmailOtpChallenge` code 6 chiffres valide 10 min,
+  max 5 tentatives, envoi via Resend/Console. Endpoints
+  `POST /api/auth/otp/request` + `/verify`.
+
 ### Vague J — Experience client avancee
 - **J1 Booking** : modele `BookingSlotConfig` + `Booking`, config avec
   `availability` JSON par jour, calcul automatique des creneaux libres sur

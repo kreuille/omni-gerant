@@ -145,6 +145,10 @@ export async function buildApp() {
   await app.register(bookingRoutes);
   const { npsRoutes } = await import('./modules/nps/nps.routes.js');
   await app.register(npsRoutes);
+  const { auditEventsRoutes } = await import('./modules/audit/audit-events.routes.js');
+  await app.register(auditEventsRoutes);
+  const { emailOtpRoutes } = await import('./modules/auth/email-otp.routes.js');
+  await app.register(emailOtpRoutes);
   await app.register(notificationRoutes);
   const { smsRoutes } = await import('./modules/notification/sms.routes.js');
   await app.register(smsRoutes);

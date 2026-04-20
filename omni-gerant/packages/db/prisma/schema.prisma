@@ -1478,3 +1478,59 @@ model NpsResponse {
   @@index([tenant_id, created_at(sort: Desc)])
   @@map("nps_responses")
 }
+
+// Vague K1 : Audit trail global (append-only)
+model AuditEvent {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id     String   @db.Uuid
+  user_id       String?  @db.Uuid
+  action        String   // "invoice.create" | "quote.sign" | "user.login" ...
+  resource_type String   // "invoice" | "quote" | "user" | ...
+  resource_id   String?  @db.Uuid
+  metadata      Json     @default("{}")
+  ip_address    String?
+  user_agent    String?
+  correlation_id String?
+  created_at    DateTime @default(now())
+
+  @@index([tenant_id, created_at(sort: Desc)])
+  @@index([tenant_id, resource_type, resource_id])
+  @@index([tenant_id, action])
+  @@map("audit_events")
+}
+
+// Vague K2 : Archive fiscale 10 ans
+// Chaine hash pour immutabilite.
+model FiscalArchive {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id     String   @db.Uuid
+  year          Int
+  document_type String   // "invoice" | "purchase" | "payslip" | "fec" | "duerp"
+  document_id   String
+  document_hash String   // SHA-256 du contenu
+  previous_hash String?  // hash de l'archive precedente (chain)
+  chain_hash    String   // SHA-256(previous_hash + document_hash)
+  pdf_url       String?  // URL interne
+  metadata      Json     @default("{}")
+  created_at    DateTime @default(now())
+
+  @@unique([tenant_id, document_type, document_id])
+  @@index([tenant_id, year, document_type])
+  @@map("fiscal_archives")
+}
+
+// Vague K3 : 2FA par email (fallback TOTP)
+model EmailOtpChallenge {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id     String   @db.Uuid
+  code_hash   String   // SHA-256 du code 6 chiffres
+  purpose     String   // "login" | "sensitive_action"
+  used_at     DateTime?
+  expires_at  DateTime
+  attempts    Int      @default(0)
+  created_at  DateTime @default(now())
+
+  @@index([user_id, purpose])
+  @@index([expires_at])
+  @@map("email_otp_challenges")
+}
