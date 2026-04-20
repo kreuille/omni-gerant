@@ -23,6 +23,7 @@ export type Resource =
   | 'billing'
   | 'export'
   | 'legal'
+  | 'accounting'
   | 'dashboard';
 
 export type Action = 'create' | 'read' | 'update' | 'delete' | 'export';
@@ -49,6 +50,7 @@ const PERMISSION_MATRIX: Record<UserRole, Set<string>> = {
     'billing:create', 'billing:read', 'billing:update', 'billing:delete',
     'export:read', 'export:export',
     'legal:create', 'legal:read', 'legal:update', 'legal:delete',
+    'accounting:create', 'accounting:read', 'accounting:update', 'accounting:delete', 'accounting:export',
     'dashboard:read',
   ]),
   admin: new Set([
@@ -65,6 +67,7 @@ const PERMISSION_MATRIX: Record<UserRole, Set<string>> = {
     'settings:read', 'settings:update',
     'export:read', 'export:export',
     'legal:create', 'legal:read', 'legal:update', 'legal:delete',
+    'accounting:create', 'accounting:read', 'accounting:update', 'accounting:delete', 'accounting:export',
     'dashboard:read',
   ]),
   member: new Set([
@@ -91,6 +94,7 @@ const PERMISSION_MATRIX: Record<UserRole, Set<string>> = {
     'audit:read',
     'export:read', 'export:export',
     'legal:read',
+    'accounting:read', 'accounting:export',
     'dashboard:read',
   ]),
 };

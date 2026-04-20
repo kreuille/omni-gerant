@@ -376,7 +376,7 @@ export async function quoteRoutes(app: FastifyInstance) {
         return reply.status(403).send({
           error: {
             code: 'INVALID_STATUS',
-            message: `Seul un devis signe peut etre converti (statut actuel : ${quote.status})`,
+            message: `Seul un devis accepté ou signé peut être converti (statut actuel : ${quote.status}).`,
           },
         });
       }
@@ -418,6 +418,109 @@ export async function quoteRoutes(app: FastifyInstance) {
       });
 
       return reply.status(201).send(invoiceResult.value);
+    },
+  );
+
+  // POST /api/quotes/:id/accept — acceptation manuelle (ex : client confirme par telephone)
+  // BUSINESS RULE [CDC-2.1]: le owner/admin peut enregistrer une acceptation sans signature electronique
+  app.post(
+    '/api/quotes/:id/accept',
+    { preHandler: [...preHandlers, requirePermission('quote', 'update')], schema: { body: { type: 'object', additionalProperties: true } } },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const quoteResult = await quoteService.getById(id, request.auth.tenant_id);
+      if (!quoteResult.ok) return reply.status(404).send({ error: quoteResult.error });
+      const quote = quoteResult.value;
+
+      if (quote.status !== 'sent' && quote.status !== 'viewed') {
+        return reply.status(403).send({
+          error: {
+            code: 'INVALID_STATUS',
+            message: `Le devis doit être à l'état "envoyé" ou "vu" pour être accepté (actuel : ${quote.status}).`,
+          },
+        });
+      }
+
+      await repo.update(quote.id, quote.tenant_id, { status: 'accepted' });
+
+      await trackingService.track({
+        quote_id: quote.id,
+        tenant_id: quote.tenant_id,
+        event_type: 'accepted',
+        actor: request.auth.user_id,
+        ip_address: request.ip,
+        user_agent: request.headers['user-agent'] ?? undefined,
+      });
+
+      return { status: 'accepted', accepted_at: new Date().toISOString() };
+    },
+  );
+
+  // POST /api/quotes/:id/sign — signature electronique côté authentifié
+  app.post(
+    '/api/quotes/:id/sign',
+    { preHandler: [...preHandlers, requirePermission('quote', 'update')], schema: { body: { type: 'object', additionalProperties: true } } },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const body = (request.body ?? {}) as { signer_name?: string; signature_image?: string };
+      if (!body.signer_name) {
+        return reply.status(400).send({
+          error: { code: 'VALIDATION_ERROR', message: 'Le nom du signataire est obligatoire.' },
+        });
+      }
+
+      const quoteResult = await quoteService.getById(id, request.auth.tenant_id);
+      if (!quoteResult.ok) return reply.status(404).send({ error: quoteResult.error });
+      const quote = quoteResult.value;
+
+      if (quote.status !== 'viewed' && quote.status !== 'accepted') {
+        return reply.status(403).send({
+          error: {
+            code: 'INVALID_STATUS',
+            message: `Le devis doit être "vu" ou "accepté" pour être signé (actuel : ${quote.status}).`,
+          },
+        });
+      }
+
+      await repo.update(quote.id, quote.tenant_id, { status: 'signed' });
+
+      await trackingService.track({
+        quote_id: quote.id,
+        tenant_id: quote.tenant_id,
+        event_type: 'signed',
+        actor: request.auth.user_id,
+        ip_address: request.ip,
+        user_agent: request.headers['user-agent'] ?? undefined,
+        metadata: { signer_name: body.signer_name, has_image: !!body.signature_image },
+      });
+
+      return { status: 'signed', signed_at: new Date().toISOString() };
+    },
+  );
+
+  // POST /api/quotes/:id/share — (re)generation d'un lien public de partage
+  app.post(
+    '/api/quotes/:id/share',
+    { preHandler: [...preHandlers, requirePermission('quote', 'update')], schema: { body: { type: 'object', additionalProperties: true } } },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const quoteResult = await quoteService.getById(id, request.auth.tenant_id);
+      if (!quoteResult.ok) return reply.status(404).send({ error: quoteResult.error });
+      const quote = quoteResult.value;
+
+      const body = (request.body ?? {}) as { validity_days?: number };
+      const days = Math.max(1, Math.min(90, body.validity_days ?? 30));
+      const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+
+      const tokenResult = await shareService.generateToken(quote.id, quote.tenant_id, expiresAt);
+      if (!tokenResult.ok) return reply.status(500).send({ error: tokenResult.error });
+
+      const appUrl = process.env['APP_URL'] ?? 'https://omni-gerant.vercel.app';
+      return {
+        share_token: tokenResult.value.token,
+        share_url: `${appUrl}/share/quote/${tokenResult.value.token}`,
+        expires_at: tokenResult.value.expires_at.toISOString(),
+      };
     },
   );
 

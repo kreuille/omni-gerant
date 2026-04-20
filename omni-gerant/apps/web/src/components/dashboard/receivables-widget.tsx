@@ -18,7 +18,7 @@ export function ReceivablesWidget({ amountCents }: ReceivablesWidgetProps) {
     <KpiCard
       title="Ce qu'on me doit"
       value={formatCents(amountCents)}
-      subtitle="Factures emises non payees"
+      subtitle="Factures émises non payées"
       color="green"
     />
   );

@@ -4,7 +4,7 @@ export interface TrackingEvent {
   id: string;
   quote_id: string;
   tenant_id: string;
-  event_type: 'sent' | 'viewed' | 'signed' | 'refused' | 'expired' | 'duplicated' | 'invoiced';
+  event_type: 'sent' | 'viewed' | 'accepted' | 'signed' | 'refused' | 'expired' | 'duplicated' | 'invoiced';
   actor: string; // user_id or 'client' or 'system'
   ip_address: string | null;
   user_agent: string | null;

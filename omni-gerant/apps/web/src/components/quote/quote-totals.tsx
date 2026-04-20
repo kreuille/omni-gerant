@@ -33,7 +33,7 @@ export function QuoteTotals({ totalHtCents, totalTvaCents, totalTtcCents, tvaBre
   return (
     <Card>
       <CardContent className="p-4">
-        <CardTitle className="text-sm font-semibold text-gray-700 mb-3">Recapitulatif</CardTitle>
+        <CardTitle className="text-sm font-semibold text-gray-700 mb-3">Récapitulatif</CardTitle>
 
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">

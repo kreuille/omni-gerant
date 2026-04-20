@@ -207,6 +207,15 @@ export async function duerpRoutes(app: FastifyInstance) {
     { preHandler: [...preHandlers, requirePermission('legal', 'read')] },
     async (request, reply) => {
       const { nafCode } = request.params as { nafCode: string };
+      // P2-09 : valider le format NN.NNA (ex 62.01Z) avant toute recherche
+      if (!/^\d{2}\.\d{2}[A-Z]$/i.test(nafCode)) {
+        return reply.status(400).send({
+          error: {
+            code: 'INVALID_NAF_CODE',
+            message: 'Code NAF invalide (format attendu : NN.NNA, ex : 62.01Z).',
+          },
+        });
+      }
       // Try v2 first (161 specialized profiles), fall back to v1
       const v2 = findMetierByNaf(nafCode);
       if (v2) {
@@ -230,14 +239,21 @@ export async function duerpRoutes(app: FastifyInstance) {
     '/api/legal/duerp/detect-risks',
     { preHandler: [...preHandlers, requirePermission('legal', 'read')] },
     async (request, reply) => {
-      const { description } = request.body as { description: string };
-      if (!description) {
-        return reply.status(400).send({
-          error: { code: 'VALIDATION_ERROR', message: 'description is required' },
+      try {
+        const body = (request.body ?? {}) as { description?: string };
+        const description = body.description?.trim();
+        if (!description) {
+          // P0-12 fix: renvoyer un resultat vide plutot que 500 si body absent/vide
+          return { detected: [], should_update_duerp: false };
+        }
+        const detected = detectPurchaseRisks(description) ?? [];
+        return { detected, should_update_duerp: detected.length > 0 };
+      } catch (e) {
+        request.log.error({ err: e }, 'detect-risks failed');
+        return reply.status(500).send({
+          error: { code: 'DETECT_RISKS_FAILED', message: 'Impossible de detecter les risques pour le moment.' },
         });
       }
-      const detected = detectPurchaseRisks(description);
-      return { detected, should_update_duerp: detected.length > 0 };
     },
   );
 

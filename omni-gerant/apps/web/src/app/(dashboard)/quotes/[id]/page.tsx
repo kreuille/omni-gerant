@@ -257,8 +257,8 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                 <thead>
                   <tr className="border-b-2 border-gray-300">
                     <th className="py-2 text-left font-semibold text-gray-700">Designation</th>
-                    <th className="py-2 text-right font-semibold text-gray-700 w-16">Qte</th>
-                    <th className="py-2 text-center font-semibold text-gray-700 w-14">Unite</th>
+                    <th className="py-2 text-right font-semibold text-gray-700 w-16">Qté</th>
+                    <th className="py-2 text-center font-semibold text-gray-700 w-14">Unité</th>
                     <th className="py-2 text-right font-semibold text-gray-700 w-24">P.U. HT</th>
                     <th className="py-2 text-center font-semibold text-gray-700 w-14">TVA</th>
                     <th className="py-2 text-right font-semibold text-gray-700 w-28">Total HT</th>

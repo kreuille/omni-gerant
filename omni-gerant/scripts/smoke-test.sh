@@ -2,7 +2,7 @@
 # Smoke test for zenadmin API
 # Usage: ./scripts/smoke-test.sh [API_URL]
 
-API_URL="${1:-https://zenadmin-api.onrender.com}"
+API_URL="${1:-https://omni-gerant-api.onrender.com}"
 FAILURES=0
 
 check() {

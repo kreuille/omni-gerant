@@ -210,8 +210,8 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
                     <thead>
                       <tr className="border-b border-gray-200">
                         <th className="px-3 py-2 text-left font-medium text-gray-500">Designation</th>
-                        <th className="px-3 py-2 text-right font-medium text-gray-500">Qte</th>
-                        <th className="px-3 py-2 text-left font-medium text-gray-500">Unite</th>
+                        <th className="px-3 py-2 text-right font-medium text-gray-500">Qté</th>
+                        <th className="px-3 py-2 text-left font-medium text-gray-500">Unité</th>
                         <th className="px-3 py-2 text-right font-medium text-gray-500">PU HT</th>
                         <th className="px-3 py-2 text-right font-medium text-gray-500">TVA</th>
                         <th className="px-3 py-2 text-right font-medium text-gray-500">Total HT</th>

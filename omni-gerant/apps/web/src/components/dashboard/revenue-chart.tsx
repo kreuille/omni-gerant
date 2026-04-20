@@ -38,12 +38,12 @@ export function RevenueChart({ data, trendPct }: RevenueChartProps) {
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-gray-900">CA mensuel</h3>
           <span className={`text-sm font-medium ${trendPct >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            {trendPct >= 0 ? '+' : ''}{trendPct}% vs mois precedent
+            {trendPct >= 0 ? '+' : ''}{trendPct}% vs mois précédent
           </span>
         </div>
 
         {data.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-8">Aucune donnee disponible</p>
+          <p className="text-sm text-gray-400 text-center py-8">Aucune donnée disponible</p>
         ) : (
           <div className="flex items-end gap-2 h-40">
             {data.map((d) => {

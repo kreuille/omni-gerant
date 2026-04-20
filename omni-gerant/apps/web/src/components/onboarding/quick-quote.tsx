@@ -125,7 +125,7 @@ export function QuickQuote({ onComplete }: QuickQuoteProps) {
       </Card>
 
       <Button onClick={onComplete} className="w-full">
-        Creer mon premier devis
+        Créer mon premier devis
       </Button>
     </div>
   );

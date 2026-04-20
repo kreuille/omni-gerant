@@ -20,7 +20,7 @@ export default function Step4Page() {
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Votre premier devis</h2>
         <p className="text-sm text-gray-500 mt-1">
-          Creez votre premier client et devis pour decouvrir la puissance de l'outil.
+          Créez votre premier client et devis pour decouvrir la puissance de l'outil.
         </p>
       </div>
 

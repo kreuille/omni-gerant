@@ -40,7 +40,7 @@ export default function Step1Page() {
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Votre entreprise</h2>
         <p className="text-sm text-gray-500 mt-1">
-          Saisissez votre SIRET pour pre-remplir automatiquement vos informations.
+          Saisissez votre SIRET pour pré-remplir automatiquement vos informations.
         </p>
       </div>
 

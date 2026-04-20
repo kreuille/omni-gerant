@@ -11,14 +11,14 @@ interface MobileNavProps {
 }
 
 const navItems = [
-  { label: 'Dashboard', href: '/' },
+  { label: 'Tableau de bord', href: '/' },
   { label: 'Devis', href: '/quotes' },
   { label: 'Factures', href: '/invoices' },
   { label: 'Achats', href: '/purchases' },
   { label: 'Banque', href: '/bank' },
   { label: 'Effectif', href: '/hr' },
   { label: 'Legal', href: '/legal' },
-  { label: 'Parametres', href: '/settings' },
+  { label: 'Paramètres', href: '/settings' },
 ];
 
 export function MobileNav({ open, onClose }: MobileNavProps) {

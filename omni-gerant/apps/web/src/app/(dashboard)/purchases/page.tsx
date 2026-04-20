@@ -196,7 +196,7 @@ export default function PurchasesPage() {
         <Card>
           <CardContent className="py-12 text-center text-gray-500">
             <p className="text-lg mb-2">Aucune facture d&apos;achat pour le moment</p>
-            <p className="text-sm">Creez votre premiere facture d&apos;achat ou importez-en via OCR.</p>
+            <p className="text-sm">Créez votre premiere facture d&apos;achat ou importez-en via OCR.</p>
           </CardContent>
         </Card>
       ) : (

@@ -28,7 +28,7 @@ export function RecentActivity({ activities }: RecentActivityProps) {
   return (
     <Card>
       <CardContent className="p-4">
-        <h3 className="font-semibold text-gray-900 mb-3">Activite recente</h3>
+        <h3 className="font-semibold text-gray-900 mb-3">Activité récente</h3>
         {activities.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-4">Aucune activite recente</p>
         ) : (

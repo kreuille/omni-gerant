@@ -78,7 +78,7 @@ export default function QuotesPage() {
         <Card>
           <CardContent className="py-12 text-center text-gray-500">
             <p className="text-lg mb-2">Aucun devis pour le moment</p>
-            <p className="text-sm">Creez votre premier devis pour commencer.</p>
+            <p className="text-sm">Créez votre premier devis pour commencer.</p>
           </CardContent>
         </Card>
       ) : (

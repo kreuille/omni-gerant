@@ -36,7 +36,7 @@ export function QuoteActions({ status, onSend, onDuplicate, onPreview, onDelete,
       )}
       {actions.includes('preview') && (
         <Button variant="outline" size="sm" onClick={onPreview}>
-          Apercu
+          Aperçu
         </Button>
       )}
       {actions.includes('send') && (

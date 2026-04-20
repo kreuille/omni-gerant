@@ -4,7 +4,7 @@ import { injectTenant } from '../../plugins/tenant.js';
 
 // BUSINESS RULE [CDC-3.2]: Settings endpoints for accounting, payments, PPF
 
-type SettingsSection = 'accounting' | 'payments' | 'ppf';
+type SettingsSection = 'accounting' | 'payments' | 'ppf' | 'connectors';
 
 const settingsStore = new Map<string, Record<string, unknown>>();
 
@@ -25,6 +25,14 @@ const DEFAULTS: Record<SettingsSection, Record<string, unknown>> = {
     enabled: false,
     platform: 'chorus-pro',
     pdp_id: null,
+  },
+  connectors: {
+    bridge_banking_enabled: false,
+    gocardless_enabled: false,
+    pappers_enabled: true,
+    sirene_enabled: true,
+    insee_enabled: true,
+    resend_enabled: false,
   },
 };
 
@@ -98,6 +106,40 @@ export async function settingsRoutes(app: FastifyInstance) {
     async (request) => {
       const body = request.body as Record<string, unknown>;
       return putSettings(request.auth.tenant_id, 'ppf', body);
+    },
+  );
+
+  // GET /api/settings/connectors — P0-10
+  app.get(
+    '/api/settings/connectors',
+    { preHandler: [...preHandlers, requirePermission('settings', 'read')] },
+    async (request) => {
+      return getSettings(request.auth.tenant_id, 'connectors');
+    },
+  );
+
+  // PUT /api/settings/connectors
+  app.put(
+    '/api/settings/connectors',
+    { preHandler: [...preHandlers, requirePermission('settings', 'update')] },
+    async (request) => {
+      const body = request.body as Record<string, unknown>;
+      return putSettings(request.auth.tenant_id, 'connectors', body);
+    },
+  );
+
+  // GET /api/settings — recapitulatif
+  app.get(
+    '/api/settings',
+    { preHandler: [...preHandlers, requirePermission('settings', 'read')] },
+    async (request) => {
+      const tenantId = request.auth.tenant_id;
+      return {
+        accounting: getSettings(tenantId, 'accounting'),
+        payments: getSettings(tenantId, 'payments'),
+        ppf: getSettings(tenantId, 'ppf'),
+        connectors: getSettings(tenantId, 'connectors'),
+      };
     },
   );
 }

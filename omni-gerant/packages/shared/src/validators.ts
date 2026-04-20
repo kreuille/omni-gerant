@@ -6,15 +6,72 @@ export const uuidSchema = z.string().uuid();
 
 export const emailSchema = z.string().email().toLowerCase().trim();
 
+// P1-02 : Algorithme de Luhn (INSEE) pour SIREN/SIRET
+export function luhnCheck(digits: string): boolean {
+  if (!/^\d+$/.test(digits)) return false;
+  let sum = 0;
+  const len = digits.length;
+  for (let i = 0; i < len; i++) {
+    // parite : doubler les positions paires en partant de la droite (1-indexe)
+    const fromRight = len - i;
+    let d = Number(digits[i]);
+    if (fromRight % 2 === 0) {
+      d *= 2;
+      if (d > 9) d -= 9;
+    }
+    sum += d;
+  }
+  return sum % 10 === 0;
+}
+
 export const siretSchema = z
   .string()
-  .regex(/^\d{14}$/, 'SIRET must be 14 digits')
-  .transform((v) => v.replace(/\s/g, ''));
+  .transform((v) => v.replace(/\s/g, ''))
+  .refine((v) => /^\d{14}$/.test(v), { message: 'Le SIRET doit contenir 14 chiffres.' })
+  .refine((v) => luhnCheck(v), { message: 'Le SIRET est invalide (échec du contrôle Luhn).' });
 
 export const sirenSchema = z
   .string()
-  .regex(/^\d{9}$/, 'SIREN must be 9 digits')
-  .transform((v) => v.replace(/\s/g, ''));
+  .transform((v) => v.replace(/\s/g, ''))
+  .refine((v) => /^\d{9}$/.test(v), { message: 'Le SIREN doit contenir 9 chiffres.' })
+  .refine((v) => luhnCheck(v), { message: 'Le SIREN est invalide (échec du contrôle Luhn).' });
+
+// P1-03 : IBAN MOD-97 (ISO 13616)
+const IBAN_LENGTHS: Record<string, number> = {
+  FR: 27, BE: 16, DE: 22, ES: 24, IT: 27, LU: 20, MC: 27, PT: 25, NL: 18,
+  AT: 20, CH: 21, GB: 22, IE: 22, DK: 18, FI: 18, SE: 24, PL: 28, CZ: 24,
+};
+export function ibanCheck(iban: string): boolean {
+  const clean = iban.replace(/\s/g, '').toUpperCase();
+  if (clean.length < 4) return false;
+  const country = clean.slice(0, 2);
+  const expected = IBAN_LENGTHS[country];
+  if (expected && clean.length !== expected) return false;
+  if (!/^[A-Z0-9]+$/.test(clean)) return false;
+  const rearranged = clean.slice(4) + clean.slice(0, 4);
+  const numeric = rearranged.split('').map((c) => {
+    const code = c.charCodeAt(0);
+    return code >= 65 && code <= 90 ? String(code - 55) : c;
+  }).join('');
+  // mod97 sur string longue
+  let remainder = 0;
+  for (const ch of numeric) remainder = (remainder * 10 + Number(ch)) % 97;
+  return remainder === 1;
+}
+
+export const ibanSchema = z
+  .string()
+  .transform((v) => v.replace(/\s/g, '').toUpperCase())
+  .refine((v) => /^[A-Z]{2}\d{2}[A-Z0-9]+$/.test(v), { message: 'Format IBAN invalide.' })
+  .refine(ibanCheck, { message: 'IBAN invalide (longueur ou clé MOD-97 incorrecte).' });
+
+// P2-09 : Code NAF FR (format NN.NNA, ex 62.01Z)
+export const nafCodeSchema = z
+  .string()
+  .transform((v) => v.toUpperCase().trim())
+  .refine((v) => /^\d{2}\.\d{2}[A-Z]$/.test(v), {
+    message: 'Code NAF invalide (format attendu : NN.NNA, ex : 62.01Z).',
+  });
 
 export const phoneSchema = z
   .string()

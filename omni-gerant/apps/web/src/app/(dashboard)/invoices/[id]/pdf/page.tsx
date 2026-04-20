@@ -58,7 +58,7 @@ export default function InvoicePdfPage({ params }: { params: { id: string } }) {
           <Link href={`/invoices/${params.id}`} className="text-sm text-gray-500 hover:text-gray-700">
             &larr; Retour a la facture
           </Link>
-          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mt-1">Apercu PDF</h1>
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mt-1">Aperçu PDF</h1>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleDownload} disabled={!pdfUrl}>
@@ -86,7 +86,7 @@ export default function InvoicePdfPage({ params }: { params: { id: string } }) {
             <iframe
               src={pdfUrl}
               className="w-full h-[80vh] border-0 rounded"
-              title="Apercu PDF facture"
+              title="Aperçu PDF facture"
             />
           ) : (
             <p className="text-center text-gray-500 py-12">

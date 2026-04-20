@@ -12,7 +12,11 @@ const quoteLineSchema = z.object({
   unit: z.string().max(20).default('unit'),
   unit_price_cents: z.number().int().min(0).default(0),
   // BUSINESS RULE [R02]: TVA en basis points (2000 = 20.00%)
-  tva_rate: z.number().int().min(0).max(10000).default(2000),
+  // P1-01 : whitelist France — 0, 2.1, 5.5, 10, 20 %
+  tva_rate: z.number().int().refine(
+    (v) => [0, 210, 550, 1000, 2000].includes(v),
+    { message: 'Taux de TVA invalide. Valeurs autorisées : 0, 2.1, 5.5, 10 ou 20 %.' },
+  ).default(2000),
   discount_type: z.enum(['percentage', 'fixed']).optional(),
   discount_value: z.number().int().min(0).optional(),
 });

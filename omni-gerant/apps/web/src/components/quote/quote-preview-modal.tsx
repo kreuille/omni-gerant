@@ -67,7 +67,7 @@ export function QuotePreviewModal({ title, lines, validityDays, notes, onClose, 
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-lg font-semibold text-gray-900">Apercu du devis</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Aperçu du devis</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">
             &times;
           </button>
@@ -112,7 +112,7 @@ export function QuotePreviewModal({ title, lines, validityDays, notes, onClose, 
             </div>
             <div className="text-right text-sm text-gray-600">
               <p>Date : {new Date().toLocaleDateString('fr-FR')}</p>
-              <p>Validite : {validityDate.toLocaleDateString('fr-FR')}</p>
+              <p>Validité : {validityDate.toLocaleDateString('fr-FR')}</p>
             </div>
           </div>
 
@@ -127,8 +127,8 @@ export function QuotePreviewModal({ title, lines, validityDays, notes, onClose, 
             <thead>
               <tr className="border-b-2 border-gray-300">
                 <th className="py-2 text-left font-semibold text-gray-700">Designation</th>
-                <th className="py-2 text-right font-semibold text-gray-700 w-16">Qte</th>
-                <th className="py-2 text-center font-semibold text-gray-700 w-14">Unite</th>
+                <th className="py-2 text-right font-semibold text-gray-700 w-16">Qté</th>
+                <th className="py-2 text-center font-semibold text-gray-700 w-14">Unité</th>
                 <th className="py-2 text-right font-semibold text-gray-700 w-24">P.U. HT</th>
                 <th className="py-2 text-center font-semibold text-gray-700 w-14">TVA</th>
                 <th className="py-2 text-right font-semibold text-gray-700 w-28">Total HT</th>

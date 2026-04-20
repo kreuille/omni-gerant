@@ -97,7 +97,7 @@ export default function RgpdPage() {
           <CardContent className="p-8 text-center">
             <div className="mx-auto max-w-md">
               <h2 className="text-lg font-semibold text-gray-900 mb-2">
-                Creer votre registre RGPD
+                Créer votre registre RGPD
               </h2>
               <p className="text-sm text-gray-600 mb-6">
                 Le registre sera pre-rempli avec 5 traitements types pour une TPE :
@@ -154,7 +154,7 @@ export default function RgpdPage() {
               </div>
 
               <Button onClick={handleCreateRegistry} disabled={creating}>
-                {creating ? 'Creation...' : 'Creer le registre (avec pre-remplissage)'}
+                {creating ? 'Creation...' : 'Créer le registre (avec pré-remplissage)'}
               </Button>
             </div>
           </CardContent>
@@ -212,7 +212,7 @@ export default function RgpdPage() {
 
       <Card className="mb-6">
         <CardContent className="p-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Informations generales</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">Informations générales</h2>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="text-gray-500">Responsable de traitement : </span>

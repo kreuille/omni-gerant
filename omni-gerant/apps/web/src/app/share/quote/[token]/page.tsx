@@ -228,7 +228,7 @@ export default function SharedQuotePage({ params }: { params: { token: string } 
           </div>
           <div className="text-right text-sm text-gray-600">
             {quote?.issue_date && <p>Date : {new Date(quote.issue_date).toLocaleDateString('fr-FR')}</p>}
-            {quote?.validity_date && <p>Validite : {new Date(quote.validity_date).toLocaleDateString('fr-FR')}</p>}
+            {quote?.validity_date && <p>Validité : {new Date(quote.validity_date).toLocaleDateString('fr-FR')}</p>}
           </div>
         </div>
 
@@ -239,8 +239,8 @@ export default function SharedQuotePage({ params }: { params: { token: string } 
               <thead>
                 <tr className="border-b">
                   <th className="text-left py-2 text-gray-500">Designation</th>
-                  <th className="text-right py-2 text-gray-500">Qte</th>
-                  <th className="text-center py-2 text-gray-500">Unite</th>
+                  <th className="text-right py-2 text-gray-500">Qté</th>
+                  <th className="text-center py-2 text-gray-500">Unité</th>
                   <th className="text-right py-2 text-gray-500">P.U. HT</th>
                   <th className="text-center py-2 text-gray-500">TVA</th>
                   <th className="text-right py-2 text-gray-500">Total HT</th>
@@ -311,8 +311,8 @@ export default function SharedQuotePage({ params }: { params: { token: string } 
                   <Input value={signerName} onChange={(e) => setSignerName(e.target.value)} placeholder="Nom" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Prenom</label>
-                  <Input value={signerFirstName} onChange={(e) => setSignerFirstName(e.target.value)} placeholder="Prenom" />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
+                  <Input value={signerFirstName} onChange={(e) => setSignerFirstName(e.target.value)} placeholder="Prénom" />
                 </div>
               </div>
 

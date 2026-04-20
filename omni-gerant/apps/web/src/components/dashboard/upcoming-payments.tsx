@@ -26,9 +26,9 @@ export function UpcomingPayments({ payments }: UpcomingPaymentsProps) {
   return (
     <Card>
       <CardContent className="p-4">
-        <h3 className="font-semibold text-gray-900 mb-3">Echeances cette semaine</h3>
+        <h3 className="font-semibold text-gray-900 mb-3">Échéances cette semaine</h3>
         {payments.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-4">Aucune echeance cette semaine</p>
+          <p className="text-sm text-gray-400 text-center py-4">Aucune échéance cette semaine</p>
         ) : (
           <div className="space-y-2">
             {payments.map((p) => (

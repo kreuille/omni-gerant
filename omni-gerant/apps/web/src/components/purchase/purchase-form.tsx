@@ -172,7 +172,7 @@ export function PurchaseForm() {
             <tr className="border-b">
               <th className="py-2 text-left">#</th>
               <th className="py-2 text-left">Designation</th>
-              <th className="py-2 text-right w-20">Qte</th>
+              <th className="py-2 text-right w-20">Qté</th>
               <th className="py-2 text-right w-28">P.U. HT</th>
               <th className="py-2 text-right w-24">TVA</th>
               <th className="py-2 text-right w-28">Total HT</th>

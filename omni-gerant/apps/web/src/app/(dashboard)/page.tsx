@@ -131,7 +131,7 @@ export default function DashboardPage() {
           title="CA du mois"
           value={formatCents(data.kpis.revenue_month_cents)}
           trend={data.kpis.revenue_trend_pct}
-          subtitle="vs mois precedent"
+          subtitle="vs mois précédent"
           color="blue"
         />
         <RevenueChart

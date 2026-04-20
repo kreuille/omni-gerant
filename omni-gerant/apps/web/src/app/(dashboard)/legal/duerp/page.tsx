@@ -117,10 +117,10 @@ export default function DuerpPage() {
             </h2>
             <p className="text-gray-500 mb-6 max-w-md mx-auto">
               Le Document Unique est obligatoire pour toutes les entreprises.
-              Creez votre premier DUERP en quelques minutes grace au pre-remplissage automatique.
+              Créez votre premier DUERP en quelques minutes grace au pré-remplissage automatique.
             </p>
             <a href="/legal/duerp/edit">
-              <Button>Creer mon DUERP</Button>
+              <Button>Créer mon DUERP</Button>
             </a>
           </CardContent>
         </Card>

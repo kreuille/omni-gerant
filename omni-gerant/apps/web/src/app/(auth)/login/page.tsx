@@ -63,7 +63,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-primary-700">zenAdmin</h1>
-          <p className="mt-2 text-gray-600">Connectez-vous a votre espace</p>
+          <p className="mt-2 text-gray-600">Connectez-vous à votre espace</p>
         </div>
         <Card>
           <CardContent className="pt-6">
@@ -92,7 +92,7 @@ export default function LoginPage() {
             <p className="mt-4 text-center text-sm text-gray-600">
               Pas encore de compte ?{' '}
               <Link href="/register" className="text-primary-600 hover:text-primary-700 font-medium">
-                Creer un compte
+                Créer un compte
               </Link>
             </p>
           </CardContent>

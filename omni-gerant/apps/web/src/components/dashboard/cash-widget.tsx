@@ -18,7 +18,7 @@ function formatCents(cents: number): string {
 export function CashWidget({ amountCents, bankBalanceCents }: CashWidgetProps) {
   return (
     <KpiCard
-      title="Mon reste a vivre reel"
+      title="Mon reste à vivre réel"
       value={formatCents(amountCents)}
       subtitle={`Solde bancaire : ${formatCents(bankBalanceCents)}`}
       color={amountCents >= 0 ? 'blue' : 'red'}

@@ -182,7 +182,7 @@ export default function PurchaseDetailPage() {
                     <tr className="border-b">
                       <th className="py-2 text-left">#</th>
                       <th className="py-2 text-left">Designation</th>
-                      <th className="py-2 text-right">Qte</th>
+                      <th className="py-2 text-right">Qté</th>
                       <th className="py-2 text-right">P.U. HT</th>
                       <th className="py-2 text-right">TVA</th>
                       <th className="py-2 text-right">Total HT</th>

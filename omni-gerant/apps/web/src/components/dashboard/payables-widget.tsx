@@ -18,7 +18,7 @@ export function PayablesWidget({ amountCents }: PayablesWidgetProps) {
     <KpiCard
       title="Ce que je dois"
       value={formatCents(amountCents)}
-      subtitle="Factures fournisseurs non payees"
+      subtitle="Factures fournisseurs non payées"
       color="red"
     />
   );

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const API_URL = process.env['E2E_API_URL'] || 'https://zenadmin-api.onrender.com';
+const API_URL = process.env['E2E_API_URL'] || 'https://omni-gerant-api.onrender.com';
 const UNIQUE = Date.now();
 
 // Helper: register a fresh user and return tokens

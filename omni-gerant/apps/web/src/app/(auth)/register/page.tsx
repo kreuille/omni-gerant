@@ -34,7 +34,7 @@ export default function RegisterPage() {
       return;
     }
     if (password.length < 8) {
-      setError('Le mot de passe doit contenir au moins 8 caracteres');
+      setError('Le mot de passe doit contenir au moins 8 caractères');
       setLoading(false);
       return;
     }
@@ -73,7 +73,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-primary-700">zenAdmin</h1>
-          <p className="mt-2 text-gray-600">Creez votre compte gratuit</p>
+          <p className="mt-2 text-gray-600">Créez votre compte gratuit</p>
         </div>
         <Card>
           <CardContent className="pt-6">
@@ -81,7 +81,7 @@ export default function RegisterPage() {
               <Input
                 id="company"
                 label="Nom de l'entreprise"
-                placeholder="Ma Societe SARL"
+                placeholder="Ma Société SARL"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 required
@@ -89,7 +89,7 @@ export default function RegisterPage() {
               <div className="grid grid-cols-2 gap-3">
                 <Input
                   id="firstName"
-                  label="Prenom"
+                  label="Prénom"
                   placeholder="Jean"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
@@ -117,7 +117,7 @@ export default function RegisterPage() {
                 id="password"
                 label="Mot de passe"
                 type="password"
-                placeholder="8 caracteres minimum"
+                placeholder="8 caractères minimum"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -126,11 +126,11 @@ export default function RegisterPage() {
                 <p className="text-sm text-red-600 bg-red-50 rounded px-3 py-2">{error}</p>
               )}
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Creation...' : 'Creer mon compte'}
+                {loading ? 'Creation...' : 'Créer mon compte'}
               </Button>
             </form>
             <p className="mt-4 text-center text-sm text-gray-600">
-              Deja un compte ?{' '}
+              Déjà un compte ?{' '}
               <Link href="/login" className="text-primary-600 hover:text-primary-700 font-medium">
                 Se connecter
               </Link>

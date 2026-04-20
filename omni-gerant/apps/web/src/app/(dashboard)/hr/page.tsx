@@ -255,7 +255,7 @@ export default function HrPage() {
           <div className="bg-white border rounded-lg p-6 space-y-4">
             <h2 className="text-lg font-semibold">Pre-remplissage automatique</h2>
             <p className="text-sm text-gray-500">
-              Entrez votre code NAF et effectif pour pre-remplir les postes types de votre metier.
+              Entrez votre code NAF et effectif pour pré-remplir les postes types de votre metier.
             </p>
             <div className="flex gap-3 items-end">
               <div className="flex-1">
@@ -402,7 +402,7 @@ export default function HrPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b text-left">
-                    <th className="px-2 py-2">Prenom</th>
+                    <th className="px-2 py-2">Prénom</th>
                     <th className="px-2 py-2">Nom</th>
                     <th className="px-2 py-2">Poste</th>
                     <th className="px-2 py-2">Contrat</th>
@@ -436,7 +436,7 @@ export default function HrPage() {
             <div className="grid grid-cols-5 gap-2 pt-4 border-t">
               <input
                 type="text"
-                placeholder="Prenom"
+                placeholder="Prénom"
                 value={newEmployee.firstName ?? ''}
                 onChange={(e) => setNewEmployee((p) => ({ ...p, firstName: e.target.value }))}
                 className="border rounded px-2 py-1.5 text-sm"

@@ -4,7 +4,7 @@ import { AuthProvider } from '@/lib/auth-context';
 
 export const metadata: Metadata = {
   title: {
-    default: 'zenAdmin — Gestion complete pour TPE',
+    default: 'zenAdmin — Gestion complète pour TPE',
     template: '%s | zenAdmin',
   },
   description:
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'fr_FR',
     siteName: 'zenAdmin',
-    title: 'zenAdmin — Gestion complete pour TPE',
+    title: 'zenAdmin — Gestion complète pour TPE',
     description:
       'Plateforme SaaS tout-en-un pour TPE, artisans et auto-entrepreneurs.',
   },

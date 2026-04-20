@@ -143,7 +143,7 @@ export default function NewQuotePage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setShowPreview(true)}>
-            Apercu
+            Aperçu
           </Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? 'Enregistrement...' : 'Enregistrer'}
@@ -160,10 +160,10 @@ export default function NewQuotePage() {
       {profileIncomplete && (
         <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-md text-sm text-orange-800 flex items-center justify-between gap-3">
           <span>
-            Votre profil entreprise est incomplet (SIRET, adresse...). Le devis sera genere avec des champs manquants.
+            Votre profil entreprise est incomplet (SIRET, adresse...). Le devis sera généré avec des champs manquants.
           </span>
           <Link href="/settings/profile" className="text-orange-900 underline font-medium whitespace-nowrap">
-            Completer
+            Compléter
           </Link>
         </div>
       )}
@@ -235,7 +235,7 @@ export default function NewQuotePage() {
                 <Input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Ex: Renovation salle de bain"
+                  placeholder="Ex: Rénovation salle de bain"
                 />
               </div>
               <QuoteClientSelect value={clientId} onChange={setClientId} />
@@ -254,7 +254,7 @@ export default function NewQuotePage() {
           <Card>
             <CardContent className="p-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Validite (jours)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Validité (jours)</label>
                 <Input
                   type="number"
                   value={validityDays}
@@ -270,7 +270,7 @@ export default function NewQuotePage() {
                   onChange={(e) => setNotes(e.target.value)}
                   className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   rows={4}
-                  placeholder="Conditions particulieres..."
+                  placeholder="Conditions particulières..."
                 />
               </div>
             </CardContent>

@@ -160,41 +160,39 @@ export async function authRoutes(app: FastifyInstance) {
   );
 
   // POST /api/auth/2fa/enable (authenticated)
-  app.post(
-    '/api/auth/2fa/enable',
-    { preHandler: [authenticate] },
-    async (request, reply) => {
-      const result = await authService.enable2fa(request.auth.user_id);
-      if (!result.ok) {
-        return reply.status(400).send({ error: result.error });
-      }
-      return result.value;
-    },
-  );
+  const enable2faHandler = async (request: import('fastify').FastifyRequest, reply: import('fastify').FastifyReply) => {
+    const result = await authService.enable2fa(request.auth.user_id);
+    if (!result.ok) {
+      return reply.status(400).send({ error: result.error });
+    }
+    return result.value;
+  };
+  app.post('/api/auth/2fa/enable', { preHandler: [authenticate] }, enable2faHandler);
+  // Alias documenté dans CLAUDE.md — P0-08
+  app.post('/api/auth/2fa/setup', { preHandler: [authenticate] }, enable2faHandler);
 
   // POST /api/auth/2fa/confirm (authenticated)
-  app.post(
-    '/api/auth/2fa/confirm',
-    { preHandler: [authenticate] },
-    async (request, reply) => {
-      const parsed = enable2faSchema.safeParse(request.body);
-      if (!parsed.success) {
-        return reply.status(400).send({
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: 'Invalid code',
-            details: { issues: parsed.error.issues },
-          },
-        });
-      }
+  const confirm2faHandler = async (request: import('fastify').FastifyRequest, reply: import('fastify').FastifyReply) => {
+    const parsed = enable2faSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Code 2FA invalide',
+          details: { issues: parsed.error.issues },
+        },
+      });
+    }
 
-      const result = await authService.confirm2fa(request.auth.user_id, parsed.data.code);
-      if (!result.ok) {
-        return reply.status(400).send({ error: result.error });
-      }
-      return reply.status(204).send();
-    },
-  );
+    const result = await authService.confirm2fa(request.auth.user_id, parsed.data.code);
+    if (!result.ok) {
+      return reply.status(400).send({ error: result.error });
+    }
+    return reply.status(204).send();
+  };
+  app.post('/api/auth/2fa/confirm', { preHandler: [authenticate] }, confirm2faHandler);
+  // Alias documenté dans CLAUDE.md — P0-08
+  app.post('/api/auth/2fa/verify', { preHandler: [authenticate] }, confirm2faHandler);
 
   // POST /api/auth/2fa/disable (authenticated)
   app.post(

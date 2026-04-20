@@ -95,6 +95,31 @@ export async function invoiceRoutes(app: FastifyInstance) {
     },
   );
 
+  // Alias documentes dans CLAUDE.md :
+  // - GET /api/invoices/:id/pdf -> redirige vers facturx.pdf (P0-04)
+  // - GET /api/invoices/:id/facturx -> redirige vers facturx.xml (P0-03)
+  app.get(
+    '/api/invoices/:id/pdf',
+    { preHandler: [...preHandlers, requirePermission('invoice', 'read')] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const qs = new URLSearchParams(request.query as Record<string, string> ?? {}).toString();
+      const target = `/api/invoices/${id}/facturx.pdf${qs ? '?' + qs : ''}`;
+      return reply.redirect(307, target);
+    },
+  );
+
+  app.get(
+    '/api/invoices/:id/facturx',
+    { preHandler: [...preHandlers, requirePermission('invoice', 'read')] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const qs = new URLSearchParams(request.query as Record<string, string> ?? {}).toString();
+      const target = `/api/invoices/${id}/facturx.xml${qs ? '?' + qs : ''}`;
+      return reply.redirect(307, target);
+    },
+  );
+
   // F1 : GET /api/invoices/:id/facturx.pdf — genere et retourne PDF/A-3 avec XML Factur-X embedded
   app.get(
     '/api/invoices/:id/facturx.pdf',

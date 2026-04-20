@@ -29,6 +29,7 @@ import { paymentIntegrationRoutes } from './modules/payment/payment-integration.
 import { ppfRoutes } from './modules/invoice/ppf/ppf.routes.js';
 import { hrRoutes } from './modules/hr/hr.routes.js';
 import { clientRoutes } from './modules/client/client.routes.js';
+import { settingsRoutes } from './modules/settings/settings.routes.js';
 import { createRequestContext, runWithContext } from './middleware/request-context.js';
 
 export async function buildApp() {
@@ -102,6 +103,7 @@ export async function buildApp() {
   await app.register(ppfRoutes);
   await app.register(hrRoutes);
   await app.register(clientRoutes);
+  await app.register(settingsRoutes);
   const { billingRoutes } = await import('./modules/billing/billing.routes.js');
   await app.register(billingRoutes);
 

@@ -73,7 +73,7 @@ export function SituationEditor({ quoteLines, previousPercent, onSubmit }: Situa
         </div>
 
         <Button onClick={() => onSubmit(Math.round(globalPercent * 100))} className="w-full">
-          Creer la situation
+          Créer la situation
         </Button>
       </CardContent>
     </Card>

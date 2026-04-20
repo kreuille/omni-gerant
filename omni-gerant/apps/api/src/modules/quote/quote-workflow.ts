@@ -7,9 +7,9 @@ import type { AppError } from '@zenadmin/shared';
 //                viewed → refused
 //         sent → expired
 
-export type QuoteStatus = 'draft' | 'sent' | 'viewed' | 'signed' | 'refused' | 'expired' | 'invoiced';
+export type QuoteStatus = 'draft' | 'sent' | 'viewed' | 'accepted' | 'signed' | 'refused' | 'expired' | 'invoiced';
 
-export type QuoteAction = 'send' | 'view' | 'sign' | 'refuse' | 'expire' | 'invoice' | 'duplicate';
+export type QuoteAction = 'send' | 'view' | 'accept' | 'sign' | 'refuse' | 'expire' | 'invoice' | 'duplicate';
 
 interface Transition {
   from: QuoteStatus;
@@ -20,9 +20,15 @@ interface Transition {
 const VALID_TRANSITIONS: Transition[] = [
   { from: 'draft', to: 'sent', action: 'send' },
   { from: 'sent', to: 'viewed', action: 'view' },
+  // Acceptation (sans signature formelle) : depuis sent ou viewed
+  { from: 'sent', to: 'accepted', action: 'accept' },
+  { from: 'viewed', to: 'accepted', action: 'accept' },
+  // Signature electronique : depuis viewed ou accepted
   { from: 'viewed', to: 'signed', action: 'sign' },
+  { from: 'accepted', to: 'signed', action: 'sign' },
   { from: 'viewed', to: 'refused', action: 'refuse' },
   { from: 'sent', to: 'expired', action: 'expire' },
+  { from: 'accepted', to: 'invoiced', action: 'invoice' },
   { from: 'signed', to: 'invoiced', action: 'invoice' },
 ];
 
@@ -47,7 +53,7 @@ export function getAvailableActions(status: QuoteStatus): QuoteAction[] {
 }
 
 export function isTerminalStatus(status: QuoteStatus): boolean {
-  return ['signed', 'refused', 'expired', 'invoiced'].includes(status);
+  return ['refused', 'expired', 'invoiced'].includes(status);
 }
 
 export function isMutableStatus(status: QuoteStatus): boolean {

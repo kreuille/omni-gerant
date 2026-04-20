@@ -347,7 +347,7 @@ export default function SettingsProfilePage() {
         <div>
           <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">Profil entreprise</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Informations de votre entreprise pour les devis, factures et mentions legales.
+            Informations de votre entreprise pour les devis, factures et mentions légales.
           </p>
         </div>
         <Button onClick={handleSave} disabled={saving}>
@@ -367,7 +367,7 @@ export default function SettingsProfilePage() {
         <CardContent className="p-4">
           <h2 className="text-lg font-semibold text-gray-900 mb-1">Recherche SIRET</h2>
           <p className="text-sm text-gray-500 mb-3">
-            Entrez votre SIRET pour pre-remplir automatiquement toutes les informations.
+            Entrez votre SIRET pour pré-remplir automatiquement toutes les informations.
           </p>
           <div className="flex gap-2">
             <div className="flex-1">
@@ -388,10 +388,10 @@ export default function SettingsProfilePage() {
       {/* Informations generales */}
       <Card className="mb-6">
         <CardContent className="p-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Informations generales</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Informations générales</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input label="Raison sociale *" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
-            <Input label="Nom commercial" value={tradeName} onChange={(e) => setTradeName(e.target.value)} placeholder="Si different de la raison sociale" />
+            <Input label="Nom commercial" value={tradeName} onChange={(e) => setTradeName(e.target.value)} placeholder="Si différent de la raison sociale" />
             <Input label="SIRET" value={siret} onChange={(e) => setSiret(e.target.value)} placeholder="14 chiffres" />
             <Input label="SIREN" value={siren} onChange={(e) => setSiren(e.target.value)} placeholder="9 chiffres" />
             <div>
