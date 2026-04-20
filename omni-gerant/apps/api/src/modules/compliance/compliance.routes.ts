@@ -66,7 +66,7 @@ async function checkDecennale(tenantId: string, chantierStart: Date, chantierEnd
     return { ok: false, policy_id: null, reason: 'Aucune police decennale active.' };
   }
   const end = chantierEnd ?? new Date(chantierStart.getTime() + 365 * 86_400_000);
-  const covered = policies.find((p) => p.start_date <= chantierStart && p.end_date >= end);
+  const covered = policies.find((p: { id: string; start_date: Date; end_date: Date }) => p.start_date <= chantierStart && p.end_date >= end);
   if (covered) return { ok: true, policy_id: covered.id, reason: null };
   return { ok: false, policy_id: null, reason: 'Aucune police decennale ne couvre la periode du chantier.' };
 }

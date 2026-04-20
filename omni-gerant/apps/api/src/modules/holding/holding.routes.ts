@@ -183,9 +183,12 @@ export async function holdingRoutes(app: FastifyInstance) {
       select: { id: true, name: true, siret: true },
     });
 
-    const tenantById = new Map(tenants.map((t) => [t.id, t]));
-    const revById = new Map(revenueStats.map((r) => [r.tenant_id, r]));
-    const expById = new Map(expenseStats.map((e) => [e.tenant_id, e]));
+    type RevStat = { tenant_id: string; _sum: { total_ht_cents: number | null; total_ttc_cents: number | null; paid_cents: number | null }; _count: number };
+    type ExpStat = { tenant_id: string; _sum: { total_ht_cents: number | null; total_ttc_cents: number | null }; _count: number };
+    type TenantInfo = { id: string; name: string; siret: string | null };
+    const tenantById = new Map<string, TenantInfo>((tenants as TenantInfo[]).map((t) => [t.id, t]));
+    const revById = new Map<string, RevStat>((revenueStats as unknown as RevStat[]).map((r) => [r.tenant_id, r]));
+    const expById = new Map<string, ExpStat>((expenseStats as unknown as ExpStat[]).map((e) => [e.tenant_id, e]));
 
     const members = memberships.map((m) => {
       const rev = revById.get(m.tenant_id);

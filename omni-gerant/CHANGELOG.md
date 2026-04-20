@@ -6,6 +6,19 @@ Versionnage : [SemVer](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Vague Y — API publique
+- **Y1 OpenAPI 3.1** : `GET /api/openapi.json`, `/api/openapi.yaml`,
+  `/api/docs` (Swagger UI embarque) exposent la spec de l'API publique v1.
+- **Y2 API Keys** : `ApiKey` (key_prefix + SHA-256 hash, scopes granulaires,
+  rate_limit_per_min, expires_at), `ApiKeyUsage` bucket par minute pour
+  rate limit + metriques. Endpoints CRUD + `/revoke` + `/usage` (stats 24h).
+- **Y3 API v1** : `/api/v1/clients`, `/invoices`, `/quotes`, `/whoami`
+  avec auth Bearer zen_live_ + verification de scope (read:*, write:*, *),
+  pagination cursor, rate limit applique.
+- **Fix schema** : remplacement `10_000` par `10000` dans `LoyaltyTier`
+  (underscore numeric separator non supporte par Prisma — bloquait le
+  deploy Render).
+
 ### Vague X — Conformite sectorielle
 - **X1 HACCP (restauration)** : `HaccpRecord` (temperature/cleaning/delivery/
   expiration/oil_change), auto-check conformite (temperature hors seuils

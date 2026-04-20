@@ -183,6 +183,12 @@ export async function buildApp() {
   await app.register(savRoutes);
   const { complianceRoutes } = await import('./modules/compliance/compliance.routes.js');
   await app.register(complianceRoutes);
+  const { apiKeysRoutes } = await import('./modules/public-api/api-keys.routes.js');
+  await app.register(apiKeysRoutes);
+  const { openapiRoutes } = await import('./modules/public-api/openapi.routes.js');
+  await app.register(openapiRoutes);
+  const { publicV1Routes } = await import('./modules/public-api/v1.routes.js');
+  await app.register(publicV1Routes);
   await app.register(notificationRoutes);
   const { smsRoutes } = await import('./modules/notification/sms.routes.js');
   await app.register(smsRoutes);

@@ -2044,7 +2044,7 @@ model LoyaltyTier {
   name                String   // bronze | silver | gold | platinum (ou custom)
   min_points          Int      @default(0)
   discount_bp         Int      @default(0)    // reduction auto en basis points
-  earn_multiplier_bp  Int      @default(10_000) // multiplicateur gain points (10000 = x1)
+  earn_multiplier_bp  Int      @default(10000) // multiplicateur gain points (10000 = x1)
   benefits            Json     @default("[]") // liste libre d'avantages
   order               Int      @default(0)
   created_at          DateTime @default(now())
@@ -2303,4 +2303,46 @@ model BtpChantier {
   @@index([tenant_id, client_id])
   @@index([tenant_id, decennale_ok])
   @@map("btp_chantiers")
+}
+
+// ============================================================================
+// Vague Y - API publique (OpenAPI 3.1 + API keys + rate limit par scope)
+// ============================================================================
+
+model ApiKey {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id     String    @db.Uuid
+  name          String
+  key_prefix    String    // 8 premiers caracteres, visible (ex: "zen_live_ab12cd34")
+  key_hash      String    @unique // SHA-256 hash de la cle complete
+  scopes        String[]  @default([])   // ["read:invoices", "write:invoices", ...]
+  rate_limit_per_min Int  @default(60)
+  is_active     Boolean   @default(true)
+  last_used_at  DateTime?
+  last_used_ip  String?
+  expires_at    DateTime?
+  created_by    String    @db.Uuid
+  revoked_at    DateTime?
+  revoked_by    String?   @db.Uuid
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  @@index([tenant_id, is_active])
+  @@index([key_prefix])
+  @@map("api_keys")
+}
+
+model ApiKeyUsage {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  api_key_id    String    @db.Uuid
+  tenant_id     String    @db.Uuid
+  endpoint      String
+  method        String
+  status_code   Int
+  bucket_minute DateTime  // debut de la minute pour rate limit
+  count         Int       @default(1)
+  created_at    DateTime  @default(now())
+
+  @@index([api_key_id, bucket_minute])
+  @@map("api_key_usage")
 }
