@@ -6,6 +6,17 @@ Versionnage : [SemVer](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Vague U — Fidelisation
+- **U1 Programme points** : `LoyaltyAccount` par client + `LoyaltyTransaction`
+  (earn/redeem/adjust/expire). Endpoint auto-credit depuis facture payee
+  (`POST /api/loyalty/earn/invoice/:id`), multiplicateur par tier.
+- **U2 Niveaux** : `LoyaltyTier` bronze (0pts)/silver (500pts, 3% + x1.25)/
+  gold (2000pts, 6% + x1.5)/platinum (5000pts, 10% + x2), seed automatique
+  au 1er appel `/api/loyalty/tiers`.
+- **U3 Coupons** : `Coupon` (percent/amount/free_shipping) avec
+  max_uses, max_uses_per_client, valid_from/until, `CouponRedemption`.
+  `GET /api/public/coupons/:code` verification + `POST /api/loyalty/coupons/redeem`.
+
 ### Vague T — Multi-societes (holding)
 - **T1 Holding** : `HoldingGroup` (name, siren, parent_tenant_id) +
   `HoldingMembership` (role parent/subsidiary/joint_venture + ownership_bp) +
