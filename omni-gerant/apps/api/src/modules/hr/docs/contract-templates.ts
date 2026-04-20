@@ -8,6 +8,7 @@ import { prisma } from '@zenadmin/db';
 import type { Result, AppError } from '@zenadmin/shared';
 import { ok, err, notFound, validationError } from '@zenadmin/shared';
 import { formatCentsEur } from '../payroll/payroll-calculator.js';
+import { formatAddress } from '../payroll/address-format.js';
 
 export interface ContractContext {
   employer: {
@@ -62,7 +63,7 @@ export async function loadContractContext(employeeId: string, tenantId: string):
     employer: {
       name: tenant.name,
       siret: tenant.siret,
-      address: tenant.address ? JSON.stringify(tenant.address) : null,
+      address: formatAddress(tenant.address),
       legalForm: tenant.legal_form,
     },
     employee: {

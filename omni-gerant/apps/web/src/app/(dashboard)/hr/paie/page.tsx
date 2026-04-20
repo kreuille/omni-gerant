@@ -77,7 +77,9 @@ export default function PaiePage() {
 
   async function downloadPdf(id: string, filename: string) {
     const { openAuthenticatedDocument } = await import('@/lib/download');
-    const r = await openAuthenticatedDocument(`/api/hr/payroll/payslips/${id}/pdf`, filename);
+    // On demande un nom .pdf pour que le navigateur le reconnaisse comme PDF
+    const pdfName = filename.replace(/\.html?$/i, '.pdf');
+    const r = await openAuthenticatedDocument(`/api/hr/payroll/payslips/${id}/pdf`, pdfName);
     if (!r.ok) setMessage('Erreur téléchargement : ' + r.error);
   }
 
@@ -171,7 +173,7 @@ export default function PaiePage() {
                     <td className="px-4 py-3 text-right text-gray-500 text-xs">{p.fillon_reduction_cents > 0 ? `-${euro(p.fillon_reduction_cents)}` : '—'}</td>
                     <td className="px-4 py-3 text-xs text-gray-500">{p.sent_to_employee_at ? new Date(p.sent_to_employee_at).toLocaleDateString('fr-FR') : '—'}</td>
                     <td className="px-4 py-3 text-right space-x-2">
-                      <button onClick={() => downloadPdf(p.id, `bulletin-${emp?.lastName ?? 'salarie'}-${p.period_year}-${String(p.period_month).padStart(2, '0')}.html`)} className="text-primary-600 hover:underline text-xs font-medium">PDF</button>
+                      <button onClick={() => downloadPdf(p.id, `bulletin-${emp?.lastName ?? 'salarie'}-${p.period_year}-${String(p.period_month).padStart(2, '0')}.pdf`)} className="text-primary-600 hover:underline text-xs font-medium">PDF</button>
                       <button onClick={() => sendPayslip(p.id)} className="text-blue-600 hover:underline text-xs font-medium">Envoyer</button>
                     </td>
                   </tr>

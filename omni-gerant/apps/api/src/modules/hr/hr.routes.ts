@@ -12,11 +12,11 @@ import { validateSmic, computeAverageHeadcount, appendRegistryEntry, listRegistr
 import {
   generatePayslip, generateAllPayslips, getPayslip, listPayslips, closePeriod, markPayslipSent,
 } from './payroll/payroll.service.js';
-import { renderPayslipHtml } from './payroll/payroll-pdf.js';
 import { generateDpae, renderDpaeHtml } from './docs/dpae.js';
 import { loadContractContext, renderContract, markContractSigned } from './docs/contract-templates.js';
 import { computeLeaveBalance, createLeave, listLeaves, type LeaveType } from './docs/leaves.service.js';
 import { getApplicablePostings, renderPostingsChecklistHtml, MANDATORY_POSTINGS } from './docs/postings.js';
+import { formatAddress as formatTenantAddress } from './payroll/address-format.js';
 import { computeTermination, type TerminationReason } from './termination/termination.service.js';
 import { renderSoldeToutCompte, renderCertificatTravail, renderAttestationPoleEmploi } from './termination/termination-docs.js';
 import { exportPayrollAccounting, formatAccountingExportCsv } from './termination/payroll-accounting.js';
@@ -486,12 +486,15 @@ export async function hrRoutes(app: FastifyInstance) {
       });
       const tenant = await prisma.tenant.findUnique({ where: { id: request.auth.tenant_id } });
 
-      const html = renderPayslipHtml({
+      const { formatAddress } = await import('./payroll/address-format.js');
+      const { generatePayslipPdf } = await import('./payroll/payroll-pdf-binary.js');
+
+      const pdfBuffer = await generatePayslipPdf({
         employer: {
           name: tenant?.name ?? '',
           siret: tenant?.siret ?? null,
           nafCode: tenant?.naf_code ?? null,
-          address: tenant?.address ? JSON.stringify(tenant.address) : null,
+          address: formatAddress(tenant?.address),
         },
         employee: {
           firstName: employee?.first_name ?? '',
@@ -504,7 +507,12 @@ export async function hrRoutes(app: FastifyInstance) {
         },
         payslip,
       });
-      return reply.type('text/html').send(html);
+
+      const filename = `bulletin-${employee?.last_name ?? 'salarie'}-${payslip.period_year}-${String(payslip.period_month).padStart(2, '0')}.pdf`;
+      return reply
+        .type('application/pdf')
+        .header('content-disposition', `attachment; filename="${filename}"`)
+        .send(pdfBuffer);
     },
   );
 
@@ -910,7 +918,7 @@ export async function hrRoutes(app: FastifyInstance) {
         employer: {
           name: tenant.name,
           siret: tenant.siret,
-          address: tenant.address ? JSON.stringify(tenant.address) : null,
+          address: formatTenantAddress(tenant.address),
           nafCode: tenant.naf_code,
         },
         employee: {
