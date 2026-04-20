@@ -42,6 +42,35 @@ export async function accountingRoutes(app: FastifyInstance) {
     },
   );
 
+  // G3 : GET /api/accounting/export/pennylane — export pour expert-comptable
+  // (Pennylane, Dougs, Tiime...). Format JSON normalise.
+  app.get(
+    '/api/accounting/export/pennylane',
+    { preHandler: [...preHandlers, requirePermission('accounting', 'export')] },
+    async (request, reply) => {
+      const { from, to } = request.query as { from?: string; to?: string };
+      if (!from || !to) {
+        return reply.status(400).send({
+          error: { code: 'VALIDATION_ERROR', message: 'from et to (YYYY-MM-DD) sont obligatoires.' },
+        });
+      }
+      try {
+        const { exportForAccountant } = await import('./pennylane-export.service.js');
+        const fromDate = new Date(from);
+        const toDate = new Date(to);
+        const data = await exportForAccountant(request.auth.tenant_id, fromDate, toDate);
+        return reply
+          .type('application/json')
+          .header('content-disposition', `attachment; filename="pennylane-export-${from}-to-${to}.json"`)
+          .send(data);
+      } catch (e) {
+        return reply.status(500).send({
+          error: { code: 'INTERNAL_ERROR', message: e instanceof Error ? e.message : 'unknown' },
+        });
+      }
+    },
+  );
+
   // GET /api/accounting/fec/validate — Validate FEC
   app.get(
     '/api/accounting/fec/validate',

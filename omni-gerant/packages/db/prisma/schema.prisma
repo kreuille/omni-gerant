@@ -1273,3 +1273,43 @@ model QuoteTemplate {
   @@index([tenant_id, scope, deleted_at])
   @@map("quote_templates")
 }
+
+// Vague G2 : Variantes et stock pour le catalogue produits
+model ProductVariant {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id        String   @db.Uuid
+  product_id       String   @db.Uuid
+  sku              String?  // code article specifique
+  name             String   // ex: "Rouge / Taille M", "500g", "Edition collector"
+  attributes       Json     @default("{}") // { color: "red", size: "M", ... }
+  unit_price_cents Int?     // override du prix produit parent (null = heritage)
+  stock_qty        Int      @default(0)
+  stock_alert_at   Int?     // seuil d'alerte low stock
+  is_active        Boolean  @default(true)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+  deleted_at       DateTime?
+
+  @@index([tenant_id, product_id, deleted_at])
+  @@unique([tenant_id, product_id, sku])
+  @@map("product_variants")
+}
+
+// Mouvements de stock (manuel + auto sur facturation)
+model StockMovement {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id     String   @db.Uuid
+  variant_id    String?  @db.Uuid  // null = mouvement sur produit sans variante
+  product_id    String   @db.Uuid
+  direction     String   // "in" | "out" | "adjust"
+  quantity      Int
+  reason        String?  // "sale" | "return" | "manual" | "inventory" | "loss"
+  reference     String?  // ex: invoice number FAC-2026-00001
+  notes         String?
+  created_at    DateTime @default(now())
+  created_by    String   @db.Uuid
+
+  @@index([tenant_id, product_id, created_at(sort: Desc)])
+  @@index([tenant_id, variant_id, created_at(sort: Desc)])
+  @@map("stock_movements")
+}
