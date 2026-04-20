@@ -6,6 +6,19 @@ Versionnage : [SemVer](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Vague X — Conformite sectorielle
+- **X1 HACCP (restauration)** : `HaccpRecord` (temperature/cleaning/delivery/
+  expiration/oil_change), auto-check conformite (temperature hors seuils
+  → is_compliant=false, DLC passee → idem), `GET /api/compliance/haccp/alerts`
+  liste produits <7j DLC + non-conformites <7j.
+- **X2 Decennale BTP** : `BtpChantier` CHT-YYYY-NNN avec work_type, budget,
+  `decennale_required` + auto-check contre `InsurancePolicy type=decennale`
+  active couvrant la periode chantier. `POST /:id/check-decennale` ferme
+  replay, `GET /api/compliance/chantiers/alerts` liste chantiers non
+  couverts.
+- **X3 Registre unique du personnel** : deja expose via `/api/hr/registry`
+  (vague O1, append-only conforme Article L1221-13).
+
 ### Vague W — Service apres-vente (SAV)
 - **W1 Retours client (RMA)** : `ReturnAuthorization` RMA-YYYY-NNNN +
   `ReturnLine`, workflow pending → approved → received → refunded.

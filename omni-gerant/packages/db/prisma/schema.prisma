@@ -2240,3 +2240,67 @@ model Warranty {
   @@index([serial_number])
   @@map("warranties")
 }
+
+// ============================================================================
+// Vague X - Conformite sectorielle (HACCP + decennale BTP + registre personnel*)
+// * X3 registre personnel existe deja via HrRegistryEntry depuis vague O1
+// ============================================================================
+
+// X1 : HACCP — tracabilite sanitaire restauration (DLC, temperatures, nettoyage)
+model HaccpRecord {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id       String    @db.Uuid
+  kind            String    // temperature | cleaning | delivery | expiration | oil_change | other
+  area            String?   // cuisine | chambre_froide | congelateur | bar | salle | stockage
+  equipment       String?   // ex: "frigo bar 1", "congelateur cuisine"
+  recorded_at     DateTime  @default(now())
+  recorded_by     String    @db.Uuid
+  // Selon kind, certains champs pertinents :
+  temperature_c   Float?    // celsius, si kind=temperature
+  threshold_min_c Float?
+  threshold_max_c Float?
+  is_compliant    Boolean   @default(true)
+  product_name    String?   // pour kind=expiration | delivery
+  batch_number    String?
+  expiry_date     DateTime? // pour kind=expiration
+  supplier_name   String?
+  notes           String?
+  corrective_action String?
+  attachment_url  String?
+  created_at      DateTime  @default(now())
+
+  @@index([tenant_id, kind, recorded_at])
+  @@index([tenant_id, is_compliant])
+  @@index([tenant_id, expiry_date])
+  @@map("haccp_records")
+}
+
+// X2 : Decennale BTP — chantier avec check auto assurance decennale
+model BtpChantier {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id           String    @db.Uuid
+  number              String    // CHT-YYYY-NNN
+  name                String
+  client_id           String?   @db.Uuid
+  address             String?
+  work_type           String?   // gros_oeuvre | second_oeuvre | renovation | neuf | autre
+  start_date          DateTime
+  end_date            DateTime?
+  estimated_end_date  DateTime?
+  status              String    @default("planned") // planned | in_progress | completed | suspended | cancelled
+  budget_ht_cents     Int       @default(0)
+  decennale_required  Boolean   @default(true)
+  decennale_ok        Boolean   @default(false)
+  decennale_checked_at DateTime?
+  decennale_policy_id String?   @db.Uuid             // reference a InsurancePolicy type=decennale
+  notes               String?
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @updatedAt
+  deleted_at          DateTime?
+
+  @@unique([tenant_id, number])
+  @@index([tenant_id, status])
+  @@index([tenant_id, client_id])
+  @@index([tenant_id, decennale_ok])
+  @@map("btp_chantiers")
+}
