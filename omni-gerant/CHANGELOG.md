@@ -6,6 +6,19 @@ Versionnage : [SemVer](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Vague S — Gestion de projet
+- **S1 Timesheets** : `TimeEntry` (user/project/phase/date/minutes/hourly_rate),
+  workflow draft → submitted → approved → invoiced, CRUD +
+  `/api/timesheets/{id}/{submit,approve,reject}` + `/api/timesheets/summary`
+  (aggregats by_user/by_project/by_status).
+- **S2 Projets** : `Project` (client/manager/code PRJ-YYYY-NNN/budget/phases JSON/
+  default_hourly_rate/status active|on_hold|completed|cancelled), CRUD +
+  `/api/projects/:id/kpis` (budget consume, logged/invoiced minutes, to_invoice).
+- **S3 Facturation au temps** : `POST /api/projects/:id/invoice` transforme
+  les time entries approuves en facture (ligne par projet/phase/user/day au choix),
+  cree l'Invoice + InvoiceLines, marque les entries `invoiced`, incremente
+  `spent_cents` + `invoiced_minutes` du projet.
+
 ### Vague R — Marketing
 - **R1** `MarketingSegment` + filtres JSON + endpoint preview.
 - **R2** `MarketingCampaign` email+SMS, send direct avec Resend/OVH/Twilio,

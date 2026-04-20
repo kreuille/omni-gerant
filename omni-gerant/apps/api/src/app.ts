@@ -169,6 +169,10 @@ export async function buildApp() {
   await app.register(supportRoutes);
   const { marketingRoutes } = await import('./modules/marketing/marketing.routes.js');
   await app.register(marketingRoutes);
+  const { projectsRoutes } = await import('./modules/projects/projects.routes.js');
+  await app.register(projectsRoutes);
+  const { timesheetsRoutes } = await import('./modules/projects/timesheets.routes.js');
+  await app.register(timesheetsRoutes);
   await app.register(notificationRoutes);
   const { smsRoutes } = await import('./modules/notification/sms.routes.js');
   await app.register(smsRoutes);

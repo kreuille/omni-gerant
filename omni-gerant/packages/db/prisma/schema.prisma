@@ -1869,3 +1869,63 @@ model ReferralCode {
   @@index([tenant_id, is_active])
   @@map("referral_codes")
 }
+
+// ============================================================================
+// Vague S - Gestion de projet (Projects + Timesheets + Facturation au temps)
+// ============================================================================
+
+model Project {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id           String    @db.Uuid
+  client_id           String?   @db.Uuid      // null = projet interne
+  manager_user_id     String?   @db.Uuid
+  code                String    // PRJ-2026-001
+  name                String
+  description         String?
+  status              String    @default("active") // active | on_hold | completed | cancelled
+  start_date          DateTime?
+  end_date            DateTime?
+  budget_cents        Int       @default(0)   // budget total prevu (0 = pas de budget defini)
+  billable            Boolean   @default(true)
+  default_hourly_rate_cents Int @default(0)   // taux horaire par defaut (0 = utiliser celui du timesheet)
+  phases              Json      @default("[]") // [{ name, status, budget_cents, start, end }]
+  spent_cents         Int       @default(0)   // montant deja factures via time entries invoicees
+  logged_minutes      Int       @default(0)   // total minutes loggees sur ce projet
+  invoiced_minutes    Int       @default(0)   // minutes deja facturees
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @updatedAt
+  deleted_at          DateTime?
+
+  @@unique([tenant_id, code])
+  @@index([tenant_id, status])
+  @@index([tenant_id, client_id])
+  @@index([tenant_id, deleted_at])
+  @@map("projects")
+}
+
+model TimeEntry {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id           String    @db.Uuid
+  user_id             String    @db.Uuid       // qui a saisi
+  project_id          String    @db.Uuid
+  phase               String?                  // nom de la phase du projet (libre)
+  entry_date          DateTime                 // jour du pointage
+  minutes             Int                      // duree en minutes
+  hourly_rate_cents   Int       @default(0)    // taux horaire applique
+  billable            Boolean   @default(true)
+  description         String?
+  status              String    @default("draft") // draft | submitted | approved | invoiced | rejected
+  invoice_id          String?   @db.Uuid        // set quand facture (facturation au temps S3)
+  invoice_line_id     String?   @db.Uuid
+  approved_by         String?   @db.Uuid
+  approved_at         DateTime?
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @updatedAt
+  deleted_at          DateTime?
+
+  @@index([tenant_id, project_id, entry_date])
+  @@index([tenant_id, user_id, entry_date])
+  @@index([tenant_id, status])
+  @@index([tenant_id, invoice_id])
+  @@map("time_entries")
+}
