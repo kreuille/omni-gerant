@@ -1,14 +1,15 @@
 import type { FastifyInstance } from 'fastify';
 import { createQuoteService, type QuoteRepository, type Quote, type QuoteLine } from './quote.service.js';
 import { createQuoteSchema, updateQuoteSchema, quoteListSchema } from './quote.schemas.js';
-import { createDocumentNumberGenerator, createInMemoryNumberRepo } from './document-number.js';
+import { createDocumentNumberGenerator, createInMemoryNumberRepo, createPrismaNumberRepo } from './document-number.js';
 import { createPrismaQuoteRepository } from './quote.repository.js';
 import { getNextStatus } from './quote-workflow.js';
 import { createShareService, type ShareTokenRepository, type ShareToken } from './quote-share.js';
 import { createTrackingService, type TrackingRepository, type TrackingEvent } from './quote-tracking.js';
 import { createInvoiceService } from '../invoice/invoice.service.js';
 import { createPrismaInvoiceRepository } from '../invoice/invoice.repository.js';
-import { createInMemoryNumberRepo as createInvoiceNumberRepo } from './document-number.js';
+// Plan 3 : persistence PostgreSQL pour la numerotation
+import { createPrismaNumberRepo as createInvoiceNumberRepo } from './document-number.js';
 import { createDocumentNumberGenerator as createInvoiceNumberGen } from './document-number.js';
 import { generateQuoteHtml } from './quote-pdf.js';
 import { generateQuotePdfBinary } from './quote-pdf-binary.js';
@@ -68,8 +69,8 @@ export async function quoteRoutes(app: FastifyInstance) {
     async findByQuote(_quoteId, _tenantId) { return []; },
   };
 
-  // Use in-memory number repo (advisory locks require real PostgreSQL connection)
-  const numberRepo = createInMemoryNumberRepo();
+  // Plan 3 : persistence PostgreSQL (advisory lock) ; fallback memoire si DATABASE_URL absent
+  const numberRepo = process.env['DATABASE_URL'] ? createPrismaNumberRepo() : createInMemoryNumberRepo();
   const numberGen = createDocumentNumberGenerator(numberRepo);
   const quoteService = createQuoteService(repo, {
     generate: (tenantId: string) => numberGen.generate(tenantId, 'DEV'),

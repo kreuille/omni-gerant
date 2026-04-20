@@ -2,11 +2,12 @@ import type { FastifyInstance } from 'fastify';
 import { authenticate, requirePermission } from '../../plugins/auth.js';
 import { injectTenant } from '../../plugins/tenant.js';
 
-// BUSINESS RULE [CDC-3.2]: Settings endpoints for accounting, payments, PPF
+// BUSINESS RULE [CDC-3.2]: Settings endpoints pour accounting, payments, PPF, connectors
+// Plan 3 : persistence dans tenant.settings (JSON) via Prisma
 
 type SettingsSection = 'accounting' | 'payments' | 'ppf' | 'connectors';
 
-const settingsStore = new Map<string, Record<string, unknown>>();
+const settingsMemoryStore = new Map<string, Record<string, unknown>>(); // fallback si pas de DB
 
 const DEFAULTS: Record<SettingsSection, Record<string, unknown>> = {
   accounting: {
@@ -36,110 +37,80 @@ const DEFAULTS: Record<SettingsSection, Record<string, unknown>> = {
   },
 };
 
-function getSettings(tenantId: string, section: SettingsSection): Record<string, unknown> {
+async function getSettings(tenantId: string, section: SettingsSection): Promise<Record<string, unknown>> {
+  if (process.env['DATABASE_URL']) {
+    try {
+      const { prisma } = await import('@zenadmin/db');
+      const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { settings: true } });
+      const all = (tenant?.settings ?? {}) as Record<string, Record<string, unknown> | undefined>;
+      return { ...DEFAULTS[section], ...(all[section] ?? {}) };
+    } catch {
+      // fallback memoire
+    }
+  }
   const key = `${tenantId}:${section}`;
-  return settingsStore.get(key) ?? { ...DEFAULTS[section] };
+  return settingsMemoryStore.get(key) ?? { ...DEFAULTS[section] };
 }
 
-function putSettings(tenantId: string, section: SettingsSection, data: Record<string, unknown>): Record<string, unknown> {
-  const key = `${tenantId}:${section}`;
-  const current = getSettings(tenantId, section);
+async function putSettings(tenantId: string, section: SettingsSection, data: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const current = await getSettings(tenantId, section);
   const updated = { ...current, ...data };
-  settingsStore.set(key, updated);
+
+  if (process.env['DATABASE_URL']) {
+    try {
+      const { prisma } = await import('@zenadmin/db');
+      const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { settings: true } });
+      const all = (tenant?.settings ?? {}) as Record<string, Record<string, unknown>>;
+      all[section] = updated;
+      // Prisma JSON column : cast explicite
+      await prisma.tenant.update({ where: { id: tenantId }, data: { settings: all as unknown as Parameters<typeof prisma.tenant.update>[0]['data']['settings'] } });
+      return updated;
+    } catch {
+      // fallback memoire
+    }
+  }
+  settingsMemoryStore.set(`${tenantId}:${section}`, updated);
   return updated;
 }
 
 export async function settingsRoutes(app: FastifyInstance) {
   const preHandlers = [authenticate, injectTenant];
 
-  // GET /api/settings/accounting
-  app.get(
-    '/api/settings/accounting',
-    { preHandler: [...preHandlers, requirePermission('settings', 'read')] },
-    async (request) => {
-      return getSettings(request.auth.tenant_id, 'accounting');
-    },
-  );
-
-  // PUT /api/settings/accounting
-  app.put(
-    '/api/settings/accounting',
-    { preHandler: [...preHandlers, requirePermission('settings', 'update')] },
-    async (request) => {
-      const body = request.body as Record<string, unknown>;
-      return putSettings(request.auth.tenant_id, 'accounting', body);
-    },
-  );
-
-  // GET /api/settings/payments
-  app.get(
-    '/api/settings/payments',
-    { preHandler: [...preHandlers, requirePermission('settings', 'read')] },
-    async (request) => {
-      return getSettings(request.auth.tenant_id, 'payments');
-    },
-  );
-
-  // PUT /api/settings/payments
-  app.put(
-    '/api/settings/payments',
-    { preHandler: [...preHandlers, requirePermission('settings', 'update')] },
-    async (request) => {
-      const body = request.body as Record<string, unknown>;
-      return putSettings(request.auth.tenant_id, 'payments', body);
-    },
-  );
-
-  // GET /api/settings/ppf
-  app.get(
-    '/api/settings/ppf',
-    { preHandler: [...preHandlers, requirePermission('settings', 'read')] },
-    async (request) => {
-      return getSettings(request.auth.tenant_id, 'ppf');
-    },
-  );
-
-  // PUT /api/settings/ppf
-  app.put(
-    '/api/settings/ppf',
-    { preHandler: [...preHandlers, requirePermission('settings', 'update')] },
-    async (request) => {
-      const body = request.body as Record<string, unknown>;
-      return putSettings(request.auth.tenant_id, 'ppf', body);
-    },
-  );
-
-  // GET /api/settings/connectors — P0-10
-  app.get(
-    '/api/settings/connectors',
-    { preHandler: [...preHandlers, requirePermission('settings', 'read')] },
-    async (request) => {
-      return getSettings(request.auth.tenant_id, 'connectors');
-    },
-  );
-
-  // PUT /api/settings/connectors
-  app.put(
-    '/api/settings/connectors',
-    { preHandler: [...preHandlers, requirePermission('settings', 'update')] },
-    async (request) => {
-      const body = request.body as Record<string, unknown>;
-      return putSettings(request.auth.tenant_id, 'connectors', body);
-    },
-  );
-
-  // GET /api/settings — recapitulatif
+  // GET /api/settings — recap global
   app.get(
     '/api/settings',
     { preHandler: [...preHandlers, requirePermission('settings', 'read')] },
     async (request) => {
       const tenantId = request.auth.tenant_id;
-      return {
-        accounting: getSettings(tenantId, 'accounting'),
-        payments: getSettings(tenantId, 'payments'),
-        ppf: getSettings(tenantId, 'ppf'),
-        connectors: getSettings(tenantId, 'connectors'),
-      };
+      const [accounting, payments, ppf, connectors] = await Promise.all([
+        getSettings(tenantId, 'accounting'),
+        getSettings(tenantId, 'payments'),
+        getSettings(tenantId, 'ppf'),
+        getSettings(tenantId, 'connectors'),
+      ]);
+      return { accounting, payments, ppf, connectors };
     },
   );
+
+  // Helpers : generateur de GET/PUT par section
+  function registerSection(section: SettingsSection) {
+    app.get(
+      `/api/settings/${section}`,
+      { preHandler: [...preHandlers, requirePermission('settings', 'read')] },
+      async (request) => getSettings(request.auth.tenant_id, section),
+    );
+    app.put(
+      `/api/settings/${section}`,
+      { preHandler: [...preHandlers, requirePermission('settings', 'update')] },
+      async (request) => {
+        const body = (request.body ?? {}) as Record<string, unknown>;
+        return putSettings(request.auth.tenant_id, section, body);
+      },
+    );
+  }
+
+  registerSection('accounting');
+  registerSection('payments');
+  registerSection('ppf');
+  registerSection('connectors');
 }

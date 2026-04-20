@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { createInvoiceService } from './invoice.service.js';
 import { createInvoiceSchema, invoiceListSchema } from './invoice.schemas.js';
-import { createDocumentNumberGenerator, createInMemoryNumberRepo } from '../quote/document-number.js';
+import { createDocumentNumberGenerator, createInMemoryNumberRepo, createPrismaNumberRepo } from '../quote/document-number.js';
 import { createPrismaInvoiceRepository } from './invoice.repository.js';
 import { authenticate, requirePermission } from '../../plugins/auth.js';
 import { injectTenant } from '../../plugins/tenant.js';
@@ -11,7 +11,8 @@ import { injectTenant } from '../../plugins/tenant.js';
 export async function invoiceRoutes(app: FastifyInstance) {
   const repo = createPrismaInvoiceRepository();
 
-  const numberRepo = createInMemoryNumberRepo();
+  // Plan 3 : persistence PostgreSQL pour FAC-YYYY-NNNNN (advisory lock)
+  const numberRepo = process.env['DATABASE_URL'] ? createPrismaNumberRepo() : createInMemoryNumberRepo();
   const numberGen = createDocumentNumberGenerator(numberRepo);
   const invoiceService = createInvoiceService(repo, {
     generate: (tenantId: string) => numberGen.generate(tenantId, 'FAC'),
