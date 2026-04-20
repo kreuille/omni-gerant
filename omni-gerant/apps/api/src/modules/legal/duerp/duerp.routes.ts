@@ -5,6 +5,7 @@ import { createDuerpSchema, updateDuerpSchema } from './duerp.schemas.js';
 import { getRisksByNafCode, detectPurchaseRisks } from './risk-database.js';
 import { METIER_RISK_DATABASE, findMetierByNaf, findMetierBySlug, getRisksForMetier } from './risk-database-v2.js';
 import { generateDuerpHtml } from './duerp-pdf.js';
+import { generateDuerpPdfBinary } from './duerp-pdf-binary.js';
 import { createDuerpAutoFill, type PurchaseInfo, type InsuranceInfo } from './duerp-autofill.js';
 import { createSiretLookup } from '../../../lib/siret-lookup.js';
 import { createTenantRepository } from '../../tenant/tenant.repository.js';
@@ -135,17 +136,35 @@ export async function duerpRoutes(app: FastifyInstance) {
     },
   );
 
-  // GET /api/legal/duerp/:id/pdf — Generate PDF HTML
+  // GET /api/legal/duerp/:id/pdf — Generate binary PDF (pdf-lib)
+  // BUSINESS RULE [CDC-2.4 / P0-02] : PDF binaire pour inspection du travail
+  // Query ?format=html pour rendu HTML (preview web).
   app.get(
     '/api/legal/duerp/:id/pdf',
     { preHandler: [...preHandlers, requirePermission('legal', 'read')] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
+      const { format } = request.query as { format?: 'html' | 'pdf' };
       const result = await duerpService.getById(id, request.auth.tenant_id);
       if (!result.ok) return reply.status(404).send({ error: result.error });
 
-      const html = generateDuerpHtml(result.value);
-      return reply.type('text/html').send(html);
+      if (format === 'html') {
+        const html = generateDuerpHtml(result.value);
+        return reply.type('text/html').send(html);
+      }
+
+      try {
+        const pdf = await generateDuerpPdfBinary(result.value);
+        return reply
+          .type('application/pdf')
+          .header('content-disposition', `attachment; filename="DUERP-${new Date(result.value.evaluation_date).getFullYear()}-v${result.value.version}.pdf"`)
+          .send(pdf);
+      } catch (e) {
+        request.log.error({ err: e }, 'duerp pdf generation failed');
+        return reply.status(500).send({
+          error: { code: 'PDF_GENERATION_FAILED', message: 'Impossible de générer le PDF DUERP.' },
+        });
+      }
     },
   );
 

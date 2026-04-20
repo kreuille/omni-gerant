@@ -11,6 +11,7 @@ import { createPrismaInvoiceRepository } from '../invoice/invoice.repository.js'
 import { createInMemoryNumberRepo as createInvoiceNumberRepo } from './document-number.js';
 import { createDocumentNumberGenerator as createInvoiceNumberGen } from './document-number.js';
 import { generateQuoteHtml } from './quote-pdf.js';
+import { generateQuotePdfBinary } from './quote-pdf-binary.js';
 import { createPrismaClientRepository } from '../client/client.repository.js';
 import { createEmailService, createDefaultEmailProvider } from '../../lib/email.js';
 import { quoteSentHtml, quoteSentText } from '../../lib/email-templates/quote-sent.js';
@@ -524,21 +525,38 @@ export async function quoteRoutes(app: FastifyInstance) {
     },
   );
 
-  // GET /api/quotes/:id/pdf - Generate PDF HTML for quote
-  // BUSINESS RULE [CDC-2.1]: PDF avec emetteur, client, mentions legales
+  // GET /api/quotes/:id/pdf - Generate binary PDF for quote (pdf-lib)
+  // BUSINESS RULE [CDC-2.1 / P0-02]: PDF binaire (plus de HTML deguise)
+  // Query ?format=html pour conserver l'ancien rendu HTML (debug / preview web).
   app.get(
     '/api/quotes/:id/pdf',
     { preHandler: [...preHandlers, requirePermission('quote', 'read')] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
+      const { format } = request.query as { format?: 'html' | 'pdf' };
       const result = await quoteService.getById(id, request.auth.tenant_id);
       if (!result.ok) {
         return reply.status(404).send({ error: result.error });
       }
-
       const tenant = await tenantRepo.findById(request.auth.tenant_id);
-      const html = generateQuoteHtml(result.value, tenant);
-      return reply.type('text/html').send(html);
+
+      if (format === 'html') {
+        const html = generateQuoteHtml(result.value, tenant);
+        return reply.type('text/html').send(html);
+      }
+
+      try {
+        const pdf = await generateQuotePdfBinary(result.value, tenant);
+        return reply
+          .type('application/pdf')
+          .header('content-disposition', `attachment; filename="${result.value.number}.pdf"`)
+          .send(pdf);
+      } catch (e) {
+        request.log.error({ err: e }, 'quote pdf generation failed');
+        return reply.status(500).send({
+          error: { code: 'PDF_GENERATION_FAILED', message: 'Impossible de générer le PDF.' },
+        });
+      }
     },
   );
 
