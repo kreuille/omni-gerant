@@ -1630,3 +1630,82 @@ model Task {
   @@index([tenant_id, assignee_id])
   @@map("tasks")
 }
+
+// Vague O1 : Conges
+model LeaveRequest {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id   String   @db.Uuid
+  employee_id String   @db.Uuid
+  kind        String   // paid | rtt | sick | unpaid | maternity | paternity | family
+  starts_at   DateTime @db.Date
+  ends_at     DateTime @db.Date
+  days_count  Decimal  @db.Decimal(5, 2)
+  reason      String?
+  status      String   @default("pending") // pending | approved | refused | cancelled
+  approver_id String?  @db.Uuid
+  approved_at DateTime?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  @@index([tenant_id, employee_id, starts_at])
+  @@index([tenant_id, status])
+  @@map("leave_requests")
+}
+
+model LeaveBalance {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id        String   @db.Uuid
+  employee_id      String   @db.Uuid
+  year             Int
+  paid_acquired    Decimal  @default(0) @db.Decimal(5, 2)  // CP acquis (2.08/mois)
+  paid_taken       Decimal  @default(0) @db.Decimal(5, 2)
+  rtt_acquired     Decimal  @default(0) @db.Decimal(5, 2)
+  rtt_taken        Decimal  @default(0) @db.Decimal(5, 2)
+  updated_at       DateTime @updatedAt
+
+  @@unique([tenant_id, employee_id, year])
+  @@map("leave_balances")
+}
+
+// Vague O2 : Notes de frais
+model ExpenseClaim {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id    String   @db.Uuid
+  employee_id  String   @db.Uuid
+  claim_number String
+  date         DateTime @db.Date
+  category     String   // meal | transport | hotel | supplies | fuel | other
+  description  String
+  amount_ttc_cents Int
+  tva_rate     Int      @default(2000)
+  tva_cents    Int      @default(0)
+  receipt_url  String?
+  status       String   @default("pending") // pending | approved | refused | reimbursed
+  approver_id  String?  @db.Uuid
+  approved_at  DateTime?
+  reimbursed_at DateTime?
+  created_at   DateTime @default(now())
+
+  @@unique([tenant_id, claim_number])
+  @@index([tenant_id, employee_id, date(sort: Desc)])
+  @@index([tenant_id, status])
+  @@map("expense_claims")
+}
+
+// Vague O3 : Indemnites kilometriques
+model MileageLog {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id   String   @db.Uuid
+  employee_id String   @db.Uuid
+  date        DateTime @db.Date
+  origin      String
+  destination String
+  purpose     String
+  distance_km Decimal  @db.Decimal(6, 2)
+  vehicle_cv  Int      @default(5)    // puissance fiscale (barème URSSAF)
+  amount_cents Int                    // calcule depuis bareme * distance
+  created_at  DateTime @default(now())
+
+  @@index([tenant_id, employee_id, date(sort: Desc)])
+  @@map("mileage_logs")
+}

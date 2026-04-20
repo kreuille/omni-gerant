@@ -6,6 +6,16 @@ Versionnage : [SemVer](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Vague O — HR avancee
+- **O1 Conges** : `LeaveRequest` + `LeaveBalance`, workflow
+  pending/approved/refused, comptage jours ouvrables, mise a jour auto
+  du solde CP a l'approbation.
+- **O2 Notes de frais** : `ExpenseClaim` (NDF-YYYY-NNNNN), 6 categories,
+  workflow pending/approved/reimbursed, TVA deductible calculee.
+- **O3 Indemnites kilometriques** : `MileageLog` + bareme URSSAF 2024
+  (3-7 CV, 3 tranches <= 5000 / 5-20k / > 20k km), endpoint de calcul
+  de taux preview.
+
 ### Vague N — Reporting fiscal
 - **N1** `GET /api/accounting/vat/declaration?from=&to=` — CA3 TVA ventilee
   par taux FR + net a payer / credit.
