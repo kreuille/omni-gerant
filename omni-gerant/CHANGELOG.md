@@ -6,6 +6,11 @@ Versionnage : [SemVer](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Vague Q — Support ticketing
+- **Q1** `SupportTicket` TCK-NNNNNN + SLA auto par priorite (1-48h / 8-240h).
+- **Q2** `SupportMessage` agent/requester/system + is_internal + first_responded_at.
+- **Q3** `SupportMacro` reponses pre-ecrites + `/api/support/sla/summary`.
+
 ### Vague P — Contrats & documents legaux
 - **P1 Contrats** : `Contract` (CTR-YYYY-NNNNN, kind service/nda/cgv/
   maintenance/employment), CRUD + signature hash-chain SHA-256,

@@ -1757,3 +1757,61 @@ model LegalDocument {
   @@index([tenant_id, kind, is_current])
   @@map("legal_documents")
 }
+
+// Vague Q : Support ticketing
+model SupportTicket {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id      String   @db.Uuid
+  ticket_number  String
+  subject        String
+  description    String?  @db.Text
+  priority       String   @default("normal") // low | normal | high | urgent
+  status         String   @default("open") // open | pending | resolved | closed
+  channel        String   @default("portal") // portal | email | phone | chat
+  requester_email String
+  requester_name  String?
+  client_id      String?  @db.Uuid
+  assignee_id    String?  @db.Uuid
+  tags           String[] @default([])
+  // SLA
+  first_response_due_at DateTime?
+  resolution_due_at     DateTime?
+  first_responded_at    DateTime?
+  resolved_at    DateTime?
+  closed_at      DateTime?
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  @@unique([tenant_id, ticket_number])
+  @@index([tenant_id, status])
+  @@index([tenant_id, assignee_id])
+  @@map("support_tickets")
+}
+
+model SupportMessage {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id  String   @db.Uuid
+  ticket_id  String   @db.Uuid
+  author_kind String  // "agent" | "requester" | "system"
+  author_id   String? @db.Uuid
+  author_name String?
+  body       String   @db.Text
+  is_internal Boolean @default(false)
+  created_at DateTime @default(now())
+
+  @@index([tenant_id, ticket_id, created_at])
+  @@map("support_messages")
+}
+
+model SupportMacro {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id  String   @db.Uuid
+  name       String
+  body       String   @db.Text
+  shortcut   String?
+  usage_count Int     @default(0)
+  created_at DateTime @default(now())
+
+  @@index([tenant_id])
+  @@map("support_macros")
+}
