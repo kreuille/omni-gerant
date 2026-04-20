@@ -618,6 +618,24 @@ export async function hrRoutes(app: FastifyInstance) {
     },
   );
 
+  // BL3 : GET /api/hr/dsn/:id/neodes — fichier NEODeS reel (format net-entreprises.fr)
+  app.get(
+    '/api/hr/dsn/:id/neodes',
+    { preHandler: [...preHandlers, requirePermission('legal', 'read')] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const filing = await prisma.hrDsnFiling.findFirst({ where: { id, tenant_id: request.auth.tenant_id } });
+      if (!filing) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'DSN introuvable' } });
+      const { generateNeodesFile } = await import('./payroll/dsn-xml.js');
+      const content = generateNeodesFile(filing.payload as unknown as import('./payroll/dsn.service.js').DsnMonthlyPayload);
+      const filename = `DSN-${filing.period_year}-${String(filing.period_month).padStart(2, '0')}.dsn`;
+      return reply
+        .type('text/plain; charset=utf-8')
+        .header('content-disposition', `attachment; filename="${filename}"`)
+        .send(content);
+    },
+  );
+
   // V10 Dashboard analytics RH
   app.get(
     '/api/hr/dashboard/analytics',
