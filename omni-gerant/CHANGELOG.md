@@ -6,6 +6,13 @@ Versionnage : [SemVer](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Vague M — IA & Insights
+- **M1 Insights** : `GET /api/ai/insights` — clients a risque (3+ factures
+  retard), anomalies CA (z-score), prediction CA mois suivant (moyenne mobile
+  3 mois), concentration client >30 %, DSO > 45j.
+- **M2 Assistant IA** : `POST /api/ai/chat` via OpenAI gpt-4o-mini, system
+  prompt expert TPE France.
+
 ### Vague L — Business Tools
 - **L1 Multi-entrepots** : `Warehouse` + `WarehouseStock` par emplacement,
   defaut unique, `POST /api/warehouses/transfer` atomique entre entrepots

@@ -155,6 +155,8 @@ export async function buildApp() {
   await app.register(publicCatalogRoutes);
   const { tasksRoutes } = await import('./modules/tasks/tasks.routes.js');
   await app.register(tasksRoutes);
+  const { aiRoutes } = await import('./modules/ai/ai.routes.js');
+  await app.register(aiRoutes);
   await app.register(notificationRoutes);
   const { smsRoutes } = await import('./modules/notification/sms.routes.js');
   await app.register(smsRoutes);
