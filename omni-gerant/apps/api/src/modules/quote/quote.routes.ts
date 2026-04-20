@@ -89,6 +89,30 @@ export async function quoteRoutes(app: FastifyInstance) {
 
   const preHandlers = [authenticate, injectTenant];
 
+  // J3 : POST /api/quotes/ai-generate — prompt FR -> lignes structurees
+  app.post(
+    '/api/quotes/ai-generate',
+    { preHandler: [...preHandlers, requirePermission('quote', 'create')] },
+    async (request, reply) => {
+      const body = (request.body ?? {}) as { description?: string; context?: string };
+      if (!body.description || body.description.trim().length < 10) {
+        return reply.status(400).send({ error: { code: 'VALIDATION_ERROR', message: 'description doit contenir au moins 10 caractères.' } });
+      }
+      try {
+        const { generateQuoteFromDescription } = await import('./ai-quote.service.js');
+        const tenant = await tenantRepo.findById(request.auth.tenant_id);
+        return await generateQuoteFromDescription({
+          description: body.description,
+          naf_code: tenant?.naf_code ?? undefined,
+          company_name: tenant?.company_name,
+          context: body.context,
+        });
+      } catch (e) {
+        return reply.status(500).send({ error: { code: 'INTERNAL_ERROR', message: e instanceof Error ? e.message : 'unknown' } });
+      }
+    },
+  );
+
   // H2 : GET /api/quotes/pipeline — kanban + stats
   app.get(
     '/api/quotes/pipeline',

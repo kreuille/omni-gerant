@@ -1426,3 +1426,55 @@ model WebhookDelivery {
   @@index([endpoint_id, created_at(sort: Desc)])
   @@map("webhook_deliveries")
 }
+
+// Vague J1 : Booking / RDV en ligne
+model BookingSlotConfig {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id       String   @unique @db.Uuid
+  duration_min    Int      @default(30)
+  buffer_min      Int      @default(10)
+  // JSON { mon: [{from:"09:00",to:"12:00"},...], tue: [...], ... }
+  availability    Json     @default("{}")
+  timezone        String   @default("Europe/Paris")
+  is_active       Boolean  @default(true)
+  title           String   @default("Prendre rendez-vous")
+  description     String?
+  slug            String?  @unique
+  updated_at      DateTime @updatedAt
+  created_at      DateTime @default(now())
+
+  @@map("booking_slot_configs")
+}
+
+model Booking {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id       String   @db.Uuid
+  guest_name      String
+  guest_email     String
+  guest_phone     String?
+  starts_at       DateTime
+  ends_at         DateTime
+  notes           String?
+  status          String   @default("confirmed") // confirmed | cancelled | completed
+  cancel_token    String   @unique
+  created_at      DateTime @default(now())
+  cancelled_at    DateTime?
+
+  @@index([tenant_id, starts_at])
+  @@map("bookings")
+}
+
+// Vague J2 : NPS
+model NpsResponse {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id     String   @db.Uuid
+  client_id     String?  @db.Uuid
+  invoice_id    String?  @db.Uuid
+  score         Int      // 0..10
+  comment       String?
+  source        String?  // "email" | "portal" | "in_app"
+  created_at    DateTime @default(now())
+
+  @@index([tenant_id, created_at(sort: Desc)])
+  @@map("nps_responses")
+}

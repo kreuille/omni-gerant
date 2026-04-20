@@ -141,6 +141,10 @@ export async function buildApp() {
   await app.register(clientPortalRoutes);
   const { webhookRoutes } = await import('./modules/webhooks/webhook.routes.js');
   await app.register(webhookRoutes);
+  const { bookingRoutes } = await import('./modules/booking/booking.routes.js');
+  await app.register(bookingRoutes);
+  const { npsRoutes } = await import('./modules/nps/nps.routes.js');
+  await app.register(npsRoutes);
   await app.register(notificationRoutes);
   const { smsRoutes } = await import('./modules/notification/sms.routes.js');
   await app.register(smsRoutes);
