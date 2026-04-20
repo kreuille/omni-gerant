@@ -26,21 +26,26 @@ export async function openAuthenticatedDocument(path: string, suggestedFilename 
     const contentType = res.headers.get('content-type') ?? '';
     const blob = await res.blob();
 
-    if (contentType.includes('text/html')) {
-      const html = await blob.text();
-      const win = window.open('', '_blank');
-      if (!win) return { ok: false, error: 'Bloqueur de popup actif — autorisez les popups' };
-      win.document.open();
-      win.document.write(html);
-      win.document.close();
-      win.focus();
-      // Petit delai puis impression (pour PDF via navigateur)
-      setTimeout(() => { try { win.print(); } catch { /* ok */ } }, 400);
+    // Strategie unifiee : creer une blob URL et ouvrir/telecharger
+    const objectUrl = URL.createObjectURL(blob);
+
+    if (contentType.includes('text/html') || contentType.includes('application/pdf')) {
+      // Ouvre dans le meme onglet avec blob URL — evite le popup blocker.
+      // L'utilisateur peut revenir avec la fleche retour navigateur.
+      // Alternative : creer un lien temporaire et cliquer (donne UX download + preview).
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.download = contentType.includes('text/html') ? '' : suggestedFilename; // HTML : preview, PDF : download
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
       return { ok: true };
     }
 
-    // Binary (PDF/CSV/autre) : download
-    const objectUrl = URL.createObjectURL(blob);
+    // Binary (CSV/autre) : force download
     const a = document.createElement('a');
     a.href = objectUrl;
     a.download = suggestedFilename;
