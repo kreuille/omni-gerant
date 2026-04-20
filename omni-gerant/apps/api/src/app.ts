@@ -129,6 +129,10 @@ export async function buildApp() {
   await app.register(ocrRoutes);
   const { quoteTemplateRoutes } = await import('./modules/quote/templates/template.routes.js');
   await app.register(quoteTemplateRoutes);
+  const { importRoutes } = await import('./modules/import/import.routes.js');
+  await app.register(importRoutes);
+  const { productVariantRoutes } = await import('./modules/product/variant.routes.js');
+  await app.register(productVariantRoutes);
   await app.register(notificationRoutes);
   const { smsRoutes } = await import('./modules/notification/sms.routes.js');
   await app.register(smsRoutes);
