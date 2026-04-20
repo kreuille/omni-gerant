@@ -83,6 +83,10 @@ export async function buildApp() {
   // Metrics counter hook
   registerMetricsHook(app);
 
+  // D5 : observabilite (slow requests + error envelope)
+  const { registerObservabilityPlugin } = await import('./plugins/observability.js');
+  registerObservabilityPlugin(app);
+
   // Error handler
   registerErrorHandler(app);
 

@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
+import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
+import { InstallPrompt } from '@/components/layout/install-prompt';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -31,8 +33,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <Sidebar />
       <div className="md:pl-64 flex flex-col min-h-screen overflow-y-auto">
         <Header />
-        <main className="flex-1 p-4 sm:p-6 overflow-x-hidden">{children}</main>
+        <main className="flex-1 p-4 sm:p-6 overflow-x-hidden pb-20 md:pb-6">{children}</main>
       </div>
+      {/* D3 : navigation mobile + install prompt PWA */}
+      <MobileBottomNav />
+      <InstallPrompt />
     </div>
   );
 }

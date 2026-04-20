@@ -1,0 +1,43 @@
+name: Smoke prod
+
+# D4 : smoke tests quotidiens contre la prod + tick du cron via API.
+# Evite de dependre du setInterval interne Render (qui se met en pause si spin-down).
+
+on:
+  schedule:
+    - cron: '15 6 * * *'   # 06:15 UTC daily
+    - cron: '15 12 * * *'  # 12:15 UTC daily
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    name: Smoke /health + /ready
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Health check
+        run: |
+          curl --fail --max-time 60 https://omni-gerant-api.onrender.com/health/ready
+          echo "API OK"
+      - name: Frontend check
+        run: |
+          curl --fail --max-time 60 -I https://omni-gerant.vercel.app/
+          echo "Frontend OK"
+
+  cron-tick:
+    name: Tick scheduled jobs
+    runs-on: ubuntu-latest
+    if: ${{ github.event.schedule == '15 6 * * *' }}  # 1x/jour le matin
+    steps:
+      - name: POST /api/jobs/tick
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "CRON_SECRET non configure, skip"
+            exit 0
+          fi
+          curl --fail --max-time 300 \
+            -X POST https://omni-gerant-api.onrender.com/api/jobs/tick \
+            -H "X-Cron-Secret: $CRON_SECRET" \
+            -H "Content-Type: application/json"

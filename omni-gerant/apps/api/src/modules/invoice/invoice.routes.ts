@@ -177,6 +177,63 @@ export async function invoiceRoutes(app: FastifyInstance) {
     },
   );
 
+  // D1 : POST /api/invoices/:id/payment-link — genere un lien Stripe Checkout
+  // pour la facture (Stripe Connect si tenant a un stripe_account_id).
+  app.post(
+    '/api/invoices/:id/payment-link',
+    { preHandler: [...preHandlers, requirePermission('invoice', 'update')] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const { prisma } = await import('@zenadmin/db');
+      const inv = await prisma.invoice.findFirst({
+        where: { id, tenant_id: request.auth.tenant_id, deleted_at: null },
+      });
+      if (!inv) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Facture introuvable' } });
+
+      const { createStripeClient } = await import('../payment/stripe/stripe-client.js');
+      const { createCheckoutService } = await import('../payment/stripe/checkout.service.js');
+      const stripeKey = process.env['STRIPE_SECRET_KEY'];
+      if (!stripeKey) {
+        return reply.status(503).send({
+          error: { code: 'STRIPE_NOT_CONFIGURED', message: 'Stripe n\'est pas configuré (STRIPE_SECRET_KEY manquant).' },
+        });
+      }
+      const stripeClient = createStripeClient({
+        secret_key: stripeKey,
+        webhook_secret: process.env['STRIPE_WEBHOOK_SECRET'] ?? '',
+        connect_client_id: process.env['STRIPE_CONNECT_CLIENT_ID'] ?? '',
+      });
+      const checkoutService = createCheckoutService(stripeClient, process.env['APP_BASE_URL'] ?? 'https://omni-gerant.vercel.app');
+
+      // Connect : on lit stripe_account_id depuis tenant.settings si present
+      const tenant = await prisma.tenant.findUnique({ where: { id: request.auth.tenant_id }, select: { settings: true } });
+      const tenantSettings = (tenant?.settings ?? {}) as Record<string, string | undefined>;
+      const remaining = inv.remaining_cents > 0 ? inv.remaining_cents : inv.total_ttc_cents;
+
+      const r = await checkoutService.createPaymentLink({
+        invoice_id: inv.id,
+        invoice_number: inv.number,
+        amount_cents: remaining,
+        currency: 'eur',
+        tenant_stripe_account_id: tenantSettings['stripe_account_id'],
+      });
+      if (!r.ok) return reply.status(502).send({ error: r.error });
+
+      // Persist le session_id + URL dans la facture pour reutilisation
+      try {
+        await (prisma as unknown as { invoice: { update: Function } }).invoice.update({
+          where: { id: inv.id },
+          data: {
+            payment_link_url: r.value.checkout_url,
+            payment_link_session_id: r.value.session_id,
+          } as unknown as Parameters<typeof prisma.invoice.update>[0]['data'],
+        });
+      } catch { /* champ optionnel — peut ne pas etre migre */ }
+
+      return r.value;
+    },
+  );
+
   // POST /api/invoices/:id/finalize
   app.post(
     '/api/invoices/:id/finalize',
