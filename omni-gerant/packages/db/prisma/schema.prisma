@@ -1815,3 +1815,57 @@ model SupportMacro {
   @@index([tenant_id])
   @@map("support_macros")
 }
+
+// Vague R : Marketing campaigns
+model MarketingSegment {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id   String   @db.Uuid
+  name        String
+  description String?
+  // Filtres serialises : { client_type, total_ttc_min, last_purchase_after, tags, country, ... }
+  filters     Json     @default("{}")
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  @@index([tenant_id])
+  @@map("marketing_segments")
+}
+
+model MarketingCampaign {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id     String   @db.Uuid
+  name          String
+  channel       String   // email | sms
+  subject       String?
+  body          String   @db.Text
+  segment_id    String?  @db.Uuid
+  status        String   @default("draft") // draft | scheduled | sending | sent | failed
+  scheduled_at  DateTime?
+  sent_at       DateTime?
+  stats_sent    Int      @default(0)
+  stats_delivered Int    @default(0)
+  stats_failed  Int      @default(0)
+  stats_opened  Int      @default(0)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  @@index([tenant_id, status])
+  @@map("marketing_campaigns")
+}
+
+model ReferralCode {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id      String   @db.Uuid
+  code           String   @unique
+  owner_client_id String? @db.Uuid
+  description    String?
+  reward_cents   Int      @default(0) // reduction / avoir a appliquer
+  uses_count     Int      @default(0)
+  max_uses       Int?     // null = illimite
+  expires_at     DateTime?
+  is_active      Boolean  @default(true)
+  created_at     DateTime @default(now())
+
+  @@index([tenant_id, is_active])
+  @@map("referral_codes")
+}

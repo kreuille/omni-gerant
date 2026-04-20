@@ -6,6 +6,13 @@ Versionnage : [SemVer](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Vague R — Marketing
+- **R1** `MarketingSegment` + filtres JSON + endpoint preview.
+- **R2** `MarketingCampaign` email+SMS, send direct avec Resend/OVH/Twilio,
+  variable `{{name}}`.
+- **R3** `ReferralCode` avec reward_cents, max_uses, expires_at,
+  `GET /api/public/referrals/:code` verification.
+
 ### Vague Q — Support ticketing
 - **Q1** `SupportTicket` TCK-NNNNNN + SLA auto par priorite (1-48h / 8-240h).
 - **Q2** `SupportMessage` agent/requester/system + is_internal + first_responded_at.
