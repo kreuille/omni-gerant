@@ -13,6 +13,7 @@
 import { prisma } from '@zenadmin/db';
 import type { Result, AppError } from '@zenadmin/shared';
 import { ok, err, notFound, validationError } from '@zenadmin/shared';
+import { formatAddress } from '../payroll/address-format.js';
 
 export interface DpaeContext {
   employer: {
@@ -75,7 +76,7 @@ export async function generateDpae(employeeId: string, tenantId: string): Promis
     employer: {
       name: tenant.name,
       siret: tenant.siret,
-      address: tenant.address ? JSON.stringify(tenant.address) : null,
+      address: formatAddress(tenant.address),
       nafCode: tenant.naf_code,
     },
     employee: {
