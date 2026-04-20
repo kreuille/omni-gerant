@@ -1709,3 +1709,51 @@ model MileageLog {
   @@index([tenant_id, employee_id, date(sort: Desc)])
   @@map("mileage_logs")
 }
+
+// Vague P1 : Contrats (prestations, CGV signees, NDA, ...)
+model Contract {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id      String   @db.Uuid
+  client_id      String?  @db.Uuid
+  number         String   // CTR-YYYY-NNNNN
+  title          String
+  kind           String   @default("service") // service | nda | cgv | maintenance | employment
+  content        String   @db.Text // markdown ou HTML
+  starts_on      DateTime?
+  ends_on        DateTime?
+  auto_renew     Boolean  @default(false)
+  renewal_notice_days Int @default(30)
+  signed_at      DateTime?
+  signer_name    String?
+  signer_email   String?
+  signature_image String?
+  content_hash   String?  // SHA-256 au moment de la signature
+  signature_hash String?
+  status         String   @default("draft") // draft | sent | signed | expired | terminated
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+  deleted_at     DateTime?
+
+  @@unique([tenant_id, number])
+  @@index([tenant_id, client_id])
+  @@index([tenant_id, ends_on])
+  @@map("contracts")
+}
+
+// Vague P3 : Bibliotheque documents legaux (CGV, CGU, mentions legales, politiques...)
+model LegalDocument {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id   String   @db.Uuid
+  kind        String   // cgv | cgu | mentions_legales | politique_confidentialite | cookies
+  version     String   @default("1.0")
+  content     String   @db.Text
+  published_at DateTime?
+  is_current  Boolean  @default(true)
+  language    String   @default("fr")
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  @@unique([tenant_id, kind, version])
+  @@index([tenant_id, kind, is_current])
+  @@map("legal_documents")
+}
