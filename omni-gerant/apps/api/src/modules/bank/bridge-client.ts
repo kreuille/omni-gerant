@@ -1,5 +1,6 @@
 import { ok, err } from '@zenadmin/shared';
 import type { Result, AppError } from '@zenadmin/shared';
+import * as crypto from 'node:crypto';
 
 // BUSINESS RULE [CDC-2.3]: Integration Bridge API pour Open Banking DSP2
 
@@ -197,7 +198,6 @@ export function createBridgeClient(config: BridgeConfig): BridgeClient {
     validateWebhook(payload, signature) {
       if (!config.webhookSecret) return false;
       // HMAC-SHA256 validation
-      const crypto = require('crypto') as typeof import('crypto');
       const expected = crypto
         .createHmac('sha256', config.webhookSecret)
         .update(payload)

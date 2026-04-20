@@ -146,9 +146,9 @@ export async function rgpdRoutes(app: FastifyInstance) {
     },
   );
 
-  // GET /api/legal/rgpd/export — Export CNIL format
+  // GET /api/legal/rgpd/export-cnil — Export CNIL format (TSV registre)
   app.get(
-    '/api/legal/rgpd/export',
+    '/api/legal/rgpd/export-cnil',
     { preHandler: [...preHandlers, requirePermission('legal', 'read')] },
     async (request, reply) => {
       const result = await rgpdService.exportCnil(request.auth.tenant_id);
