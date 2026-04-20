@@ -67,6 +67,13 @@ async function refreshToken(): Promise<boolean> {
   }
 }
 
+// P1-06 : lit le cookie non-HttpOnly zen_csrf pour le double-submit
+function getCsrfToken(): string | null {
+  if (typeof document === 'undefined') return null;
+  const m = document.cookie.match(/(?:^|; )zen_csrf=([^;]+)/);
+  return m && m[1] ? decodeURIComponent(m[1]) : null;
+}
+
 async function doFetch(
   path: string,
   options: RequestOptions,
@@ -81,11 +88,20 @@ async function doFetch(
     headers['Content-Type'] = 'application/json';
   }
 
+  // P1-06 : CSRF token pour mutations si on utilise le cookie d'auth
+  const method_upper = method.toUpperCase();
+  if (method_upper !== 'GET' && method_upper !== 'HEAD') {
+    const csrf = getCsrfToken();
+    if (csrf) headers['X-CSRF-Token'] = csrf;
+  }
+
   return fetch(`${API_BASE_URL}${path}`, {
     method,
     headers,
     body: body ? JSON.stringify(body) : undefined,
     signal,
+    // P1-06 : include cookies HttpOnly cross-origin (necessite CORS credentials: true cote API)
+    credentials: 'include',
   });
 }
 

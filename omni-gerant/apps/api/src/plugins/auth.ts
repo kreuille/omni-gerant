@@ -25,17 +25,35 @@ async function authPlugin(app: FastifyInstance) {
 
 export const registerAuthPlugin = fp(authPlugin, { name: 'auth-plugin' });
 
-// BUSINESS RULE [CDC-6]: Authentication hook - verifies JWT
+// BUSINESS RULE [CDC-6]: Authentication hook - verifies JWT (header OR cookie)
 export function authenticate(request: FastifyRequest, reply: FastifyReply, done: (err?: Error) => void) {
+  // P1-06 : lecture duale — Authorization header OU cookie HttpOnly `zen_access`
   const authHeader = request.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
+  const bearer = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  const cookieToken = (request.cookies as Record<string, string | undefined> | undefined)?.['zen_access'];
+  const token = bearer ?? cookieToken;
+
+  if (!token) {
     reply.status(401).send({
-      error: { code: 'UNAUTHORIZED', message: 'Missing or invalid authorization header' },
+      error: { code: 'UNAUTHORIZED', message: 'Session requise (cookie ou en-tête Authorization manquant).' },
     });
     return;
   }
 
-  const token = authHeader.slice(7);
+  // P1-06 CSRF double-submit : si authent par cookie sur mutations, exiger X-CSRF-Token
+  const method = request.method.toUpperCase();
+  const isMutation = method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
+  if (!bearer && isMutation) {
+    const csrfCookie = (request.cookies as Record<string, string | undefined> | undefined)?.['zen_csrf'];
+    const csrfHeader = request.headers['x-csrf-token'];
+    if (!csrfCookie || !csrfHeader || csrfCookie !== csrfHeader) {
+      reply.status(403).send({
+        error: { code: 'CSRF_MISMATCH', message: 'Jeton CSRF invalide ou manquant.' },
+      });
+      return;
+    }
+  }
+
   // P1-07 : blacklist post-logout
   const tokenHash = createHash('sha256').update(token).digest('hex');
   if (isJwtBlacklisted(tokenHash)) {

@@ -7,6 +7,7 @@ import { verifyAccessToken, generateTokenPair, type JwtPayload } from './jwt.js'
 import { verifyTotpCode } from './totp.js';
 import { authenticate } from '../../plugins/auth.js';
 import { authRateLimit } from '../../plugins/rate-limiter.js';
+import { setAuthCookies, clearAuthCookies, COOKIE_NAMES } from './cookies.js';
 
 // Plan 4 : blacklist JWT en memoire (Map TTL = exp)
 // Cle = jti/token-hash, valeur = timestamp d'expiration (ms)
@@ -79,7 +80,6 @@ export async function authRoutes(app: FastifyInstance) {
 
     const result = await authService.login(parsed.data);
     if (!result.ok) {
-      // P1-10 : messages FR clairs. Le service renvoie typiquement NOT_FOUND / BAD_REQUEST pour mauvais credentiels.
       const code = result.error.code as string;
       const isCred = code === 'NOT_FOUND' || code === 'BAD_REQUEST' || code === 'UNAUTHORIZED';
       if (isCred) {
@@ -90,6 +90,13 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.status(500).send({
         error: { code: 'LOGIN_FAILED', message: 'Le serveur est temporairement indisponible. Réessayez dans quelques secondes.' },
       });
+    }
+
+    // P1-06 : si login complet (pas 2FA pending), set cookies HttpOnly
+    const v = result.value as { tokens?: { access_token: string; refresh_token: string }; requires_2fa?: boolean };
+    if (v.tokens && !v.requires_2fa) {
+      const csrf = setAuthCookies(reply, v.tokens.access_token, v.tokens.refresh_token);
+      return { ...result.value, csrf_token: csrf };
     }
     return result.value;
   });
@@ -172,7 +179,34 @@ export async function authRoutes(app: FastifyInstance) {
     if (!result.ok) {
       return reply.status(401).send({ error: result.error });
     }
+    // P1-06 : renouvelle les cookies
+    const v = result.value as { access_token?: string; refresh_token?: string; tokens?: { access_token: string; refresh_token: string } };
+    const tokens = v.tokens ?? (v.access_token && v.refresh_token ? { access_token: v.access_token, refresh_token: v.refresh_token } : null);
+    if (tokens) {
+      const csrf = setAuthCookies(reply, tokens.access_token, tokens.refresh_token);
+      return { ...result.value, csrf_token: csrf };
+    }
     return result.value;
+  });
+
+  // POST /api/auth/refresh-cookie — refresh via cookie HttpOnly seulement
+  app.post('/api/auth/refresh-cookie', async (request, reply) => {
+    const refreshToken = request.cookies[COOKIE_NAMES.refresh];
+    if (!refreshToken) {
+      return reply.status(401).send({ error: { code: 'UNAUTHORIZED', message: 'Missing refresh cookie.' } });
+    }
+    const result = await authService.refreshToken(refreshToken);
+    if (!result.ok) {
+      clearAuthCookies(reply);
+      return reply.status(401).send({ error: result.error });
+    }
+    const v = result.value as { access_token?: string; refresh_token?: string; tokens?: { access_token: string; refresh_token: string } };
+    const tokens = v.tokens ?? (v.access_token && v.refresh_token ? { access_token: v.access_token, refresh_token: v.refresh_token } : null);
+    if (tokens) {
+      const csrf = setAuthCookies(reply, tokens.access_token, tokens.refresh_token);
+      return { refreshed: true, csrf_token: csrf };
+    }
+    return reply.status(500).send({ error: { code: 'INTERNAL_ERROR', message: 'Token format unexpected.' } });
   });
 
   // POST /api/auth/logout (authenticated)
@@ -186,15 +220,20 @@ export async function authRoutes(app: FastifyInstance) {
         await authService.logout(body.refresh_token).catch(() => { /* best-effort */ });
       }
 
-      // Blacklist l'access_token courant jusqu'a son exp naturelle
+      // Blacklist l'access_token courant (header ou cookie) jusqu'a son exp naturelle
       const auth = request.headers.authorization ?? '';
       const bearer = auth.toLowerCase().startsWith('bearer ') ? auth.slice(7) : null;
-      if (bearer) {
-        const tokenHash = createHash('sha256').update(bearer).digest('hex');
-        const tokenInfo = verifyAccessToken(bearer);
+      const cookieToken = request.cookies[COOKIE_NAMES.access];
+      const activeToken = bearer ?? cookieToken;
+      if (activeToken) {
+        const tokenHash = createHash('sha256').update(activeToken).digest('hex');
+        const tokenInfo = verifyAccessToken(activeToken);
         const expMs = tokenInfo.ok ? Date.now() + 60 * 60 * 1000 : Date.now() + 60 * 60 * 1000;
         blacklistJwt(tokenHash, expMs);
       }
+
+      // P1-06 : clear cookies HttpOnly
+      clearAuthCookies(reply);
 
       return reply.status(204).send();
     },
