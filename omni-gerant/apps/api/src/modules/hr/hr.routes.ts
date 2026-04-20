@@ -950,9 +950,9 @@ export async function hrRoutes(app: FastifyInstance) {
     },
   );
 
-  // GET /api/hr/leaves — liste tous les conges du tenant (filtre employee optionnel)
+  // GET /api/hr/leaves-legacy — (ancien endpoint, remplace par /api/hr/leaves dans leave.routes.ts)
   app.get(
-    '/api/hr/leaves',
+    '/api/hr/leaves-legacy',
     { preHandler: [...preHandlers, requirePermission('legal', 'read')] },
     async (request) => {
       const { employeeId } = request.query as { employeeId?: string };

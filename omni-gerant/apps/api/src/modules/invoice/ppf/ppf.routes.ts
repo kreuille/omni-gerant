@@ -216,9 +216,9 @@ export async function ppfRoutes(app: FastifyInstance) {
     },
   );
 
-  // BL5 : GET /api/ppf/directory/:siret — lookup PDP destinataire
+  // BL5 : GET /api/ppf/receiver-platform/:siret — lookup PDP destinataire
   app.get(
-    '/api/ppf/directory/:siret',
+    '/api/ppf/receiver-platform/:siret',
     { preHandler: [...preHandlers, requirePermission('legal', 'read')] },
     async (request, reply) => {
       const { siret } = request.params as { siret: string };

@@ -1,6 +1,7 @@
 import type { Result } from '@zenadmin/shared';
 import { ok } from '@zenadmin/shared';
 import type { AppError } from '@zenadmin/shared';
+import { prisma } from '@zenadmin/db';
 
 // BUSINESS RULE [CDC-2.1]: Numerotation sequentielle
 // Format: DEV-{ANNEE}-{SEQUENCE:5} (ex: DEV-2026-00001)
@@ -45,8 +46,6 @@ export function createInMemoryNumberRepo(): DocumentNumberRepository {
 // BUSINESS RULE [CDC-2.1]: Numerotation sequentielle sans trou via PostgreSQL
 // Uses advisory lock to prevent concurrent duplicates
 export function createPrismaNumberRepo(): DocumentNumberRepository {
-  const { prisma } = require('@zenadmin/db') as { prisma: import('@prisma/client').PrismaClient };
-
   return {
     async getNextSequence(tenantId: string, prefix: string, year: number): Promise<number> {
       // Use a transaction with advisory lock for atomicity
