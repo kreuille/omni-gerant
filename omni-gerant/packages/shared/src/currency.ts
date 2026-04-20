@@ -23,7 +23,7 @@ export const CURRENCY_SYMBOL: Record<Currency, string> = {
   CHF: 'CHF',
 };
 
-export function formatMoney(minorUnits: number, currency: Currency = DEFAULT_CURRENCY, locale = 'fr-FR'): string {
+export function formatCurrency(minorUnits: number, currency: Currency = DEFAULT_CURRENCY, locale = 'fr-FR'): string {
   const exp = CURRENCY_EXPONENT[currency];
   const amount = minorUnits / Math.pow(10, exp);
   return new Intl.NumberFormat(locale, {
