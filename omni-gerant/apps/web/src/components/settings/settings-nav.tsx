@@ -12,6 +12,8 @@ const items = [
   { href: '/settings/accounting', label: 'Comptabilité' },
   { href: '/settings/ppf', label: 'PPF' },
   { href: '/settings/connectors', label: 'Connecteurs' },
+  { href: '/settings/api-keys', label: '🔑 API keys' },
+  { href: '/settings/whitelabel', label: '🎨 White-label' },
 ];
 
 export function SettingsNav() {
