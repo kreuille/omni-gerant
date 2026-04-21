@@ -28,9 +28,6 @@ jobs:
   deploy:
     name: Deploy to Vercel Production
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: omni-gerant
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -73,7 +70,6 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       - name: Smoke test
-        working-directory: .
         run: |
           sleep 8
           code=$(curl -s -o /dev/null -w "%{http_code}" https://omni-gerant.vercel.app/login)
