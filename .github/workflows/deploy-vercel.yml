@@ -1,9 +1,10 @@
 name: Deploy Vercel (production)
 
 # Auto-deploy le front Next.js sur Vercel a chaque push sur main.
-# Remplace l'integration Git native (qui n'est pas activee car aucun Login Connection GitHub cote Vercel).
+# Remplace l'integration Git native (pas activee : pas de Login Connection
+# GitHub cote compte Vercel).
 #
-# Secrets requis (deja configures) :
+# Secrets requis :
 #   VERCEL_TOKEN       - token Vercel CLI (vca_...)
 #   VERCEL_ORG_ID      - team_e2Xr2mo9D3BWDXNRijJV4c2w
 #   VERCEL_PROJECT_ID  - prj_rrWWOdvv2q3x6TpkOZLvDTNrPFvF
@@ -11,23 +12,25 @@ name: Deploy Vercel (production)
 on:
   push:
     branches: [main]
-    # Skip les commits qui ne touchent pas le web ni le shared workspace
     paths:
-      - 'apps/web/**'
-      - 'packages/shared/**'
-      - 'packages/db/**'
-      - 'pnpm-lock.yaml'
+      - 'omni-gerant/apps/web/**'
+      - 'omni-gerant/packages/shared/**'
+      - 'omni-gerant/packages/db/**'
+      - 'omni-gerant/pnpm-lock.yaml'
       - '.github/workflows/deploy-vercel.yml'
-  workflow_dispatch: # permet un trigger manuel depuis l'UI GitHub
+  workflow_dispatch:
 
 concurrency:
   group: deploy-vercel-production
-  cancel-in-progress: false # on ne cancel pas : chaque push doit atteindre prod
+  cancel-in-progress: false
 
 jobs:
   deploy:
     name: Deploy to Vercel Production
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: omni-gerant
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -57,14 +60,15 @@ jobs:
         run: |
           url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
           echo "deployment_url=$url" >> $GITHUB_OUTPUT
-          echo "Deployed to: $url"
+          echo "Deployed: $url"
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       - name: Smoke test
+        working-directory: .
         run: |
-          sleep 5
+          sleep 8
           code=$(curl -s -o /dev/null -w "%{http_code}" https://omni-gerant.vercel.app/login)
           if [ "$code" != "200" ]; then
             echo "Smoke test failed: /login returned $code"
